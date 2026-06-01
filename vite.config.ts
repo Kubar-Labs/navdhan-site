@@ -13,5 +13,9 @@ export default defineConfig({
     server: { entry: "server" },
   },
   // Vercel deployment target for Nitro output.
-  nitro: { preset: "vercel" },
+  nitro: {
+    preset: "vercel",
+    // Emit Build Output API artifacts where Vercel expects them.
+    output: { dir: ".vercel/output" },
+  },
 });
