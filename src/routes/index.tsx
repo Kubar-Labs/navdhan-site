@@ -1,29 +1,56 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { SiteHeader } from "@/components/navdhan/SiteHeader";
+import { Hero } from "@/components/navdhan/Hero";
+import { LoanProducts } from "@/components/navdhan/LoanProducts";
+import { WhyNavdhan } from "@/components/navdhan/WhyNavdhan";
+import { EmiCalculator } from "@/components/navdhan/EmiCalculator";
+import { Stories } from "@/components/navdhan/Stories";
+import { Recognition } from "@/components/navdhan/Recognition";
+import { CtaBand } from "@/components/navdhan/CtaBand";
+import { SiteFooter } from "@/components/navdhan/SiteFooter";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Your App" },
-      { name: "description", content: "Replace this with a one-sentence description of your app." },
-      { property: "og:title", content: "Your App" },
-      { property: "og:description", content: "Replace this with a one-sentence description of your app." },
+      { title: "Navdhan — Fuel your business growth with the right loan" },
+      {
+        name: "description",
+        content:
+          "A loan marketplace by Kubar Labs. Compare offers from 20+ NBFCs and Cooperative Banks with a single application. ₹5L to ₹1Cr+, approvals in 24h–7d.",
+      },
+      { property: "og:title", content: "Navdhan — Business loans, one application" },
+      {
+        property: "og:description",
+        content:
+          "Compare offers from 20+ NBFCs and Cooperative Banks with one application. Zero platform fee. RBI aligned, FACE registered.",
+      },
+    ],
+    links: [
+      { rel: "preconnect", href: "https://fonts.googleapis.com" },
+      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "" },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&display=swap",
+      },
     ],
   }),
-  component: Index,
+  component: LandingPage,
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
-function Index() {
+function LandingPage() {
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
+    <div className="min-h-screen bg-background text-foreground">
+      <SiteHeader />
+      <main>
+        <Hero />
+        <LoanProducts />
+        <WhyNavdhan />
+        <EmiCalculator />
+        <Stories />
+        <Recognition />
+        <CtaBand />
+      </main>
+      <SiteFooter />
     </div>
   );
 }
