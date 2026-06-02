@@ -22,12 +22,10 @@ export function Recognition() {
           </div>
         </a>
 
-        <div className="rounded-2xl border border-transparent bg-gradient-to-br from-brand-blue to-brand-navy p-8 text-white shadow-soft">
+        <div className="rounded-2xl border border-transparent bg-gradient-to-br from-brand-green to-brand-navy p-8 text-white shadow-soft">
           <div className="flex items-center gap-3">
             <Award className="size-5 text-brand-orange" aria-hidden />
-            <p className="text-xs uppercase tracking-[0.22em] text-white/70">
-              Recognition
-            </p>
+            <p className="text-xs uppercase tracking-[0.22em] text-white/70">Recognition</p>
           </div>
           <h3 className="mt-8 font-display text-3xl leading-tight text-white">
             Featured by FACE & recognized by leading fintech publications.

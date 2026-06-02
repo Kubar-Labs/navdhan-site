@@ -1,5 +1,81 @@
 import { Button } from "@/components/ui/button";
-import navdhanFlow from "@/assets/navdhan-flow.png";
+import { ShoppingBag, Cpu, Building2 } from "lucide-react";
+
+function CreditFlowVisualizer() {
+  return (
+    <div className="relative overflow-hidden rounded-2xl border border-border bg-slate-50/40 p-8 shadow-soft">
+      <div className="flex flex-col gap-6">
+        <div>
+          <h4 className="font-display text-xl text-brand-navy font-semibold">How NavDhan Works</h4>
+          <p className="text-sm text-muted-foreground mt-1">
+            An embedded credit hub connecting B2B platforms and lenders.
+          </p>
+        </div>
+
+        {/* Step 1 */}
+        <div className="relative flex gap-4 items-start">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand-blue-light text-brand-blue">
+            <ShoppingBag className="size-5" />
+          </div>
+          <div>
+            <h5 className="text-sm font-semibold text-brand-navy">1. Embedded Integration</h5>
+            <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+              NavDhan embeds directly into B2B marketplaces and platforms. Borrowers apply
+              seamlessly within their daily workflows.
+            </p>
+          </div>
+        </div>
+
+        {/* Connector Line 1 */}
+        <div className="ml-5 h-6 w-0.5 bg-border -my-2" />
+
+        {/* Step 2 */}
+        <div className="relative flex gap-4 items-start">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand-orange-light text-brand-orange">
+            <Cpu className="size-5" />
+          </div>
+          <div>
+            <h5 className="text-sm font-semibold text-brand-navy">
+              2. Smart Matching (&lt; 5 Mins)
+            </h5>
+            <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+              Aggregates consent-backed GST and Account Aggregator data to qualify leads inside our
+              BRE in under 5 minutes.
+            </p>
+          </div>
+        </div>
+
+        {/* Connector Line 2 */}
+        <div className="ml-5 h-6 w-0.5 bg-border -my-2" />
+
+        {/* Step 3 */}
+        <div className="relative flex gap-4 items-start">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand-green-light text-brand-green">
+            <Building2 className="size-5" />
+          </div>
+          <div>
+            <h5 className="text-sm font-semibold text-brand-navy">3. Lender Routing & Disbursal</h5>
+            <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+              BRE-qualified leads match with 20+ partner banks/NBFCs, delivering a 40–45% approval
+              rate (vs. 15-20% standard).
+            </p>
+          </div>
+        </div>
+
+        {/* Monetization note */}
+        <div className="mt-4 border-t border-border pt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between text-xs text-muted-foreground">
+          <span>
+            Fee: <strong className="text-brand-navy font-semibold">1.25% on disbursals</strong>
+          </span>
+          <span className="hidden sm:inline h-1.5 w-1.5 rounded-full bg-brand-green" />
+          <span>
+            Platform Cost: <strong className="text-brand-navy font-semibold">100% Free</strong>
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function Hero() {
   return (
@@ -16,7 +92,8 @@ export function Hero() {
           </h1>
 
           <p className="max-w-xl text-lg text-muted-foreground">
-            NavDhan by Kubar Labs powers embedded lending for the next generation of MSME finance. We connect{" "}
+            NavDhan by Kubar Labs powers embedded lending for the next generation of MSME finance.
+            We connect{" "}
             <span className="bg-brand-orange/10 border-b border-brand-orange/30 px-1.5 py-0.5 rounded font-medium text-brand-navy">
               lenders, marketplaces, and platforms
             </span>{" "}
@@ -52,15 +129,7 @@ export function Hero() {
 
         <div className="relative md:-mt-12 md:translate-y-[-8px]">
           <div className="absolute -inset-6 rounded-3xl bg-gradient-to-br from-brand-blue/20 via-brand-green/10 to-transparent blur-2xl" />
-          <div className="relative overflow-hidden rounded-2xl border border-border bg-white p-4 shadow-elegant">
-            <img
-              src={navdhanFlow}
-              alt="NavDhan Smart Credit Infrastructure Flow diagram showing connections between lenders, marketplaces, and data rails like GST and Account Aggregator"
-              width={1024}
-              height={1024}
-              className="w-full h-auto max-h-[500px] md:max-h-[560px] rounded-xl object-contain"
-            />
-          </div>
+          <CreditFlowVisualizer />
         </div>
       </div>
     </section>

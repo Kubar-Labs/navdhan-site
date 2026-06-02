@@ -10,6 +10,8 @@ import {
 import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
+import ndLogoUrl from "../assets/nd-logo.png?url";
+import navdhanFlowUrl from "../assets/navdhan-flow.png?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
 function NotFoundComponent() {
@@ -78,19 +80,23 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "NavDhan" },
-      { name: "description", content: "Fuel your business growth with the right loan." },
-      { name: "author", content: "Lovable" },
+      { name: "description", content: "Smart Credit Infrastructure for India's MSMEs." },
+      { name: "author", content: "NavDhan" },
       { property: "og:title", content: "NavDhan" },
-      { property: "og:description", content: "Fuel your business growth with the right loan." },
+      { property: "og:description", content: "Smart Credit Infrastructure for India's MSMEs." },
       { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
-      { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: "NavDhan" },
-      { name: "twitter:description", content: "Fuel your business growth with the right loan." },
-      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/910ff2cf-c101-47bf-b406-2246f8a3f131" },
-      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/910ff2cf-c101-47bf-b406-2246f8a3f131" },
+      { name: "twitter:description", content: "Smart Credit Infrastructure for India's MSMEs." },
+      { property: "og:image", content: navdhanFlowUrl },
+      { name: "twitter:image", content: navdhanFlowUrl },
     ],
     links: [
+      {
+        rel: "icon",
+        type: "image/png",
+        href: ndLogoUrl,
+      },
       {
         rel: "stylesheet",
         href: appCss,
