@@ -38,16 +38,16 @@ const STORIES = [
 
 export function Stories() {
   return (
-    <section id="stories" className="bg-secondary py-24">
+    <section id="stories" className="bg-white py-24 border-b border-border">
       <div className="container-prose">
         <div className="flex items-end justify-between gap-6">
           <div>
-            <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">
+            <p className="text-xs uppercase tracking-[0.22em] text-brand-blue font-semibold">
               Customer Stories
             </p>
-            <h2 className="mt-3 font-display text-4xl leading-tight md:text-5xl">
+            <h2 className="mt-3 font-display text-4xl leading-tight md:text-5xl text-brand-navy">
               Real business problems,{" "}
-              <span className="italic">real solutions.</span>
+              <span className="italic text-brand-blue">real solutions.</span>
             </h2>
           </div>
         </div>
@@ -56,7 +56,7 @@ export function Stories() {
           {STORIES.map((story) => (
             <article
               key={story.name}
-              className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-soft"
+              className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-soft hover:shadow-elegant hover:border-brand-blue/30 transition-all duration-300"
             >
               <div className="relative aspect-[4/3] overflow-hidden">
                 <img
@@ -65,19 +65,19 @@ export function Stories() {
                   loading="lazy"
                   width={768}
                   height={576}
-                  className="size-full object-cover"
+                  className="size-full object-cover transition-transform duration-500 hover:scale-105"
                 />
-                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-ink/85 to-transparent p-4 text-ink-foreground">
+                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-brand-navy/90 via-brand-navy/40 to-transparent p-4 text-white">
                   <p className="font-display text-lg leading-tight">{story.name}</p>
-                  <p className="text-xs text-ink-foreground/75">{story.role}</p>
+                  <p className="text-xs text-white/85">{story.role}</p>
                 </div>
               </div>
               <div className="flex flex-1 flex-col gap-4 p-6">
-                <p className="font-display text-xl leading-snug">
+                <p className="font-display text-xl leading-snug text-brand-navy">
                   "{story.question}"
                 </p>
                 <p className="text-sm text-muted-foreground">{story.outcome}</p>
-                <Button variant="outline-ink" className="mt-auto w-full">
+                <Button variant="outline-blue" className="mt-auto w-full">
                   {story.cta}
                 </Button>
               </div>

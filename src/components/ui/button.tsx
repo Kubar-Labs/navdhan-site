@@ -16,12 +16,19 @@ const buttonVariants = cva(
         secondary: "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
-        ink: "bg-ink text-ink-foreground shadow hover:bg-ink/90",
-        gold: "bg-gold text-gold-foreground shadow hover:bg-gold/90",
+        ink: "bg-brand-blue text-white shadow hover:bg-brand-blue-hover",
+        gold: "bg-brand-orange text-white shadow hover:bg-brand-orange-hover",
         "outline-ink":
-          "border border-ink/20 bg-transparent text-ink shadow-sm hover:bg-ink hover:text-ink-foreground",
+          "border border-brand-blue/30 bg-transparent text-brand-blue shadow-sm hover:bg-brand-blue hover:text-white",
         "outline-cream":
-          "border border-ink-foreground/30 bg-transparent text-ink-foreground hover:bg-ink-foreground hover:text-ink",
+          "border border-brand-orange/30 bg-transparent text-brand-orange hover:bg-brand-orange hover:text-white",
+        orange: "bg-brand-orange text-white shadow hover:bg-brand-orange-hover",
+        green: "bg-brand-green text-white shadow hover:bg-brand-green-hover",
+        blue: "bg-brand-blue text-white shadow hover:bg-brand-blue-hover",
+        "outline-orange":
+          "border border-brand-orange/30 bg-transparent text-brand-orange shadow-sm hover:bg-brand-orange hover:text-white",
+        "outline-blue":
+          "border border-brand-blue/30 bg-transparent text-brand-blue shadow-sm hover:bg-brand-blue hover:text-white",
       },
       size: {
         default: "h-9 px-4 py-2",

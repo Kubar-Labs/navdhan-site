@@ -16,6 +16,7 @@ dist-ssr
 .nitro
 .vercel
 *.local
+/src/artboards/
 
 # Wrangler / Cloudflare
 .wrangler/

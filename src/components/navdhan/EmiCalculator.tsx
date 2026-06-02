@@ -26,13 +26,13 @@ export function EmiCalculator() {
   const totalInterest = totalPayable - amount;
 
   return (
-    <section id="emi" className="bg-background py-24">
+    <section id="emi" className="bg-white py-24">
       <div className="container-prose grid gap-12 rounded-2xl border border-border bg-card p-8 shadow-soft md:grid-cols-2 md:p-12">
         <div>
-          <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">
+          <p className="text-xs uppercase tracking-[0.22em] text-brand-blue font-semibold">
             EMI Calculator
           </p>
-          <h2 className="mt-3 font-display text-4xl leading-tight md:text-5xl">
+          <h2 className="mt-3 font-display text-4xl leading-tight md:text-5xl text-brand-navy">
             Calculate your EMI.
           </h2>
           <p className="mt-4 text-muted-foreground">
@@ -83,14 +83,14 @@ export function EmiCalculator() {
           </div>
         </div>
 
-        <div className="flex flex-col justify-between gap-8 rounded-xl bg-ink p-8 text-ink-foreground">
+        <div className="flex flex-col justify-between gap-8 rounded-xl bg-gradient-to-br from-brand-blue to-brand-navy p-8 text-white">
           <div>
-            <p className="text-xs uppercase tracking-[0.22em] text-ink-foreground/60">
+            <p className="text-xs uppercase tracking-[0.22em] text-white/70">
               Monthly EMI
             </p>
-            <p className="mt-3 font-display text-6xl text-gold">{inr(emi)}</p>
+            <p className="mt-3 font-display text-6xl text-brand-orange">{inr(emi)}</p>
 
-            <dl className="mt-8 grid grid-cols-2 gap-6 border-t border-ink-foreground/10 pt-6">
+            <dl className="mt-8 grid grid-cols-2 gap-6 border-t border-white/10 pt-6">
               <Stat label="Principal" value={inr(amount)} />
               <Stat label="Total interest" value={inr(totalInterest)} />
               <Stat label="Total payable" value={inr(totalPayable)} />
@@ -98,7 +98,7 @@ export function EmiCalculator() {
             </dl>
           </div>
 
-          <Button variant="gold" size="lg" className="w-full">
+          <Button variant="orange" size="lg" className="w-full">
             Check Eligibility
           </Button>
         </div>
