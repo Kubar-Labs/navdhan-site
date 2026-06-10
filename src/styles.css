@@ -5,22 +5,33 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * Navdhan design system — premium financial.
- * Deep navy canvas, warm gold accents, cream typography.
- * All colors in oklch. Use semantic tokens, never raw values in components.
+ * Navdhan design system — "white concrete, single ember".
+ * Brex-style precision-instrument theme: near-pure white canvas, a single
+ * orange ember (#F6931E, Navdhan's own accent) doing all the talking, dark
+ * Carbon/Abyss bookends, tight Inter with aggressive negative tracking,
+ * flat surfaces defined by 1px hairline borders — no drop shadows.
  */
 
 @theme inline {
-  --font-serif: "Instrument Serif", ui-serif, Georgia, serif;
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-inter: "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", Roboto, sans-serif;
+  --font-sans: var(--font-inter);
+  --font-serif: var(--font-inter);
 
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-  --radius-2xl: calc(var(--radius) + 8px);
-  --radius-3xl: calc(var(--radius) + 12px);
+  /* === Brex-style palette (Navdhan ember) === */
+  --color-ember: var(--ember);
+  --color-ember-hover: var(--ember-hover);
+  --color-abyss: var(--abyss);
+  --color-carbon: var(--carbon);
+  --color-ink: var(--ink);
+  --color-paper: var(--paper);
+  --color-fog: var(--fog);
+  --color-mist: var(--mist);
+  --color-steel: var(--steel);
+  --color-pewter: var(--pewter);
+  --color-graphite: var(--graphite);
 
+  /* === shadcn/ui semantic tokens, remapped onto the Brex palette === */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -35,126 +46,175 @@
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
-  --color-gold: var(--gold);
-  --color-gold-foreground: var(--gold-foreground);
-  --color-ink: var(--ink);
-  --color-ink-foreground: var(--ink-foreground);
-  --color-cream: var(--cream);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
 
-  /* New Brand Colors */
-  --color-brand-blue: var(--brand-blue);
-  --color-brand-blue-hover: var(--brand-blue-hover);
-  --color-brand-blue-light: var(--brand-blue-light);
-  --color-brand-green: var(--brand-green);
-  --color-brand-green-hover: var(--brand-green-hover);
-  --color-brand-green-light: var(--brand-green-light);
-  --color-brand-orange: var(--brand-orange);
-  --color-brand-orange-hover: var(--brand-orange-hover);
-  --color-brand-orange-light: var(--brand-orange-light);
-  --color-brand-navy: var(--brand-navy);
-
-  --shadow-elegant: 0 24px 60px -28px rgba(4, 118, 181, 0.15);
-  --shadow-soft: 0 1px 2px rgba(26, 37, 60, 0.05), 0 8px 24px -12px rgba(26, 37, 60, 0.08);
+  /* === Type scale (Inter, negative tracking is the signature) === */
+  --text-caption: 0.75rem;
+  --text-caption--line-height: 1.5;
+  --text-caption--letter-spacing: -0.01em;
+  --text-body-sm: 0.875rem;
+  --text-body-sm--line-height: 1.43;
+  --text-body-sm--letter-spacing: -0.01em;
+  --text-body: 1rem;
+  --text-body--line-height: 1.5;
+  --text-body--letter-spacing: -0.01em;
+  --text-subheading: 1.25rem;
+  --text-subheading--line-height: 1.4;
+  --text-subheading--letter-spacing: -0.01em;
+  --text-heading-sm: 1.5rem;
+  --text-heading-sm--line-height: 1.33;
+  --text-heading-sm--letter-spacing: -0.01em;
+  --text-heading: 2.25rem;
+  --text-heading--line-height: 1.21;
+  --text-heading--letter-spacing: -0.02em;
+  --text-heading-lg: 3rem;
+  --text-heading-lg--line-height: 1.2;
+  --text-heading-lg--letter-spacing: -0.025em;
+  --text-display: 4.5rem;
+  --text-display--line-height: 1;
+  --text-display--letter-spacing: -0.03em;
 }
 
 :root {
-  --radius: 0.5rem;
+  --radius: 0.75rem; /* 12px — buttons, inputs, cards */
 
-  /* Surfaces */
-  --background: #ffffff;                     /* Main background is pure white */
-  --foreground: #1a253c;                     /* Premium deep blue-gray text */
-  --cream: #ffffff;                          /* Set cream to white for a clean background */
+  /* Brex-style palette */
+  --ember: #f6931e; /* Navdhan orange — the single accent */
+  --ember-hover: #db7d12;
+  --abyss: #000710; /* footer / deepest dark */
+  --carbon: #15191e; /* announcement bar / dark chrome */
+  --ink: #0b0f14; /* primary text & headings */
+  --paper: #ffffff; /* page canvas */
+  --fog: #f3f3f7; /* secondary surface / banded sections */
+  --mist: #d9dbe3; /* hairline borders, dividers */
+  --steel: #8b8d98; /* placeholder, secondary chrome text */
+  --pewter: #6f737b; /* caption / helper text */
+  --graphite: #60646c; /* body paragraphs */
 
-  --card: #ffffff;
-  --card-foreground: #1a253c;
+  /* Semantic mappings */
+  --background: var(--paper);
+  --foreground: var(--ink);
+  --card: var(--paper);
+  --card-foreground: var(--ink);
+  --popover: var(--paper);
+  --popover-foreground: var(--ink);
 
-  --popover: #ffffff;
-  --popover-foreground: #1a253c;
-
-  /* Brand Colors */
-  --brand-blue: #0476B5;
-  --brand-blue-hover: #036094;
-  --brand-blue-light: #e6f2fa;
-  
-  --brand-green: #00A551;
-  --brand-green-hover: #008742;
-  --brand-green-light: #e6f6ed;
-  
-  --brand-orange: #F6931E;
-  --brand-orange-hover: #db7d12;
-  --brand-orange-light: #fff4e6;
-  
-  --brand-navy: #1a253c;
-
-  /* Semantic Mappings */
-  --primary: #0476B5;                        /* Blue as the primary brand color */
+  --primary: var(--ember);
   --primary-foreground: #ffffff;
 
-  /* Keep legacy variables mapping to new colors to maintain compatibility */
-  --ink: #1a253c;                            /* Replaced deep navy with brand-navy */
-  --ink-foreground: #ffffff;
+  --secondary: var(--fog);
+  --secondary-foreground: var(--ink);
 
-  --gold: #F6931E;                           /* Replaced warm gold with brand-orange */
-  --gold-foreground: #ffffff;
+  --muted: var(--fog);
+  --muted-foreground: var(--graphite);
 
-  --secondary: #f8fafc;                      /* Clean slate background for container cards */
-  --secondary-foreground: #1a253c;
-
-  --muted: #f1f5f9;
-  --muted-foreground: #627d98;
-
-  --accent: #fff4e6;                         /* Soft orange tint */
-  --accent-foreground: #F6931E;
+  --accent: var(--fog);
+  --accent-foreground: var(--ink);
 
   --destructive: #ef4444;
   --destructive-foreground: #ffffff;
 
-  --border: #e2e8f0;
-  --input: #e2e8f0;
-  --ring: #0476B5;
-}
-
-.dark {
-  --background: #0f172a;
-  --foreground: #f8fafc;
-  --card: #1e293b;
-  --card-foreground: #f8fafc;
-  --popover: #1e293b;
-  --popover-foreground: #f8fafc;
-  --primary: #38bdf8;
-  --primary-foreground: #0f172a;
-  --secondary: #334155;
-  --secondary-foreground: #f8fafc;
-  --muted: #334155;
-  --muted-foreground: #94a3b8;
-  --accent: #1e293b;
-  --accent-foreground: #f8fafc;
-  --border: rgba(255, 255, 255, 0.1);
-  --input: rgba(255, 255, 255, 0.15);
+  --border: var(--mist);
+  --input: var(--mist);
+  --ring: var(--ember);
 }
 
 @layer base {
-  * { border-color: var(--color-border); }
-  html { -webkit-font-smoothing: antialiased; }
+  * {
+    border-color: var(--color-border);
+  }
+  html {
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    scroll-behavior: smooth;
+    scroll-padding-top: 6.5rem; /* announcement bar + sticky nav */
+  }
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
-    font-family: var(--font-sans);
-    font-feature-settings: "ss01", "cv11";
-  }
-  h1, h2, h3, .font-display {
-    font-family: var(--font-serif);
-    font-weight: 400;
+    font-family: var(--font-inter);
+    font-size: 1rem;
+    line-height: 1.5;
     letter-spacing: -0.01em;
+    /* Brex: disable contextual alternates & ligatures for an engineered feel */
+    font-feature-settings: "calt" 0, "liga" 0, "ss03", "cv01", "cv05" 0, "cv10", "ss01" 0,
+      "zero" 0;
+  }
+  h1, h2, h3, h4 {
+    font-family: var(--font-inter);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+  }
+  ::selection {
+    background: color-mix(in oklab, var(--ember) 26%, transparent);
+    color: var(--ink);
   }
 }
 
 @layer utilities {
-  .text-balance { text-wrap: balance; }
-  .container-prose { max-width: 80rem; margin-inline: auto; padding-inline: 1.5rem; }
+  .text-balance {
+    text-wrap: balance;
+  }
+  .container-prose {
+    max-width: 75rem; /* 1200px */
+    margin-inline: auto;
+    padding-inline: 1.5rem;
+  }
+
+  /* Restrained scroll reveal (flat — opacity + translate only) */
+  @keyframes nd-reveal {
+    from {
+      opacity: 0;
+      transform: translateY(18px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  .reveal {
+    opacity: 0;
+    will-change: transform, opacity;
+  }
+  .reveal.in {
+    animation: nd-reveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .stagger > * {
+    opacity: 0;
+    will-change: transform, opacity;
+  }
+  .stagger.in > * {
+    animation: nd-reveal 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  .stagger.in > *:nth-child(1) { animation-delay: 50ms; }
+  .stagger.in > *:nth-child(2) { animation-delay: 110ms; }
+  .stagger.in > *:nth-child(3) { animation-delay: 170ms; }
+  .stagger.in > *:nth-child(4) { animation-delay: 230ms; }
+  .stagger.in > *:nth-child(5) { animation-delay: 290ms; }
+  .stagger.in > *:nth-child(6) { animation-delay: 350ms; }
+  .stagger.in > *:nth-child(n + 7) { animation-delay: 400ms; }
+}
+
+/* No-JS / crawler fallback: never leave reveal content hidden */
+@media (scripting: none) {
+  .reveal, .stagger > * {
+    opacity: 1 !important;
+    animation: none !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .reveal, .reveal.in, .stagger > *, .stagger.in > * {
+    opacity: 1 !important;
+    animation: none !important;
+    transform: none !important;
+  }
 }
