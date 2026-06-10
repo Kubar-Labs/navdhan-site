@@ -12,14 +12,9 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
-  // Vercel deployment target for Nitro output.
+  // Cloudflare Pages deployment target — emits dist/ with a _worker.js for the
+  // SSR server, ready for `wrangler pages deploy dist`.
   nitro: {
-    preset: "vercel",
-    // Emit Build Output API artifacts where Vercel expects them.
-    output: {
-      dir: ".vercel/output",
-      publicDir: ".vercel/output/static",
-      serverDir: ".vercel/output/functions/__server.func",
-    },
+    preset: "cloudflare-pages",
   },
 });

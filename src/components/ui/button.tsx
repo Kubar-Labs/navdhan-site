@@ -5,36 +5,36 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-semibold cursor-pointer transition-colors duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ember/45 focus-visible:ring-offset-2 focus-visible:ring-offset-paper disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground shadow hover:bg-primary/90",
-        destructive: "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90",
-        outline:
-          "border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground",
-        secondary: "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80",
-        ghost: "hover:bg-accent hover:text-accent-foreground",
-        link: "text-primary underline-offset-4 hover:underline",
-        ink: "bg-brand-blue text-white shadow hover:bg-brand-blue-hover",
-        gold: "bg-brand-orange text-white shadow hover:bg-brand-orange-hover",
-        "outline-ink":
-          "border border-brand-blue/30 bg-transparent text-brand-blue shadow-sm hover:bg-brand-blue hover:text-white",
-        "outline-cream":
-          "border border-brand-orange/30 bg-transparent text-brand-orange hover:bg-brand-orange hover:text-white",
-        orange: "bg-brand-orange text-white shadow hover:bg-brand-orange-hover",
-        green: "bg-brand-green text-white shadow hover:bg-brand-green-hover",
-        blue: "bg-brand-blue text-white shadow hover:bg-brand-blue-hover",
-        "outline-orange":
-          "border border-brand-orange/30 bg-transparent text-brand-orange shadow-sm hover:bg-brand-orange hover:text-white",
-        "outline-blue":
-          "border border-brand-blue/30 bg-transparent text-brand-blue shadow-sm hover:bg-brand-blue hover:text-white",
+        // Brex system: a single ember fill, plus mist-outline and ghost.
+        default: "bg-ember text-white hover:bg-ember-hover",
+        ember: "bg-ember text-white hover:bg-ember-hover",
+        outline: "border border-mist bg-paper text-ink hover:border-ink",
+        "outline-light": "border border-white/25 bg-transparent text-white hover:bg-white hover:text-ink",
+        ghost: "text-ink hover:text-ember",
+        "ghost-light": "text-white/80 hover:text-white",
+        link: "text-ember underline-offset-4 hover:underline",
+        destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+        secondary: "bg-fog text-ink hover:bg-mist/60",
+        // Legacy aliases kept so any stray call site still resolves to the ember system.
+        orange: "bg-ember text-white hover:bg-ember-hover",
+        green: "bg-ember text-white hover:bg-ember-hover",
+        blue: "bg-ember text-white hover:bg-ember-hover",
+        "outline-orange": "border border-mist bg-paper text-ink hover:border-ink",
+        "outline-blue": "border border-mist bg-paper text-ink hover:border-ink",
+        ink: "bg-ink text-white hover:bg-ink/90",
+        gold: "bg-ember text-white hover:bg-ember-hover",
+        "outline-ink": "border border-mist bg-paper text-ink hover:border-ink",
+        "outline-cream": "border border-white/25 bg-transparent text-white hover:bg-white hover:text-ink",
       },
       size: {
-        default: "h-9 px-4 py-2",
-        sm: "h-8 rounded-md px-3 text-xs",
-        lg: "h-10 rounded-md px-8",
-        icon: "h-9 w-9",
+        default: "h-10 px-4 py-2",
+        sm: "h-9 rounded-xl px-3.5 text-[13px]",
+        lg: "h-12 rounded-xl px-6 text-base",
+        icon: "h-10 w-10",
       },
     },
     defaultVariants: {

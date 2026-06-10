@@ -32,3 +32,9 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# dsa_portal is its own separate git repo (own remote + secrets like
+# github-deployer-key.json / .env). Never track it from this repo.
+dsa_portal/
+dsa_portal\.env
+dsa_portal\backend\.env

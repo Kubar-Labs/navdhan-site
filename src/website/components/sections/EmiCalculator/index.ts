@@ -1,0 +1,1 @@
+export { EmiCalculator } from "./EmiCalculator";

@@ -8,6 +8,8 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
+    "sync:portal": "node scripts/sync-portal.mjs",
+    "deploy:cf": "vite build && npx wrangler pages deploy dist --project-name navdhan-landing",
     "lint": "eslint .",
     "format": "prettier --write ."
   },
