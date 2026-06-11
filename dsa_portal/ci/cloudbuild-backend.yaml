@@ -1,0 +1,50 @@
+# Cloud Build pipeline for the Kuber Verification backend.
+# Triggered on push to master when backend/** changes.
+# Each build tags with the git SHA so revisions are traceable to commits.
+
+steps:
+  # 1. Build the image
+  - name: gcr.io/cloud-builders/docker
+    id: build
+    args:
+      - build
+      - --tag=asia-south1-docker.pkg.dev/$PROJECT_ID/kuber/verification:$SHORT_SHA
+      - --tag=asia-south1-docker.pkg.dev/$PROJECT_ID/kuber/verification:latest
+      - ./backend
+
+  # 2. Push both tags to Artifact Registry
+  - name: gcr.io/cloud-builders/docker
+    id: push
+    args: [push, --all-tags, asia-south1-docker.pkg.dev/$PROJECT_ID/kuber/verification]
+
+  # 3. Deploy to Cloud Run, pinning the new revision to the SHA-tagged image
+  - name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    id: deploy
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - kuber-verification
+      - --image=asia-south1-docker.pkg.dev/$PROJECT_ID/kuber/verification:$SHORT_SHA
+      - --region=asia-south1
+      - --service-account=kuber-backend-sa@$PROJECT_ID.iam.gserviceaccount.com
+      - --add-cloudsql-instances=$PROJECT_ID:asia-south1:kuber-db
+      # ^@^ changes the pair delimiter to @ so ALLOWED_ORIGINS can hold a comma-separated list.
+      - --set-env-vars=^@^APP_ENV=prod@GCS_BUCKET=kuber-kyc-prod@API_VERSION=v1@ALLOWED_ORIGINS=https://navdhan.app,https://www.navdhan.app,https://dsa.kubar.tech
+      - --set-secrets=DATABASE_URL=database-url:latest,ENCRYPTION_KEY=encryption-key:latest,PERFIOS_USERNAME=perfios-username:latest,PERFIOS_PASSWORD=perfios-password:latest,PERFIOS_ORG_ID=perfios-org-id:latest
+      - --allow-unauthenticated
+      - --memory=1Gi
+      - --cpu=1
+      - --min-instances=0
+      - --max-instances=5
+      - --timeout=900s
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+# Cloud Build records these images as build outputs (for provenance).
+images:
+  - asia-south1-docker.pkg.dev/$PROJECT_ID/kuber/verification:$SHORT_SHA
+  - asia-south1-docker.pkg.dev/$PROJECT_ID/kuber/verification:latest
+
+timeout: 1200s

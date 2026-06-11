@@ -1,4 +1,0 @@
-[submodule "dsa_portal"]
-	path = dsa_portal
-	url = https://github.com/Kubar-Labs/navdhan_varification_portal.git
-	branch = master
