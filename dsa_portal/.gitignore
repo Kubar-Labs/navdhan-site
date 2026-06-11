@@ -1,0 +1,90 @@
+# ── Secrets ────────────────────────────────────────────────────────────────
+# NEVER commit .env files. Each environment has its own values; use .env.example
+# as a template. Real values live in Google Secret Manager for production.
+.env
+.env.*
+!.env.example
+backend/.env
+backend/.env.*
+!backend/.env.example
+frontend/.env
+frontend/.env.*
+!frontend/.env.example
+
+# Service-account JSON keys (we use ADC + Workload Identity in prod, but
+# block these patterns defensively).
+*-sa.json
+*service-account*.json
+*credentials*.json
+gcp-key*.json
+*-key.json
+*deployer*.json
+
+# ── Python ─────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# uv (the lockfile is committed; the cache is not)
+.uv-cache/
+
+# ── Node / Frontend ────────────────────────────────────────────────────────
+node_modules/
+dist/
+.vite/
+.next/
+build/
+*.tsbuildinfo
+
+# ── Binaries downloaded for local dev ─────────────────────────────────────
+# cloud-sql-proxy is downloaded per-developer and per-OS; not part of the source.
+cloud-sql-proxy
+cloud-sql-proxy.exe
+backend/cloud-sql-proxy
+backend/cloud-sql-proxy.exe
+
+# ── IDE / OS ───────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Claude Code working directory (per-project tool state)
+.claude/
+
+# ── Build / runtime artefacts ──────────────────────────────────────────────
+*.log
+logs/
+.coverage
+htmlcov/
+
+# Local response dumps from any dev script (these can contain real PII)
+*_response.json
+bsa_response.json
+itr_response.json
+form26as_response.json
+
+# Perfios report downloads from test scripts (may contain real bank data)
+report_*.json
+report_*.xlsx
+
+# One-off test / exploration scripts at the repo root
+test_perfios_*.py
+
+# Local-only dev scripts (prefixed with _) and their outputs
+backend/_*.py
+backend/.gcp_token
+backend/cases_*.xlsx
+backend/proxy.log
+backend/proxy.err.log
