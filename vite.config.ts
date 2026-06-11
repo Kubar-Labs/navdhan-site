@@ -12,9 +12,10 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
-  // Cloudflare Pages deployment target — emits dist/ with a _worker.js for the
-  // SSR server, ready for `wrangler pages deploy dist`.
+  // Cloudflare Workers (Static Assets) deployment target — the Lovable default.
+  // Emits a worker + static client assets + wrangler.json (main + assets),
+  // deployed with `wrangler deploy`.
   nitro: {
-    preset: "cloudflare-pages",
+    preset: "cloudflare-module",
   },
 });

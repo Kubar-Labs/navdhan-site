@@ -1,9 +1,10 @@
 name: Deploy to Cloudflare Pages
 
-# Push to main → build the site and upload to the existing Cloudflare Pages
-# project "navdhan-landing" (which serves navdhan.app). This replaces manual
-# `npm run deploy:cf`. The embedded DSA portal ships via the committed
-# public/apply/ (re-sync it locally with `npm run sync:portal` when it changes).
+# Push to main → build the site and deploy the Cloudflare Worker
+# "kubar-labs-navdhan-site" (Workers Static Assets; serves navdhan.app once the
+# custom domain is attached to the Worker). Replaces manual `npm run deploy:cf`.
+# The embedded DSA portal ships via the committed public/apply/ (re-sync locally
+# with `npm run sync:portal` when it changes).
 
 on:
   push:
@@ -23,12 +24,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build (Cloudflare Pages output → dist/)
+      - name: Build (Cloudflare Workers output → dist/)
         run: npm run build
 
-      - name: Deploy to Cloudflare Pages
+      - name: Deploy to Cloudflare Workers
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist --project-name=navdhan-landing --branch=main
+          command: deploy
