@@ -1,0 +1,22 @@
+{
+  "name": "NavDhan",
+  "legalName": "Kubar Protocol Private Limited",
+  "cin": "U70200WB2024PTC274850",
+  "address": "156, Tarvakere, BTM Layout 1st Stage, Bengaluru, Karnataka",
+  "email": "support@kubar.tech",
+  "contactEmails": {
+    "loan": "loan@kubar.tech",
+    "partnership": "partnerships@kubar.tech",
+    "support": "support@kubar.tech",
+    "careers": "careers@kubar.tech",
+    "press": "press@kubar.tech",
+    "outreach": "outreach@kubar.tech"
+  },
+  "phone": "+91-80-XXXX-XXXX",
+  "website": "https://navdhan.app",
+  "tagline": "One stop-solution for all your working capital needs",
+  "parentCompany": "Kubar",
+  "rbi": {
+    "note": "NavDhan helps connect MSMEs with RBI-registered lenders. We do not lend directly, and all credit decisions are taken by our partner banks and NBFCs."
+  }
+}

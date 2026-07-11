@@ -1,0 +1,129 @@
+{
+  "meta": {
+    "title": "Consent Policy",
+    "description": "How NavDhan obtains and manages your consent."
+  },
+  "lastUpdated": "2026-06-18",
+  "company": {
+    "name": "NavDhan",
+    "legalName": "Kubar Protocol Private Limited",
+    "cin": "U70200WB2024PTC274850",
+    "address": "156, Tarvakere, BTM Layout 1st Stage, Bengaluru, Karnataka",
+    "email": "support@kubar.tech",
+    "phone": "+91-80-XXXX-XXXX",
+    "website": "https://navdhan.app"
+  },
+  "intro": {
+    "heading": "Consent Policy",
+    "body": "Consent is at the heart of how NavDhan operates. This policy explains how we obtain, use, and honour your consent when you use our services."
+  },
+  "sections": [
+    {
+      "id": "approach",
+      "title": "Consent-first approach",
+      "content_type": "prose",
+      "body": "We collect only the data we need, ask before we share it, and give you meaningful choices. Consent is always free, informed, specific, and revocable."
+    },
+    {
+      "id": "consent-to",
+      "title": "What you consent to",
+      "content_type": "list",
+      "items": [
+        {
+          "heading": "Identity verification",
+          "body": "Consent to verify your identity using PAN, Aadhaar OTP, or other KYC documents."
+        },
+        {
+          "heading": "Business verification",
+          "body": "Consent to fetch GST returns, bank statements, and business records."
+        },
+        {
+          "heading": "Lender sharing",
+          "body": "Consent to share your application with selected lender partners."
+        },
+        {
+          "heading": "Communication",
+          "body": "Consent to receive calls, emails, and messages related to your application."
+        }
+      ]
+    },
+    {
+      "id": "how",
+      "title": "How consent is collected",
+      "content_type": "list",
+      "items": [
+        {
+          "heading": "Clear language",
+          "body": "Each consent request tells you what data is collected and why."
+        },
+        {
+          "heading": "Active action",
+          "body": "You must take an affirmative action, such as checking a box or tapping \"I agree\"."
+        },
+        {
+          "heading": "Granular choice",
+          "body": "Where possible, you can choose which purposes and data sharing you accept."
+        }
+      ]
+    },
+    {
+      "id": "withdraw",
+      "title": "Withdrawing consent",
+      "content_type": "list",
+      "items": [
+        {
+          "heading": "How to withdraw",
+          "body": "Email support@kubar.tech or use controls in your account where available."
+        },
+        {
+          "heading": "Effect of withdrawal",
+          "body": "Withdrawing optional consent may limit certain features but will not affect offers already sanctioned."
+        },
+        {
+          "heading": "Retention",
+          "body": "We may retain some data where required by law after you withdraw consent."
+        }
+      ]
+    },
+    {
+      "id": "recipients",
+      "title": "Data recipients",
+      "content_type": "list",
+      "items": [
+        {
+          "heading": "Lender partners",
+          "body": "Only the lender(s) you select or agree to evaluate your application."
+        },
+        {
+          "heading": "Verification providers",
+          "body": "Credit bureaus, account aggregators, and analytics providers with your consent."
+        },
+        {
+          "heading": "Regulators",
+          "body": "Government or regulatory bodies when required by law."
+        }
+      ]
+    },
+    {
+      "id": "dpo",
+      "title": "Data protection officer",
+      "content_type": "contact_card",
+      "contact": {
+        "name": "NavDhan Support",
+        "role": "Data Protection Officer",
+        "email": "support@kubar.tech",
+        "address": "156, Tarvakere, BTM Layout 1st Stage, Bengaluru, Karnataka"
+      }
+    },
+    {
+      "id": "privacy-link",
+      "title": "Privacy Policy",
+      "content_type": "prose",
+      "body": "For further details on data handling, please read our Privacy Policy.",
+      "cross_link": {
+        "label": "Read Privacy Policy",
+        "slug": "privacy-policy"
+      }
+    }
+  ]
+}

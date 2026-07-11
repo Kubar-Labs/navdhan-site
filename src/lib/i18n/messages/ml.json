@@ -1,0 +1,49 @@
+{
+  "home": {
+    "meta": {
+      "title": "NavDhan : ഇന്ത്യയിലെ MSME-കൾക്കായുള്ള ബിസിനസ് വായ്പകൾ",
+      "description": "വിശ്വസനീയമായ കടം നൽകുന്നവരിൽ നിന്ന് ₹5 ലക്ഷം മുതൽ ₹1 കോടി വരെ ബിസിനസ് വായ്പകൾ നേടൂ. ഒരു അപേക്ഷ, നിരവധി ഓഫറുകൾ, പൂജ്യം പ്ലാറ്റ്‌ഫോമ്മ് ഫീസ്."
+    },
+    "hero": {
+      "headline": "ബാങ്കുകളുടെ പിന്നാലെ ഓടാതെ ശരിയായ ബിസിനസ് വായ്പ നേടൂ."
+    }
+  },
+  "team": {
+    "meta": {
+      "title": "ഞങ്ങളുടെ ടീം : NavDhan"
+    },
+    "members": {
+      "eyebrow": "Leadership"
+    },
+    "advisors": {
+      "eyebrow": "Advisors"
+    }
+  },
+  "global": {
+    "footer": {
+      "company": "Kubar Protocol Private Limited (CIN: U70200WB2024PTC274850)",
+      "copyright": "© 2026 Kubar Protocol Private Limited. NavDhan is powered by Kubar.",
+      "contactHeading": "Contact",
+      "companyHeading": "Company",
+      "legalHeading": "Legal",
+      "tagline": "നിങ്ങളുടെ എല്ലാ working capital ആവശ്യങ്ങൾക്കും one-stop പരിഹാരം.",
+      "address": "156, താരവകേര, ബിടിഎം ലേഔട്ട് ഒന്നാം ഘട്ടം, ബാംഗ്ലൂർ, കർണാടക",
+      "badges": "RBI അനുസൃത · FACE രജിസ്റ്റർ ചെയ്തത് · Kubar പ്രവർത്തിപ്പിക്കുന്നു"
+    },
+    "contact": {
+      "loan": "loan@kubar.tech",
+      "partnership": "partnerships@kubar.tech",
+      "support": "support@kubar.tech",
+      "careers": "careers@kubar.tech",
+      "press": "press@kubar.tech",
+      "outreach": "outreach@kubar.tech"
+    },
+    "nav": {
+      "loanProducts": "വായ്പാ ഉത്പന്നങ്ങൾ",
+      "whyNavDhan": "എന്തുകൊണ്ട് NavDhan",
+      "emiCalculator": "EMI കാൽക്കുലേറ്റർ",
+      "customerStories": "ഉപഭോക്തൃ കഥകൾ",
+      "team": "ടീം"
+    }
+  }
+}

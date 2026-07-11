@@ -1,0 +1,62 @@
+{
+  "eyebrowKey": "home.recognition.eyebrow",
+  "headingKey": "home.recognition.heading",
+  "items": [
+    {
+      "id": "finvision-2026",
+      "titleKey": "FinVision 2026, NIBM",
+      "descriptionKey": "Showcased NavDhan's work in building simpler credit access for India's MSMEs.",
+      "imageAsset": "",
+      "date": "2026"
+    },
+    {
+      "id": "india-ai-summit",
+      "titleKey": "India AI Summit",
+      "descriptionKey": "Shared NavDhan's vision for simple, fair business loans with policymakers and investors.",
+      "imageAsset": "",
+      "date": "2026"
+    },
+    {
+      "id": "startup-mahakumbh",
+      "titleKey": "Startup Mahakumbh",
+      "descriptionKey": "Chosen by India's largest startup gathering for making finance more accessible to small businesses.",
+      "imageAsset": "",
+      "date": "2026"
+    },
+    {
+      "id": "bengaluru-tech-summit",
+      "titleKey": "Bengaluru Tech Summit",
+      "descriptionKey": "Introduced NavDhan as a calm, simple way for Karnataka businesses to access working capital.",
+      "imageAsset": "",
+      "date": "2026"
+    },
+    {
+      "id": "stpi-imc",
+      "titleKey": "STPI IMC",
+      "descriptionKey": "Recognised by STPI's India Accelerator for innovation in small business finance.",
+      "imageAsset": "",
+      "date": "2026"
+    },
+    {
+      "id": "kotak-bizlabs",
+      "titleKey": "Kotak BizLabs Demo Day",
+      "descriptionKey": "Featured by Kotak's enterprise startup network for practical financial tools for MSMEs.",
+      "imageAsset": "",
+      "date": "2026"
+    },
+    {
+      "id": "bharat-innovation",
+      "titleKey": "Bharat Innovation Conclave",
+      "descriptionKey": "Showcased at a national forum for inclusive finance solutions that support real businesses.",
+      "imageAsset": "",
+      "date": "2026"
+    },
+    {
+      "id": "rubrix-t-hub",
+      "titleKey": "Rubrix, T-Hub",
+      "descriptionKey": "Selected by T-Hub's Rubrix program for building high-impact solutions for Indian businesses.",
+      "imageAsset": "",
+      "date": "2026"
+    }
+  ]
+}

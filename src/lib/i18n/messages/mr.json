@@ -1,0 +1,49 @@
+{
+  "home": {
+    "meta": {
+      "title": "NavDhan : भारताच्या MSMEs साठी व्यवसाय कर्ज",
+      "description": "विश्वसनीय सावकारांकडून ₹5 लाख ते ₹1 कोटी व्यवसाय कर्ज मिळवा. एक अर्ज, अनेक ऑफर, शून्य प्लॅटफॉर्म फी."
+    },
+    "hero": {
+      "headline": "बँकांमागे न धावता योग्य व्यवसाय कर्ज मिळवा."
+    }
+  },
+  "team": {
+    "meta": {
+      "title": "आमची टीम : NavDhan"
+    },
+    "members": {
+      "eyebrow": "Leadership"
+    },
+    "advisors": {
+      "eyebrow": "Advisors"
+    }
+  },
+  "global": {
+    "footer": {
+      "company": "Kubar Protocol Private Limited (CIN: U70200WB2024PTC274850)",
+      "copyright": "© 2026 Kubar Protocol Private Limited. NavDhan is powered by Kubar.",
+      "contactHeading": "Contact",
+      "companyHeading": "Company",
+      "legalHeading": "Legal",
+      "tagline": "तुमच्या सर्व working capital गरजांसाठी one-stop उपाय.",
+      "address": "156, तारावकेरे, बीटीएम लेआउट पहिला टप्पा, बेंगलोर, कर्नाटक",
+      "badges": "RBI अनुकूल · FACE नोंदणीकृत · Kubar द्वारे सक्षम"
+    },
+    "contact": {
+      "loan": "loan@kubar.tech",
+      "partnership": "partnerships@kubar.tech",
+      "support": "support@kubar.tech",
+      "careers": "careers@kubar.tech",
+      "press": "press@kubar.tech",
+      "outreach": "outreach@kubar.tech"
+    },
+    "nav": {
+      "loanProducts": "लोन उत्पादने",
+      "whyNavDhan": "NavDhan का",
+      "emiCalculator": "EMI कॅल्क्युलेटर",
+      "customerStories": "ग्राहकांची कहाणी",
+      "team": "टीम"
+    }
+  }
+}

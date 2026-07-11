@@ -1,0 +1,122 @@
+{
+  "meta": {
+    "title": "Fair Practices Code",
+    "description": "Our commitment to fair, transparent, and responsible lending practices."
+  },
+  "lastUpdated": "2026-06-18",
+  "company": {
+    "name": "NavDhan",
+    "legalName": "Kubar Protocol Private Limited",
+    "cin": "U70200WB2024PTC274850",
+    "address": "156, Tarvakere, BTM Layout 1st Stage, Bengaluru, Karnataka",
+    "email": "support@kubar.tech",
+    "phone": "+91-80-XXXX-XXXX",
+    "website": "https://navdhan.app"
+  },
+  "intro": {
+    "heading": "Fair Practices Code",
+    "body": "NavDhan is committed to fair, transparent, and responsible conduct in all interactions with borrowers, lenders, and partners. This Code outlines the principles we follow."
+  },
+  "sections": [
+    {
+      "id": "commitment",
+      "title": "Our commitment",
+      "content_type": "prose",
+      "body": "We believe that MSME borrowers deserve clarity, respect, and timely service. We do not charge any platform fee and we do not accept hidden commissions that influence lender recommendations."
+    },
+    {
+      "id": "no-fee",
+      "title": "No platform fee",
+      "content_type": "prose",
+      "body": "NavDhan does not charge borrowers any fee for applying, comparing offers, or using the platform. All charges from lenders are disclosed in the loan sanction letter."
+    },
+    {
+      "id": "disclosure",
+      "title": "Disclosure of loan terms",
+      "content_type": "list",
+      "items": [
+        {
+          "heading": "Interest rate",
+          "body": "Annualised rate and whether it is fixed or floating."
+        },
+        {
+          "heading": "Fees",
+          "body": "Processing fees, prepayment charges, late payment penalties, and any other charges."
+        },
+        {
+          "heading": "Tenure and EMI",
+          "body": "Repayment schedule, EMI amount, and total cost of credit."
+        },
+        {
+          "heading": "Key facts statement",
+          "body": "A summary document is provided before final acceptance."
+        }
+      ]
+    },
+    {
+      "id": "non-discrimination",
+      "title": "No discriminatory practices",
+      "content_type": "prose",
+      "body": "We do not discriminate on the basis of religion, caste, gender, language, or region. Eligibility is assessed on business merit, credit profile, and lender policies."
+    },
+    {
+      "id": "grievance",
+      "title": "Grievance handling",
+      "content_type": "list",
+      "items": [
+        {
+          "heading": "Easy access",
+          "body": "Complaints can be filed by email or post."
+        },
+        {
+          "heading": "Acknowledgement",
+          "body": "We acknowledge every complaint within a reasonable time."
+        },
+        {
+          "heading": "Resolution",
+          "body": "We aim to resolve complaints within the timelines set by applicable regulations."
+        }
+      ]
+    },
+    {
+      "id": "grievance-contact",
+      "title": "Grievance contact",
+      "content_type": "contact_card",
+      "contact": {
+        "name": "NavDhan Support",
+        "role": "Grievance / Data Protection Officer",
+        "email": "support@kubar.tech",
+        "address": "156, Tarvakere, BTM Layout 1st Stage, Bengaluru, Karnataka"
+      }
+    },
+    {
+      "id": "collection",
+      "title": "Fair collection practices",
+      "content_type": "list",
+      "items": [
+        {
+          "heading": "Dignity",
+          "body": "Borrowers are treated with respect at all times."
+        },
+        {
+          "heading": "No harassment",
+          "body": "Abusive language, threats, or repeated intrusive contact are prohibited."
+        },
+        {
+          "heading": "Timely communication",
+          "body": "Reminders are reasonable, proportionate, and sent at appropriate hours."
+        }
+      ]
+    },
+    {
+      "id": "redressal-link",
+      "title": "Grievance redressal",
+      "content_type": "prose",
+      "body": "For detailed grievance procedures, including escalation timelines and RBI channels, please see our Grievance Redressal page.",
+      "cross_link": {
+        "label": "View Grievance Redressal",
+        "slug": "grievance-redressal"
+      }
+    }
+  ]
+}

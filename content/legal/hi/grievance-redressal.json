@@ -1,0 +1,112 @@
+{
+  "meta": {
+    "title": "शिकायत निवारण",
+    "description": "NavDhan के साथ शिकायतें दर्ज करने और सहायता प्राप्त करने का तरीका।"
+  },
+  "lastUpdated": "2026-06-18",
+  "company": {
+    "name": "NavDhan",
+    "legalName": "Kubar Protocol Private Limited",
+    "cin": "U70200WB2024PTC274850",
+    "address": "156, Tarvakere, BTM Layout 1st Stage, Bengaluru, Karnataka",
+    "email": "support@kubar.tech",
+    "phone": "+91-80-XXXX-XXXX",
+    "website": "https://navdhan.app"
+  },
+  "intro": {
+    "heading": "शिकायत निवारण",
+    "body": "हम हर चिंता को गंभीरता से लेते हैं। यदि आप हमारी सेवा, किसी ऋणदाता, या साझेदार से असंतुष्ट हैं, तो कृपया नीचे दी गई प्रक्रिया का पालन करें।"
+  },
+  "sections": [
+    {
+      "id": "raise",
+      "title": "शिकायत कैसे दर्ज करें",
+      "content_type": "list",
+      "items": [
+        {
+          "heading": "हमें ईमेल करें",
+          "body": "अपनी शिकायत support@kubar.tech पर 'शिकायत' विषय के साथ भेजें।"
+        },
+        {
+          "heading": "हमें लिखें",
+          "body": "अपनी शिकायत हमारे पंजीकृत पते पर डाक द्वारा भेजें।"
+        },
+        {
+          "heading": "संदर्भ संख्या",
+          "body": "अपना आवेदन या पंजीकृत मोबाइल नंबर शामिल करें ताकि हम आपका रिकॉर्ड ढूंढ सकें।"
+        }
+      ]
+    },
+    {
+      "id": "include",
+      "title": "क्या शामिल करें",
+      "content_type": "list",
+      "items": [
+        {
+          "heading": "आपका विवरण",
+          "body": "पूरा नाम, पंजीकृत ईमेल और फोन नंबर।"
+        },
+        {
+          "heading": "मुद्दे का विवरण",
+          "body": "क्या हुआ और कब हुआ, इसकी एक स्पष्ट जानकारी।"
+        },
+        {
+          "heading": "अपेक्षित निराकरण",
+          "body": "मामले को हल करने के लिए आप क्या चाहते हैं।"
+        },
+        {
+          "heading": "सहायक दस्तावेज़",
+          "body": "स्क्रीनशॉट, ईमेल, या कोई अन्य संबंधित सबूत।"
+        }
+      ]
+    },
+    {
+      "id": "timeline",
+      "title": "निराकरण समयसीमा",
+      "content_type": "list",
+      "items": [
+        {
+          "heading": "पुष्टि",
+          "body": "आपकी शिकायत मिलने के 3 कार्यदिवसों के भीतर।"
+        },
+        {
+          "heading": "प्रारंभिक प्रतिक्रिया",
+          "body": "7 कार्यदिवसों के भीतर अपडेट या निराकरण के साथ।"
+        },
+        {
+          "heading": "अंतिम निराकरण",
+          "body": "अधिकांश शिकायतों के लिए 30 दिनों के भीतर। जटिल मामलों में कारण सहित अधिक समय लग सकता है।"
+        }
+      ]
+    },
+    {
+      "id": "nodal-officer",
+      "title": "नोडल अधिकारी को स्थानांतरण",
+      "content_type": "prose",
+      "body": "यदि आप निराकरण से संतुष्ट नहीं हैं, तो आप हमारे नोडल शिकायत अधिकारी को स्थानांतरित कर सकते हैं। कृपया अपनी मूल शिकायत और हमारी प्रतिक्रिया शामिल करें।"
+    },
+    {
+      "id": "nodal-contact",
+      "title": "नोडल अधिकारी संपर्क",
+      "content_type": "contact_card",
+      "contact": {
+        "name": "NavDhan Support",
+        "role": "Nodal Grievance Officer",
+        "email": "support@kubar.tech",
+        "address": "156, Tarvakere, BTM Layout 1st Stage, Bengaluru, Karnataka"
+      }
+    },
+    {
+      "id": "rbi",
+      "title": "RBI शिकायत",
+      "content_type": "prose",
+      "body": "यदि आपकी शिकायत किसी ऋणदाता से संबंधित है और अनसुलझी रहती है, तो आप Reserve Bank of India Integrated Ombudsman Scheme या ऋणदाता की शिकायत प्रक्रिया के पास जा सकते हैं।"
+    },
+    {
+      "id": "records",
+      "title": "रिकॉर्ड रखरखाव",
+      "content_type": "prose",
+      "body": "हम गुणवत्ता की निगरानी और नियामक आवश्यकताओं के अनुपालन के लिए सभी शिकायतों और निराकरण के रिकॉर्ड बनाए रखते हैं।"
+    }
+  ]
+}

@@ -1,0 +1,168 @@
+{
+  "meta": {
+    "title": "Privacy Policy",
+    "description": "How NavDhan collects, uses, and protects your personal information."
+  },
+  "lastUpdated": "2026-06-18",
+  "company": {
+    "name": "NavDhan",
+    "legalName": "Kubar Protocol Private Limited",
+    "cin": "U70200WB2024PTC274850",
+    "address": "156, Tarvakere, BTM Layout 1st Stage, Bengaluru, Karnataka",
+    "email": "support@kubar.tech",
+    "phone": "+91-80-XXXX-XXXX",
+    "website": "https://navdhan.app"
+  },
+  "intro": {
+    "heading": "Privacy Policy",
+    "body": "This Privacy Policy explains how Kubar Protocol Private Limited (\"NavDhan\", \"we\", \"us\") collects, uses, stores, and protects personal information when you use our website and services. We are committed to protecting your privacy and handling your data responsibly."
+  },
+  "sections": [
+    {
+      "id": "scope",
+      "title": "Scope and applicability",
+      "content_type": "prose",
+      "body": "This policy applies to all visitors, registered users, applicants, and partners who access NavDhan websites, mobile applications, APIs, or services. By using our services, you agree to the practices described in this policy."
+    },
+    {
+      "id": "data-collected",
+      "title": "Data we collect",
+      "content_type": "list",
+      "items": [
+        {
+          "heading": "Identity and contact data",
+          "body": "Name, email, phone number, PAN, Aadhaar (voluntary and regulated), and business address."
+        },
+        {
+          "heading": "Business data",
+          "body": "GSTIN, business type, years in operation, turnover, and bank statements."
+        },
+        {
+          "heading": "Device and usage data",
+          "body": "IP address, browser type, operating system, and pages visited."
+        },
+        {
+          "heading": "Communication data",
+          "body": "Emails, chat logs, and call recordings made for quality and compliance."
+        }
+      ]
+    },
+    {
+      "id": "sources",
+      "title": "Sources of data",
+      "content_type": "list",
+      "items": [
+        {
+          "heading": "Directly from you",
+          "body": "Information entered in application forms or shared with our team."
+        },
+        {
+          "heading": "From third parties",
+          "body": "Credit bureaus, GST platforms, bank statement providers, and publicly available sources with your consent."
+        },
+        {
+          "heading": "Automatically",
+          "body": "Cookies and analytics tools when you browse our website."
+        }
+      ]
+    },
+    {
+      "id": "purposes",
+      "title": "Purpose and legal basis",
+      "content_type": "list",
+      "items": [
+        {
+          "heading": "Loan matching",
+          "body": "To assess eligibility and present offers from partner lenders."
+        },
+        {
+          "heading": "Verification",
+          "body": "To verify identity, business existence, and financial standing."
+        },
+        {
+          "heading": "Communication",
+          "body": "To share application status, offers, and support responses."
+        },
+        {
+          "heading": "Compliance",
+          "body": "To meet legal, regulatory, and audit requirements."
+        }
+      ]
+    },
+    {
+      "id": "sharing",
+      "title": "How we share your data",
+      "content_type": "list",
+      "items": [
+        {
+          "heading": "Lender partners",
+          "body": "Only when you choose to proceed with an offer and provide explicit consent."
+        },
+        {
+          "heading": "Service providers",
+          "body": "Verification, cloud hosting, analytics, and communication providers under strict contracts."
+        },
+        {
+          "heading": "Regulators",
+          "body": "When required by RBI, courts, or other competent authorities."
+        }
+      ]
+    },
+    {
+      "id": "retention",
+      "title": "Retention and security",
+      "content_type": "prose",
+      "body": "We retain personal information only as long as needed for the purposes above or as required by law, typically up to five years after the end of our relationship. We use encryption, access controls, and regular security reviews to protect your data."
+    },
+    {
+      "id": "rights",
+      "title": "Your rights",
+      "content_type": "list",
+      "items": [
+        {
+          "heading": "Access",
+          "body": "Request a copy of the data we hold about you."
+        },
+        {
+          "heading": "Correction",
+          "body": "Request correction of inaccurate or incomplete data."
+        },
+        {
+          "heading": "Deletion",
+          "body": "Request deletion subject to legal retention requirements."
+        },
+        {
+          "heading": "Withdraw consent",
+          "body": "You can withdraw consent for optional data processing at any time."
+        }
+      ]
+    },
+    {
+      "id": "contact",
+      "title": "Grievance officer and contact",
+      "content_type": "contact_card",
+      "contact": {
+        "name": "NavDhan Support",
+        "role": "Grievance / Data Protection Officer",
+        "email": "support@kubar.tech",
+        "address": "156, Tarvakere, BTM Layout 1st Stage, Bengaluru, Karnataka"
+      }
+    },
+    {
+      "id": "updates",
+      "title": "Updates to this policy",
+      "content_type": "prose",
+      "body": "We may update this Privacy Policy from time to time. The updated version will be posted on this page with a revised \"Last Updated\" date. We encourage you to review it periodically."
+    },
+    {
+      "id": "cookies",
+      "title": "Cookies",
+      "content_type": "prose",
+      "body": "We use cookies and similar technologies. Please see our Cookie Policy for details.",
+      "cross_link": {
+        "label": "Read Cookie Policy",
+        "slug": "cookie-policy"
+      }
+    }
+  ]
+}

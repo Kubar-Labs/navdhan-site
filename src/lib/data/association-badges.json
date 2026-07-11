@@ -1,0 +1,16 @@
+[
+  { "name": "FACE", "logoAsset": "", "href": "https://faceai.org.in", "altKey": "global.alt.face" },
+  {
+    "name": "Startup Mahakumbh",
+    "logoAsset": "",
+    "href": "https://startupmahakumbh.gov.in",
+    "altKey": "global.alt.startupMahakumbh"
+  },
+  {
+    "name": "STPI FinGlobe",
+    "logoAsset": "",
+    "href": "https://stpi.in",
+    "altKey": "global.alt.stpiFinglobe"
+  },
+  { "name": "FinVision", "logoAsset": "", "href": "", "altKey": "global.alt.finvision" }
+]

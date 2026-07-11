@@ -1,0 +1,112 @@
+{
+  "meta": {
+    "title": "Grievance Redressal",
+    "description": "How to raise complaints and get support with NavDhan."
+  },
+  "lastUpdated": "2026-06-18",
+  "company": {
+    "name": "NavDhan",
+    "legalName": "Kubar Protocol Private Limited",
+    "cin": "U70200WB2024PTC274850",
+    "address": "156, Tarvakere, BTM Layout 1st Stage, Bengaluru, Karnataka",
+    "email": "support@kubar.tech",
+    "phone": "+91-80-XXXX-XXXX",
+    "website": "https://navdhan.app"
+  },
+  "intro": {
+    "heading": "Grievance Redressal",
+    "body": "We take every concern seriously. If you are unhappy with our service, a lender, or a partner, please follow the process below."
+  },
+  "sections": [
+    {
+      "id": "raise",
+      "title": "How to raise a complaint",
+      "content_type": "list",
+      "items": [
+        {
+          "heading": "Email us",
+          "body": "Send your complaint to support@kubar.tech with the subject line \"Complaint\"."
+        },
+        {
+          "heading": "Write to us",
+          "body": "Mail your complaint to our registered address."
+        },
+        {
+          "heading": "Reference number",
+          "body": "Include your application or registered mobile number so we can locate your record."
+        }
+      ]
+    },
+    {
+      "id": "include",
+      "title": "What to include",
+      "content_type": "list",
+      "items": [
+        {
+          "heading": "Your details",
+          "body": "Full name, registered email, and phone number."
+        },
+        {
+          "heading": "Issue description",
+          "body": "A clear description of what happened and when."
+        },
+        {
+          "heading": "Expected resolution",
+          "body": "What you would like us to do to resolve the matter."
+        },
+        {
+          "heading": "Supporting documents",
+          "body": "Screenshots, emails, or any other relevant evidence."
+        }
+      ]
+    },
+    {
+      "id": "timeline",
+      "title": "Resolution timeline",
+      "content_type": "list",
+      "items": [
+        {
+          "heading": "Acknowledgement",
+          "body": "Within 3 working days of receiving your complaint."
+        },
+        {
+          "heading": "Initial response",
+          "body": "Within 7 working days with an update or resolution."
+        },
+        {
+          "heading": "Final resolution",
+          "body": "Within 30 days for most complaints. Complex cases may take longer with a reasoned explanation."
+        }
+      ]
+    },
+    {
+      "id": "nodal-officer",
+      "title": "Escalation to Nodal Officer",
+      "content_type": "prose",
+      "body": "If you are not satisfied with the resolution, you may escalate to our Nodal Grievance Officer. Please include your original complaint and our response."
+    },
+    {
+      "id": "nodal-contact",
+      "title": "Nodal Officer contact",
+      "content_type": "contact_card",
+      "contact": {
+        "name": "NavDhan Support",
+        "role": "Nodal Grievance Officer",
+        "email": "support@kubar.tech",
+        "address": "156, Tarvakere, BTM Layout 1st Stage, Bengaluru, Karnataka"
+      }
+    },
+    {
+      "id": "rbi",
+      "title": "RBI complaint",
+      "content_type": "prose",
+      "body": "If your complaint relates to a lender and remains unresolved, you may approach the Reserve Bank of India Integrated Ombudsman Scheme or the lender's grievance mechanism, as applicable."
+    },
+    {
+      "id": "records",
+      "title": "Record keeping",
+      "content_type": "prose",
+      "body": "We maintain records of all complaints and resolutions to monitor quality and comply with regulatory requirements."
+    }
+  ]
+}

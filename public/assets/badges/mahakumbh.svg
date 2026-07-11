@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 40" fill="none" role="img" aria-label="Startup Mahakumbh">
+  <!-- Stylized Kumbh / summit mandala emblem -->
+  <circle cx="17" cy="20" r="13" fill="#EA580C" opacity="0.12"/>
+  <path d="M9 25 C9 17 14 12 17 10 C20 12 25 17 25 25" stroke="#EA580C" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <path d="M12 25 C12 19 15 15 17 14 C19 15 22 19 22 25" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <circle cx="17" cy="20" r="2.5" fill="#16A34A"/>
+  <path d="M17 10 L17 7" stroke="#16A34A" stroke-width="1.5" stroke-linecap="round"/>
+  <path d="M25 25 L27 27" stroke="#2563EB" stroke-width="1.5" stroke-linecap="round"/>
+  <path d="M9 25 L7 27" stroke="#EA580C" stroke-width="1.5" stroke-linecap="round"/>
+
+  <!-- Wordmark -->
+  <text x="38" y="17" fill="#0F172A" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="10" font-weight="700">Startup</text>
+  <text x="38" y="29" fill="#0F172A" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="12" font-weight="500">Mahakumbh</text>
+</svg>

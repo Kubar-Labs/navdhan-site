@@ -1,0 +1,137 @@
+{
+  "meta": {
+    "title": "RBI DLG Disclosure",
+    "description": "Regulatory disclosure about NavDhan, lenders, and loan products."
+  },
+  "lastUpdated": "2026-06-18",
+  "company": {
+    "name": "NavDhan",
+    "legalName": "Kubar Protocol Private Limited",
+    "cin": "U70200WB2024PTC274850",
+    "address": "156, Tarvakere, BTM Layout 1st Stage, Bengaluru, Karnataka",
+    "email": "support@kubar.tech",
+    "phone": "+91-80-XXXX-XXXX",
+    "website": "https://navdhan.app"
+  },
+  "intro": {
+    "heading": "RBI DLG Disclosure",
+    "body": "This page provides the regulatory disclosures required under Reserve Bank of India guidelines for digital lending, including our role, lender relationships, and product terms."
+  },
+  "sections": [
+    {
+      "id": "regulatory",
+      "title": "Regulatory disclosure statement",
+      "content_type": "prose",
+      "body": "NavDhan is an intermediary technology platform operated by Kubar Protocol Private Limited. We are not a bank, NBFC, or financial institution. All credit decisions, sanctions, and disbursements are made solely by our RBI-registered lending partners."
+    },
+    {
+      "id": "role",
+      "title": "Role of NavDhan",
+      "content_type": "prose",
+      "body": "We provide technology infrastructure for borrower onboarding, document collection, lender matching, and status tracking. We do not set interest rates, fees, or credit policy. We do not guarantee loan approval."
+    },
+    {
+      "id": "lenders",
+      "title": "Lender details",
+      "content_type": "table",
+      "table": {
+        "caption": "Representative lending partners",
+        "headers": [
+          "Partner type",
+          "Role",
+          "Example categories"
+        ],
+        "rows": [
+          [
+            "Scheduled Commercial Banks",
+            "Originate loans directly",
+            "Private and public sector banks"
+          ],
+          [
+            "NBFCs",
+            "Originate loans directly or through co-lending",
+            "Systemically important and registered NBFCs"
+          ],
+          [
+            "Other regulated entities",
+            "Provide credit or guarantee products",
+            "As permitted by RBI"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "terms",
+      "title": "Key product terms",
+      "content_type": "table",
+      "table": {
+        "caption": "Illustrative loan terms",
+        "headers": [
+          "Parameter",
+          "Typical range",
+          "Notes"
+        ],
+        "rows": [
+          [
+            "Loan amount",
+            "₹5 lakh - ₹1 crore",
+            "Final amount depends on lender policy and profile."
+          ],
+          [
+            "Interest rate",
+            "12% - 24% per annum",
+            "Rates quoted are annualised and may vary by lender."
+          ],
+          [
+            "Tenure",
+            "3 - 12 months",
+            "Subject to lender approval."
+          ],
+          [
+            "Processing fee",
+            "As per lender",
+            "Disclosed in the Key Facts Statement."
+          ],
+          [
+            "Prepayment charges",
+            "As per lender",
+            "Disclosed before sanction."
+          ]
+        ]
+      }
+    },
+    {
+      "id": "consent",
+      "title": "Consent and data use",
+      "content_type": "prose",
+      "body": "We collect and share data only with your explicit, informed consent. You will be shown clear consent screens at each stage of the application. You may withdraw consent for optional processing at any time."
+    },
+    {
+      "id": "grievance",
+      "title": "Grievance redressal",
+      "content_type": "prose",
+      "body": "For complaints about platform service, contact our support team. For complaints about a specific lender, please also contact the lender directly."
+    },
+    {
+      "id": "grievance-contact",
+      "title": "Contact details",
+      "content_type": "contact_card",
+      "contact": {
+        "name": "NavDhan Support",
+        "role": "Grievance / Data Protection Officer",
+        "email": "support@kubar.tech",
+        "address": "156, Tarvakere, BTM Layout 1st Stage, Bengaluru, Karnataka"
+      }
+    },
+    {
+      "id": "grievance-link",
+      "title": "Detailed grievance process",
+      "content_type": "prose",
+      "body": "For step-by-step complaint handling and escalation timelines, please refer to our Grievance Redressal page.",
+      "cross_link": {
+        "label": "View Grievance Redressal",
+        "slug": "grievance-redressal"
+      }
+    }
+  ]
+}

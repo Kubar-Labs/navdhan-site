@@ -1,0 +1,142 @@
+{
+  "meta": {
+    "title": "Terms of Use",
+    "description": "The terms governing your use of the NavDhan website and services."
+  },
+  "lastUpdated": "2026-06-18",
+  "company": {
+    "name": "NavDhan",
+    "legalName": "Kubar Protocol Private Limited",
+    "cin": "U70200WB2024PTC274850",
+    "address": "156, Tarvakere, BTM Layout 1st Stage, Bengaluru, Karnataka",
+    "email": "support@kubar.tech",
+    "phone": "+91-80-XXXX-XXXX",
+    "website": "https://navdhan.app"
+  },
+  "intro": {
+    "heading": "Terms of Use",
+    "body": "These Terms of Use govern access to and use of the NavDhan website, application, and related services owned and operated by Kubar Protocol Private Limited. Please read them carefully before using our services."
+  },
+  "sections": [
+    {
+      "id": "acceptance",
+      "title": "Acceptance of terms",
+      "content_type": "prose",
+      "body": "By accessing or using NavDhan, you agree to be bound by these terms and all applicable laws. If you do not agree, please do not use our services."
+    },
+    {
+      "id": "eligibility",
+      "title": "Eligibility",
+      "content_type": "prose",
+      "body": "You must be at least 18 years old and a resident of India. You must be authorised to represent any business you apply for. Services are available only where permitted by law."
+    },
+    {
+      "id": "role",
+      "title": "Role of NavDhan",
+      "content_type": "prose",
+      "body": "NavDhan is a technology intermediary that connects MSME borrowers with RBI-registered lenders. We do not lend money ourselves, guarantee approvals, or control lender decisions."
+    },
+    {
+      "id": "obligations",
+      "title": "User obligations",
+      "content_type": "list",
+      "items": [
+        {
+          "heading": "Accurate information",
+          "body": "Provide truthful and complete information in every application."
+        },
+        {
+          "heading": "Lawful use",
+          "body": "Use the platform only for lawful purposes."
+        },
+        {
+          "heading": "Account security",
+          "body": "Keep your login credentials confidential."
+        },
+        {
+          "heading": "No misuse",
+          "body": "Do not attempt to disrupt, reverse-engineer, or scrape the platform."
+        }
+      ]
+    },
+    {
+      "id": "accuracy",
+      "title": "Application accuracy",
+      "content_type": "prose",
+      "body": "Providing false or misleading information may result in rejection, suspension, or legal action. Lenders rely on the accuracy of the data you provide."
+    },
+    {
+      "id": "ip",
+      "title": "Intellectual property",
+      "content_type": "prose",
+      "body": "All content, trademarks, logos, and software on NavDhan are owned by Kubar Protocol Private Limited or its licensors. You may not copy, modify, or distribute them without written permission."
+    },
+    {
+      "id": "disclaimers",
+      "title": "Disclaimers",
+      "content_type": "list",
+      "items": [
+        {
+          "heading": "No financial advice",
+          "body": "Information on NavDhan is not financial, legal, or tax advice."
+        },
+        {
+          "heading": "No guarantee of offers",
+          "body": "Display of loan options is illustrative and subject to lender approval."
+        },
+        {
+          "heading": "Third-party services",
+          "body": "Links to partner sites are governed by their own terms."
+        }
+      ]
+    },
+    {
+      "id": "indemnity",
+      "title": "Indemnity",
+      "content_type": "prose",
+      "body": "You agree to indemnify and hold harmless NavDhan and its affiliates from claims arising out of your use of the services, your content, or your violation of these terms."
+    },
+    {
+      "id": "liability",
+      "title": "Limitation of liability",
+      "content_type": "list",
+      "items": [
+        {
+          "heading": "Direct damages",
+          "body": "Liability is limited to fees actually paid to NavDhan, which are typically zero."
+        },
+        {
+          "heading": "Excluded damages",
+          "body": "We are not liable for indirect, incidental, or consequential damages."
+        },
+        {
+          "heading": "Statutory rights",
+          "body": "Nothing in these terms overrides your statutory consumer rights."
+        }
+      ]
+    },
+    {
+      "id": "governing-law",
+      "title": "Governing law and jurisdiction",
+      "content_type": "prose",
+      "body": "These terms are governed by the laws of India. Any disputes shall be subject to the exclusive jurisdiction of courts in Bengaluru, Karnataka."
+    },
+    {
+      "id": "changes",
+      "title": "Changes to terms",
+      "content_type": "prose",
+      "body": "We may revise these Terms of Use at any time. Continued use after changes constitutes acceptance of the revised terms."
+    },
+    {
+      "id": "contact",
+      "title": "Contact us",
+      "content_type": "contact_card",
+      "contact": {
+        "name": "NavDhan Support",
+        "role": "Grievance / Data Protection Officer",
+        "email": "support@kubar.tech",
+        "address": "156, Tarvakere, BTM Layout 1st Stage, Bengaluru, Karnataka"
+      }
+    }
+  ]
+}

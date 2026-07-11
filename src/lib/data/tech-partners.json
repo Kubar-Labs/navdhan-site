@@ -1,0 +1,20 @@
+[
+  { "name": "Google", "logoAsset": "", "href": "https://google.com", "altKey": "Google" },
+  { "name": "NVIDIA", "logoAsset": "", "href": "https://nvidia.com", "altKey": "NVIDIA" },
+  { "name": "Microsoft", "logoAsset": "", "href": "https://microsoft.com", "altKey": "Microsoft" },
+  { "name": "Intel", "logoAsset": "", "href": "https://intel.com", "altKey": "Intel" },
+  {
+    "name": "Perplexity",
+    "logoAsset": "",
+    "href": "https://perplexity.ai",
+    "altKey": "Perplexity"
+  },
+  { "name": "OpenAI", "logoAsset": "", "href": "https://openai.com", "altKey": "OpenAI" },
+  { "name": "Amplitude", "logoAsset": "", "href": "https://amplitude.com", "altKey": "Amplitude" },
+  {
+    "name": "Eleven Labs",
+    "logoAsset": "",
+    "href": "https://elevenlabs.io",
+    "altKey": "Eleven Labs"
+  }
+]
