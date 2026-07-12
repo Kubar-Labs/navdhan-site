@@ -37,7 +37,7 @@ export function FadeIn({
     setMounted(true);
   }, []);
 
-  if (reduced || !mounted) {
+  if (reduced || !mounted || (typeof window !== "undefined" && !window.IntersectionObserver)) {
     return <div className={className}>{children}</div>;
   }
 

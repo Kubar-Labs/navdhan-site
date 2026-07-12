@@ -8,7 +8,7 @@ export function useReducedMotion(): boolean {
   const [reduced, setReduced] = useState(false);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (typeof window === "undefined" || !window.matchMedia) return;
 
     const mediaQuery = window.matchMedia(REDUCED_MOTION_QUERY);
     setReduced(mediaQuery.matches);

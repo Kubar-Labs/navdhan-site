@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Check } from "lucide-react";
+import { Check, ChevronRight } from "lucide-react";
 import { TrustBadgeBar } from "@/src/components/apply/TrustBadgeBar.stub";
 import { InlineFieldFeedback } from "@/src/components/apply/InlineFieldFeedback";
 import { ApplyFormValues, DocumentRef, WizardStepId } from "@/app/apply/lib/types";
@@ -30,6 +30,7 @@ import { STORAGE_KEY } from "@/app/apply/lib/constants";
 import { Stepper, WizardStepDefinition } from "@/src/components/apply/Stepper";
 import { NavigationFooter } from "@/src/components/apply/NavigationFooter";
 import { ConsentOverlay } from "@/src/components/apply/ConsentOverlay";
+import { FadeIn } from "@/src/components/motion/FadeIn";
 
 const ITR_ALLOWED_TYPES = ["application/pdf"];
 const ITR_MAX_BYTES = 10 * 1024 * 1024;
@@ -710,21 +711,25 @@ export function WizardShell({
         </>
       )}
 
-      <div className="flex flex-col-reverse gap-3 sm:flex-row">
+      <div className="mt-8 flex flex-col-reverse gap-3 sm:flex-row">
         <button
           type="button"
           onClick={handleSkipGst}
-          className="flex-1 rounded-md border border-nt-slate-300 bg-white px-6 py-3 text-sm font-semibold text-nt-slate-900 hover:bg-nt-slate-50"
+          className="flex-1 rounded-xl border border-nt-slate-200 bg-white px-6 py-3.5 text-sm font-semibold text-nt-slate-900 hover:bg-nt-slate-50 hover:border-nt-slate-300 transition-all duration-200 shadow-sm focus:outline-none focus:ring-4 focus:ring-nt-orange-500/10"
         >
           {t.skip ?? "Skip"}
         </button>
-        <NavigationFooter
-          showBack={false}
-          onContinue={handleContinue}
-          continueDisabled={!canContinue}
-          continueLabel={t.continue}
-          backLabel={t.back}
-        />
+        <button
+          type="button"
+          disabled={!canContinue}
+          onClick={handleContinue}
+          className="flex-1 rounded-xl bg-gradient-to-r from-nt-orange-500 to-nt-orange-600 px-6 py-3.5 text-sm font-semibold text-white hover:from-nt-orange-600 hover:to-nt-orange-700 disabled:opacity-50 disabled:pointer-events-none shadow-[0_4px_12px_rgba(234,88,12,0.15)] transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-nt-orange-500/10"
+        >
+          <span className="flex items-center justify-center gap-2">
+            {t.continue ?? "Continue"}
+            <ChevronRight className="h-4 w-4" />
+          </span>
+        </button>
       </div>
     </div>
   );
@@ -751,7 +756,7 @@ export function WizardShell({
               : undefined;
             updateValue("itr_document", doc);
           }}
-          className="mt-2 block w-full text-sm text-nt-slate-700 file:mr-4 file:rounded-md file:border-0 file:bg-nt-orange-600 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-nt-orange-700"
+          className="mt-2 block w-full text-sm text-nt-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-nt-orange-50 file:text-nt-orange-600 hover:file:bg-nt-orange-100 transition-all duration-200 cursor-pointer focus:outline-none"
         />
         <InlineFieldFeedback
           fieldId="itr_document"
@@ -779,11 +784,11 @@ export function WizardShell({
         type="button"
         onClick={() => updateValue("bank_linked", true)}
         disabled={values.bank_linked}
-        className="w-full rounded-md border border-nt-slate-300 bg-white px-6 py-3 text-sm font-semibold text-nt-slate-900 hover:bg-nt-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+        className="w-full rounded-xl border border-nt-slate-200 bg-white px-6 py-3.5 text-sm font-semibold text-nt-slate-900 hover:bg-nt-slate-50 hover:border-nt-slate-300 disabled:cursor-not-allowed disabled:opacity-60 transition-all duration-200 shadow-sm focus:outline-none focus:ring-4 focus:ring-nt-orange-500/10"
       >
         {values.bank_linked ? (
           <span className="flex items-center justify-center gap-2">
-            <Check className="h-4 w-4" />
+            <Check className="h-4 w-4 stroke-[3px]" />
             Bank account linked
           </span>
         ) : (
@@ -927,7 +932,7 @@ export function WizardShell({
         <button
           type="button"
           onClick={onComplete}
-          className="inline-flex rounded-md bg-nt-orange-600 px-6 py-3 text-sm font-semibold text-white hover:bg-nt-orange-700"
+          className="inline-flex rounded-xl bg-gradient-to-r from-nt-orange-500 to-nt-orange-600 px-6 py-3.5 text-sm font-semibold text-white hover:from-nt-orange-600 hover:to-nt-orange-700 shadow-[0_4px_12px_rgba(234,88,12,0.15)] transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-nt-orange-500/10"
         >
           {t.viewDashboardLabel ?? "View dashboard"}
         </button>
@@ -973,8 +978,13 @@ export function WizardShell({
     .map((name) => ({ name }));
 
   return (
-    <div className="mx-auto max-w-2xl rounded-2xl border border-nt-slate-200 bg-white p-6 md:p-10">
-      <TrustBadgeBar badges={trustBadgeItems} layout="inline" variant="light" />
+    <div className="relative mx-auto max-w-2xl rounded-2xl border border-nt-slate-100 bg-white p-6 md:p-10 shadow-[0_24px_48px_-12px_rgba(15,23,42,0.08),0_0_1px_rgba(15,23,42,0.08)] overflow-hidden">
+      {/* Brand accent gradient bar at top */}
+      <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-nt-orange-500 to-nt-orange-600 rounded-t-2xl" />
+
+      <div className="mb-6 flex justify-center">
+        <TrustBadgeBar badges={trustBadgeItems} layout="inline" variant="light" />
+      </div>
       <Stepper steps={stepperSteps} currentStepId={currentStepId} completedSteps={completedSteps} />
 
       {currentStepDef && (
@@ -985,7 +995,11 @@ export function WizardShell({
         </div>
       )}
 
-      <div className="mt-4">{renderStepContent()}</div>
+      <div className="mt-4 overflow-hidden">
+        <FadeIn key={currentStepId} direction="up" delay={0.05} once={true} amount={0.01}>
+          {renderStepContent()}
+        </FadeIn>
+      </div>
 
       {!showGstCustomFooter && currentStepId !== "submission_result" && (
         <NavigationFooter
@@ -1031,7 +1045,7 @@ function TextField({
         inputMode={inputMode}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="mt-2 w-full rounded-md border border-nt-slate-300 bg-white px-4 py-3 text-nt-slate-900 focus:border-nt-orange-600 focus:outline-none focus:ring-1 focus:ring-nt-orange-600"
+        className="mt-1.5 w-full rounded-xl border border-nt-slate-200 bg-white px-4 py-3 text-sm text-nt-slate-900 transition-all duration-200 placeholder:text-nt-slate-400 focus:border-nt-orange-500 focus:outline-none focus:ring-4 focus:ring-nt-orange-500/10 shadow-sm"
       />
       <InlineFieldFeedback
         fieldId={id}
@@ -1067,7 +1081,7 @@ function SelectField({
         name={id}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="mt-2 w-full rounded-md border border-nt-slate-300 bg-white px-4 py-3 text-nt-slate-900 focus:border-nt-orange-600 focus:outline-none focus:ring-1 focus:ring-nt-orange-600"
+        className="mt-1.5 w-full rounded-xl border border-nt-slate-200 bg-white px-4 py-3 text-sm text-nt-slate-900 transition-all duration-200 focus:border-nt-orange-500 focus:outline-none focus:ring-4 focus:ring-nt-orange-500/10 shadow-sm"
       >
         <option value="">Select</option>
         {options.map((opt) => (
