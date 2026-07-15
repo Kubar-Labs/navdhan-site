@@ -93,7 +93,7 @@ export default async function HomePage({ params }: HomePageProps) {
   const whyNavDhanMessages = asRecord(homeMessages.whyNavDhan) ?? {};
   const reasons = asArray<ReasonItem>(whyNavDhanMessages.reasons) ?? [];
 
-  const applyHref = `/${locale}/apply`;
+  const applyHref = "/apply";
 
   const orderedBadges = associationBadgeOrder
     .map((name) => associationBadges.find((badge) => badge.name === name))
@@ -319,7 +319,7 @@ export default async function HomePage({ params }: HomePageProps) {
         locale={locale}
         eyebrow={t("customerStories.eyebrow")}
         heading={t("customerStories.heading")}
-        cta={{ labelKey: t("customerStories.cta"), href: `${applyHref}/stories` }}
+        cta={{ labelKey: t("customerStories.cta"), href: applyHref }}
         stories={customerStories}
       />
 

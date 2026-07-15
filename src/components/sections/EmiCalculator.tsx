@@ -89,7 +89,7 @@ export function EmiCalculator({
             <Metric label={totalInterestLabel} value={formatCurrencyInr(breakdown.totalInterest)} />
           </div>
           <Link
-            href={`/${locale}/apply`}
+            href="/apply"
             className="mt-8 inline-flex w-full items-center justify-center rounded-md bg-nt-orange-600 px-6 py-3 text-sm font-semibold text-white hover:bg-nt-orange-700"
           >
             {cta}

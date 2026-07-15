@@ -30,7 +30,7 @@ export default async function MarketingLayout({ children, params }: MarketingLay
       />
       <Header
         navLinks={navLinks}
-        cta={{ label: tGlobal("cta.apply.label"), href: `/${locale}/apply`, variant: "primary" }}
+        cta={{ label: tGlobal("cta.apply.label"), href: "/apply", variant: "primary" }}
         currentLocale={locale}
       />
       <main id="main-content">{children}</main>
