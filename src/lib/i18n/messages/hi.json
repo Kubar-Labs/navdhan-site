@@ -1,0 +1,379 @@
+{
+  "home": {
+    "meta": {
+      "title": "NavDhan : भारत की MSMEs के लिए बिज़नेस लोन",
+      "description": "विश्वसनीय लेंडर्स से ₹5 लाख से ₹1 करोड़ तक के बिज़नेस लोन पाएँ। एक आवेदन, कई ऑफ़र, कोई प्लेटफ़ॉर्म फीस नहीं।"
+    },
+    "hero": {
+      "eyebrow": "भारत की MSMEs के लिए तेज़ बिज़नेस लोन",
+      "headline": "आपकी सभी working capital ज़रूरतों के लिए one stop समाधान",
+      "body": "आप बिज़नेस बढ़ाएँ, हम फंडिंग संभालते हैं। MSMEs के लिए तेज़, पारदर्शी और डिजिटल लोन।",
+      "primaryCta": "पात्रता जाँचें",
+      "secondaryCta": "उत्पाद देखें",
+      "approvalCard": {
+        "label": "फंडिंग मंज़ूर",
+        "value": "₹15,00,000"
+      },
+      "stats": [
+        {
+          "value": "24Hr",
+          "label": "संवितरण"
+        },
+        {
+          "value": "100%",
+          "label": "डिजिटल"
+        },
+        {
+          "value": "500+",
+          "label": "MSMEs सेवा दी"
+        }
+      ]
+    },
+    "associationBadges": {
+      "eyebrow": "द्वारा मान्यता प्राप्त",
+      "FinVision": {
+        "title": "FinVision",
+        "description": "NIBM, पुणे (RBI थिंक-टैंक) में FinVision 2026 अवार्ड विजेता"
+      },
+      "FACE": {
+        "title": "FACE Registered",
+        "description": "फिनटेक एसोसिएशन फॉर कंज्यूमर एम्पावरमेंट के सदस्य"
+      },
+      "Startup Mahakumbh": {
+        "title": "Startup Mahakumbh",
+        "description": "पॉपुलर चॉइस अवार्ड विजेता"
+      },
+      "STPI FinGlobe": {
+        "title": "STPI FinGlobe",
+        "description": "STPI FinGlobe में इनक्यूबेटेड"
+      }
+    },
+    "ecosystemTicker": {
+      "eyebrow": "प्रौद्योगिकी साझेदारी"
+    },
+    "loanProducts": {
+      "eyebrow": "लोन उत्पाद",
+      "heading": "टेलर-मेड बिज़नेस फाइनेंसिंग",
+      "body": "आपके उद्यम को स्केल करने के लिए आवश्यक रनवे देने हेतु डिज़ाइन किए गए सरल, पारदर्शी टर्म लोन।",
+      "cta": "लोन विकल्प तुलना करें",
+      "featured": {
+        "tag": "सबसे लोकप्रिय",
+        "title": "टर्म लोन",
+        "description": "विस्तार, उपकरण खरीद, या मौसमी नकदी प्रवाह के उतार-चढ़ाव को संभालने के लिए लचीली पूँजी।",
+        "imageAlt": "टर्म लोन का दृश्य",
+        "cta": "टर्म लोन के लिए आवेदन करें",
+        "specs": [
+          {
+            "label": "राशि",
+            "value": "₹5 लाख - ₹1 करोड़"
+          },
+          {
+            "label": "ब्याज दर",
+            "value": "12% - 24% प्रति वर्ष"
+          },
+          {
+            "label": "अवधि",
+            "value": "3 - 12 महीने"
+          },
+          {
+            "label": "प्रोसेसिंग",
+            "value": "कोई छुपा शुल्क नहीं"
+          }
+        ]
+      }
+    },
+    "whyNavDhan": {
+      "eyebrow": "NavDhan क्यों",
+      "heading": "NavDhan क्यों चुनें?",
+      "body": "भरोसे पर बना, गति के लिए डिज़ाइन। हम बिज़नेस फाइनेंसिंग की रुकावटें दूर करते हैं।",
+      "cta": "अभी आवेदन करें",
+      "trustBadges": ["RBI अनुरूप", "FACE पंजीकृत", "Kubar द्वारा संचालित"],
+      "reasons": [
+        {
+          "id": "instant-sanction",
+          "titleKey": "त्वरित संवितरण",
+          "bodyKey": "ऋणदाता की समयसीमा के आधार पर संवितरण में लगभग 24-72 घंटे का समय लगता है।",
+          "iconName": "Zap"
+        },
+        {
+          "id": "secure",
+          "titleKey": "100% सुरक्षित",
+          "bodyKey": "बैंक-ग्रेड एन्क्रिप्शन आपके बिज़नेस डेटा की पूरी गोपनीयता और सुरक्षा सुनिश्चित करता है।",
+          "iconName": "Shield"
+        },
+        {
+          "id": "fair-pricing",
+          "titleKey": "निष्पक्ष मूल्य निर्धारण",
+          "bodyKey": "बिल्कुल भी छुपे शुल्क या आश्चर्यजनक फीस के बिना पारदर्शी ब्याज दरें।",
+          "iconName": "Scale"
+        },
+        {
+          "id": "minimal-paperwork",
+          "titleKey": "न्यूनतम कागज़ात",
+          "bodyKey": "पूरी तरह से डिजिटल प्रक्रिया। बुनियादी दस्तावेज़ अपलोड करें और बाकी हमारे सिस्टम पर छोड़ दें।",
+          "iconName": "FileText"
+        },
+        {
+          "id": "support",
+          "titleKey": "24/7 सहायता",
+          "bodyKey": "आपकी पूछताछ में मदद के लिए हर समय उपलब्ध समर्पित संबंध प्रबंधक।",
+          "iconName": "PhoneCall"
+        },
+        {
+          "id": "flexible-tenure",
+          "titleKey": "लचीली अवधि",
+          "bodyKey": "वह चुकौती अनुसूची चुनें जो आपके बिज़नेस कैश फ्लो के साथ पूरी तरह मेल खाती हो।",
+          "iconName": "Calendar"
+        }
+      ]
+    },
+    "recognition": {
+      "eyebrow": "मान्यता",
+      "heading": "आपका विश्वास जीतने के लिए बना। रास्ते में मान्यता मिली।"
+    },
+    "customerStories": {
+      "eyebrow": "ग्राहकों की कहानियाँ",
+      "heading": "असली व्यवसाय। असली परिणाम।",
+      "cta": "और कहानियाँ पढ़ें",
+      "items": {
+        "rajiv": {
+          "role": "Garment Shop Owner",
+          "question": "I wanted to stock up for the wedding season, but I did not have collateral. Could I still get a loan?",
+          "outcome": "Rajiv qualified for a collateral-free ₹25 Lakh business loan."
+        },
+        "sunita": {
+          "role": "Handicraft Artisan, Varanasi",
+          "question": "Our loom needed upgrading, but cash flow was tight. Could we get a loan for equipment?",
+          "outcome": "Sunita secured a ₹15 Lakh machinery loan at a competitive rate."
+        },
+        "amit": {
+          "role": "E-commerce Logistics, Gurugram",
+          "question": "We needed working capital to hire more staff and take on bigger orders. What was the simplest way?",
+          "outcome": "Amit received an ₹18 Lakh working capital loan in days."
+        }
+      }
+    },
+    "emiCalculator": {
+      "eyebrow": "EMI कैलकुलेटर",
+      "heading": "Plan Your Finances",
+      "intro": "हमारे इंटरैक्टिव कैलकुलेटर का उपयोग करके अपनी मासिक किश्तों का अनुमान लगाएँ। अपने कैश फ्लो के अनुसार एक योजना खोजने के लिए स्लाइडर एडजस्ट करें।",
+      "amount": "लोन राशि",
+      "rate": "ब्याज दर",
+      "tenure": "अवधि",
+      "monthly": "मासिक EMI",
+      "principal": "मूलधन",
+      "totalInterest": "कुल ब्याज",
+      "totalPayable": "कुल चुकौती",
+      "cta": "विवरण के साथ आवेदन करें"
+    },
+    "finalCta": {
+      "heading": "अपने बिज़नेस को बढ़ाने के लिए तैयार हैं?",
+      "subtext": "500+ सफल उद्यमों से जुड़ें जो NavDhan की working capital समाधानों के साथ स्केल कर रहे हैं।",
+      "primaryCta": "अभी आवेदन शुरू करें",
+      "secondaryCta": "हमसे बात करें"
+    }
+  },
+  "team": {
+    "meta": {
+      "title": "हमारी टीम : NavDhan",
+      "description": "भारत की MSMEs के लिए निष्पक्ष और तेज़ बिज़नेस लोन बनाने वाले लोगों से मिलें।"
+    },
+    "hero": {
+      "heading": "छोटे व्यवसाय में विश्वास रखने वाले लोगों द्वारा बनाया गया।",
+      "subtext": "हम MSME क्रेडिट को शांत, स्पष्ट और ईमानदार बनाने के लिए काम करने वाले बिल्डर, इंजीनियर और ऑपरेटर हैं।"
+    },
+    "mission": {
+      "eyebrow": "हमारा मिशन",
+      "heading": "हर छोटे व्यवसाय के लिए शांत और भरोसेमंद क्रेडिट।",
+      "body": "हम मानते हैं कि MSMEs को ईमानदार, सम्मानजनक और तेज़ लेंडिंग अनुभव मिलना चाहिए। NavDhan इसे डिफ़ॉल्ट बनाने के लिए है।"
+    },
+    "values": {
+      "eyebrow": "हमें क्या मार्गदर्शन देता है",
+      "heading": "तीन सरल मूल्यों पर बना",
+      "items": [
+        {
+          "id": "empathy",
+          "title": "सहानुभूति (Empathy)",
+          "body": "हम ऋणदाता की सुविधा के बजाय उधारकर्ता की वास्तविक चिंताओं को ध्यान में रखकर काम करते हैं।",
+          "iconName": "Heart"
+        },
+        {
+          "id": "transparency",
+          "title": "पारदर्शिता (Transparency)",
+          "body": "कोई छिपा हुआ शुल्क नहीं, कोई जटिल शब्दावली नहीं। स्पष्ट शर्तें जिन्हें आप सत्यापित कर सकते हैं।",
+          "iconName": "Eye"
+        },
+        {
+          "id": "speed",
+          "title": "गति (Speed)",
+          "body": "निर्णय जल्दी लिए जाते हैं क्योंकि हमारी प्रणालियाँ भारी कार्य को संभालती हैं।",
+          "iconName": "Zap"
+        }
+      ]
+    },
+    "members": {
+      "eyebrow": "Leadership",
+      "heading": "टीम से मिलें",
+      "items": {
+        "divyesh-reddy": {
+          "role": "Borrower Onboarding",
+          "bio": "Buyer-Risk Intelligence | MSME Credit Analytics"
+        }
+      }
+    },
+    "advisors": {
+      "eyebrow": "Advisors",
+      "heading": "उद्योग के विशेषज्ञों के मार्गदर्शन में",
+      "items": {
+        "debayan-gupta": {
+          "domain": "प्रोफेसर, कंप्यूटर साइंस - MIT, अशोका यूनिवर्सिटी",
+          "contribution": "शोध-आधारित तकनीकी विकल्पों और शैक्षणिक साझेदारियों पर सलाह देते हैं।"
+        }
+      }
+    },
+    "join": {
+      "heading": "MSME क्रेडिट के भविष्य को आकार देना चाहते हैं?",
+      "subtext": "हम न्यायसंगत वित्तीय उत्पाद बनाने की परवाह करने वाले विचारशील लोगों की तलाश में हमेशा रहते हैं।",
+      "cta": "टीम में शामिल हों"
+    }
+  },
+  "apply": {
+    "meta": {
+      "title": "आवेदन करें: NavDhan",
+      "description": "5 मिनट से भी कम समय में अपनी बिज़नेस लोन पात्रता जाँचें।"
+    },
+    "eyebrow": "बिज़नेस लोन आवेदन",
+    "heading": "सही बिज़नेस लोन पाएँ, बैंकों के पीछे न भागें।",
+    "description": "पात्रता जाँचने के लिए कुछ विवरण भरें। इसमें 5 मिनट से भी कम समय लगता है।",
+    "loanDetailsTitle": "लोन विवरण",
+    "amountLabel": "लोन राशि",
+    "tenureLabel": "अवधि (महीने)",
+    "purposeLabel": "उद्देश्य",
+    "purposes": {
+      "working_capital": "कार्यशील पूँजी",
+      "machinery": "मशीनरी / उपकरण",
+      "inventory": "इन्वेंटरी",
+      "business_expansion": "व्यवसाय विस्तार",
+      "debt_refinancing": "कर्ज पुनर्वित्त",
+      "other": "अन्य"
+    },
+    "aboutYouTitle": "आपके बारे में",
+    "fullNameLabel": "पूरा नाम",
+    "mobileLabel": "मोबाइल नंबर",
+    "mobilePlaceholder": "10-अंकों का मोबाइल",
+    "emailLabel": "ईमेल",
+    "pinCodeLabel": "व्यवसाय का PIN कोड",
+    "pinCodePlaceholder": "6-अंकों का PIN",
+    "referralCodeLabel": "रेफ़रल कोड (वैकल्पिक)",
+    "aadhaarLabel": "आधार नंबर",
+    "aadhaarConsentLabel": "मैं आधार OTP आधारित ई-केवाईसी के लिए सहमत हूँ",
+    "panLabel": "PAN नंबर",
+    "panConsentLabel": "मैं PAN सत्यापन के लिए सहमत हूँ",
+    "gstRegisteredLabel": "क्या आप GST पंजीकृत हैं?",
+    "gstRegisteredYes": "GST के तहत पंजीकृत",
+    "gstRegisteredNo": "पंजीकृत नहीं",
+    "gstinLabel": "GSTIN",
+    "gstConsentLabel": "मैं GST सत्यापन के लिए सहमत हूँ",
+    "itrUploadLabel": "ITR अपलोड करें (PDF)",
+    "itrConsentLabel": "मैं पुष्टि करता/करती हूँ कि यह मेरा नवीनतम ITR है",
+    "linkBankLabel": "बैंक खाता लिंक करें",
+    "bankConsentLabel": "मैं बैंक स्टेटमेंट प्राप्त करने के लिए सहमत हूँ",
+    "privacyConsentLabel": "मैं गोपनीयता नीति से सहमत हूँ",
+    "termsConsentLabel": "मैं उपयोग की शर्तों से सहमत हूँ",
+    "creditConsentLabel": "मैं क्रेडिट ब्यूरो जाँच के लिए सहमत हूँ",
+    "communicationConsentLabel": "मैं NavDhan से संचार प्राप्त करने के लिए सहमत हूँ",
+    "emiLabel": "अनुमानित EMI",
+    "emiNoteTemplate": "कुल देय {total} @ 18% प्रति वर्ष। यह केवल एक अनुमान है।",
+    "consentDataPrefix": "मैं NavDhan की",
+    "consentAnd": "और",
+    "consentPolicy": "सहमति नीति",
+    "privacyPolicy": "गोपनीयता नीति",
+    "consentLender": "मैं सहमत हूँ कि मेरे व्यवसाय के लिए लोन ऑफ़र ढूंढने के लिए NavDhan मेरे विवरण साझा कर सकता है।",
+    "submit": "पात्रता जाँचें",
+    "submitting": "जाँच हो रही है...",
+    "successHeading": "धन्यवाद",
+    "successBody": "हमें आपका आवेदन मिल गया है। NavDhan सलाहकार 24 घंटों के भीतर संपर्क करेगा।",
+    "successCta": "होम पर वापस जाएँ",
+    "errorHeading": "कुछ गड़बड़ हुई",
+    "errorBody": "कृपया अपने विवरण जाँचें और पुनः प्रयास करें।",
+    "fieldRequired": "यह फ़ील्ड आवश्यक है",
+    "validation": {
+      "mobileInvalid": "कृपया एक मान्य 10-अंकों का मोबाइल नंबर दर्ज करें।",
+      "emailInvalid": "कृपया एक मान्य ईमेल पता दर्ज करें।",
+      "pinCodeInvalid": "कृपया एक मान्य 6-अंकों का PIN कोड दर्ज करें।",
+      "nameInvalid": "कृपया एक मान्य पूरा नाम दर्ज करें।",
+      "amountInvalid": "कृपया एक वैध लोन राशि दर्ज करें।",
+      "aadhaarInvalid": "कृपया एक मान्य 12-अंकों का आधार नंबर दर्ज करें।",
+      "panInvalid": "कृपया एक मान्य PAN नंबर दर्ज करें।",
+      "gstinInvalid": "कृपया एक मान्य GSTIN दर्ज करें।",
+      "itrInvalid": "कृपया 10 MB तक का मान्य PDF अपलोड करें।",
+      "consentRequired": "जारी रखने के लिए आपको सहमत होना होगा।"
+    },
+    "wizard": {
+      "stepIndicator": ["व्यवसाय विवरण", "संपर्क और लोन", "समीक्षा और जमा"],
+      "back": "वापस",
+      "next": "आगे बढ़ें",
+      "step1Title": "व्यवसाय विवरण",
+      "step1Body": "सही लोन विकल्प ढूंढने के लिए हमें अपने व्यवसाय के बारे में बताएँ।",
+      "businessNameLabel": "व्यवसाय का नाम",
+      "businessNamePlaceholder": "पंजीकृत व्यवसाय का नाम",
+      "entityTypeLabel": "व्यवसाय का प्रकार",
+      "entityTypes": {
+        "proprietorship": "स्वामित्व",
+        "partnership": "साझेदारी",
+        "llp": "LLP",
+        "pvt_ltd": "प्राइवेट लिमिटेड",
+        "others": "अन्य"
+      },
+      "annualTurnoverLabel": "वार्षिक टर्नओवर",
+      "annualTurnoverPlaceholder": "अनुमानित वार्षिक टर्नओवर",
+      "turnoverRanges": {
+        "0_10": "₹10 लाख तक",
+        "10_50": "₹10 - ₹50 लाख",
+        "50_100": "₹50 लाख - ₹1 करोड़",
+        "100_500": "₹1 - ₹5 करोड़",
+        "500_plus": "₹5 करोड़ से अधिक"
+      },
+      "securityNote": "आपकी जानकारी एन्कोडेड है और केवल पात्रता आकलन के लिए उपयोग की जाती है।",
+      "step2Title": "संपर्क और लोन विवरण",
+      "step2Body": "हम आपसे कैसे संपर्क करें और आपको कितना लोन चाहिए, बताएँ।",
+      "step3Title": "समीक्षा और जमा करें",
+      "step3Body": "अपने विवरण की पुष्टि करें और मैच किए गए लोन ऑफ़र के लिए सहमति दें।"
+    }
+  },
+  "global": {
+    "announcement": {
+      "message": "🎉 लॉन्च विशेष: अभी आवेदन करें और अपने पहले लोन पर शून्य प्रोसेसिंग शुल्क प्राप्त करें!",
+      "ctaLabel": "ऑफ़र का दावा करें",
+      "href": "/apply"
+    },
+    "footer": {
+      "company": "Kubar Protocol Private Limited (CIN: U70200WB2024PTC274850)",
+      "copyright": "© 2026 Kubar Protocol Private Limited. NavDhan is powered by Kubar.",
+      "contactHeading": "Contact",
+      "companyHeading": "Company",
+      "legalHeading": "Legal",
+      "tagline": "आपकी सभी working capital ज़रूरतों के लिए one-stop समाधान।",
+      "address": "156, तारावकेरे, बीटीएम लेआउट पहला चरण, बेंगलुरु, कर्नाटक",
+      "badges": "RBI अनुरूप · FACE पंजीकृत · Kubar द्वारा संचालित"
+    },
+    "contact": {
+      "loan": "loan@kubar.tech",
+      "partnership": "partnerships@kubar.tech",
+      "support": "support@kubar.tech",
+      "careers": "careers@kubar.tech",
+      "press": "press@kubar.tech",
+      "outreach": "outreach@kubar.tech"
+    },
+    "cta": {
+      "backToHome": "होम पर वापस जाएँ"
+    },
+    "nav": {
+      "loanProducts": "लोन उत्पाद",
+      "whyNavDhan": "NavDhan क्यों",
+      "emiCalculator": "EMI कैलकुलेटर",
+      "customerStories": "ग्राहकों की कहानियाँ",
+      "team": "टीम"
+    }
+  }
+}

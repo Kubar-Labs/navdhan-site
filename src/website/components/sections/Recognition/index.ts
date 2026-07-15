@@ -1,1 +1,0 @@
-export { Recognition } from "./Recognition";

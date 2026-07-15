@@ -11,14 +11,14 @@ node_modules
 dist
 dist-ssr
 .output
-.vinxi
-.tanstack/**
-.nitro
 .vercel
 *.local
-/src/artboards/
 
-# Wrangler / Cloudflare
+# Next.js
+.next/
+
+# OpenNext / Wrangler / Cloudflare
+.open-next/
 .wrangler/
 .dev.vars
 

@@ -1,0 +1,115 @@
+{
+  "meta": {
+    "title": "Cookie Policy",
+    "description": "How NavDhan uses cookies and similar technologies."
+  },
+  "lastUpdated": "2026-06-18",
+  "company": {
+    "name": "NavDhan",
+    "legalName": "Kubar Protocol Private Limited",
+    "cin": "U70200WB2024PTC274850",
+    "address": "156, Tarvakere, BTM Layout 1st Stage, Bengaluru, Karnataka",
+    "email": "support@kubar.tech",
+    "phone": "+91-80-XXXX-XXXX",
+    "website": "https://navdhan.app"
+  },
+  "intro": {
+    "heading": "Cookie Policy",
+    "body": "This Cookie Policy explains what cookies are, how NavDhan uses them, and the choices available to you."
+  },
+  "sections": [
+    {
+      "id": "what",
+      "title": "What are cookies?",
+      "content_type": "prose",
+      "body": "Cookies are small text files stored on your device when you visit a website. They help the site remember your preferences, understand how you use it, and improve your experience."
+    },
+    {
+      "id": "cookies-used",
+      "title": "Cookies we use",
+      "content_type": "table",
+      "table": {
+        "caption": "Cookies used on NavDhan",
+        "headers": [
+          "Cookie / category",
+          "Type",
+          "Purpose"
+        ],
+        "rows": [
+          [
+            "navdhan_session",
+            "Essential",
+            "Maintains your session and login state."
+          ],
+          [
+            "navdhan_consent",
+            "Essential",
+            "Records your cookie consent choice."
+          ],
+          [
+            "_analytics_id",
+            "Analytics",
+            "Helps us understand site usage anonymously."
+          ],
+          [
+            "_conversion_event",
+            "Marketing",
+            "Measures the effectiveness of campaigns."
+          ]
+        ]
+      }
+    },
+    {
+      "id": "third-party",
+      "title": "Third-party cookies",
+      "content_type": "prose",
+      "body": "We may allow trusted analytics and marketing partners to set cookies on our site. These partners are contractually bound to handle data responsibly."
+    },
+    {
+      "id": "manage",
+      "title": "Managing cookies",
+      "content_type": "list",
+      "items": [
+        {
+          "heading": "Browser settings",
+          "body": "You can block or delete cookies through your browser settings."
+        },
+        {
+          "heading": "Consent banner",
+          "body": "Our consent banner lets you accept or decline non-essential cookies."
+        },
+        {
+          "heading": "Impact",
+          "body": "Disabling essential cookies may affect site functionality."
+        }
+      ]
+    },
+    {
+      "id": "updates",
+      "title": "Updates to this policy",
+      "content_type": "prose",
+      "body": "We may update this Cookie Policy. The latest version will always be available on this page."
+    },
+    {
+      "id": "contact",
+      "title": "Contact us",
+      "content_type": "contact_card",
+      "contact": {
+        "name": "NavDhan Support",
+        "role": "Grievance / Data Protection Officer",
+        "email": "support@kubar.tech",
+        "address": "156, Tarvakere, BTM Layout 1st Stage, Bengaluru, Karnataka"
+      }
+    },
+    {
+      "id": "privacy-link",
+      "title": "Privacy Policy",
+      "content_type": "prose",
+      "body": "For more information on how we handle personal data, please read our Privacy Policy.",
+      "cross_link": {
+        "label": "Read Privacy Policy",
+        "slug": "privacy-policy"
+      }
+    }
+  ]
+}

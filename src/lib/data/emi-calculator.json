@@ -1,0 +1,13 @@
+{
+  "minAmount": 500000,
+  "maxAmount": 100000000,
+  "defaultAmount": 5000000,
+  "minRate": 12,
+  "maxRate": 24,
+  "defaultRate": 18,
+  "minTenure": 3,
+  "maxTenure": 12,
+  "defaultTenure": 12,
+  "ctaKey": "home.emi.cta",
+  "ctaHref": "/apply"
+}

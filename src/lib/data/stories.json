@@ -1,0 +1,26 @@
+[
+  {
+    "id": "rajiv",
+    "name": "Rajiv K.",
+    "roleKey": "Garment Shop Owner",
+    "questionKey": "I wanted to stock up for the wedding season, but I did not have collateral. Could I still get a loan?",
+    "outcomeKey": "Rajiv qualified for a collateral-free ₹25 Lakh business loan.",
+    "imageAsset": ""
+  },
+  {
+    "id": "sunita",
+    "name": "Sunita M.",
+    "roleKey": "Handicraft Artisan, Varanasi",
+    "questionKey": "Our loom needed upgrading, but cash flow was tight. Could we get a loan for equipment?",
+    "outcomeKey": "Sunita secured a ₹15 Lakh machinery loan at a competitive rate.",
+    "imageAsset": ""
+  },
+  {
+    "id": "amit",
+    "name": "Amit V.",
+    "roleKey": "E-commerce Logistics, Gurugram",
+    "questionKey": "We needed working capital to hire more staff and take on bigger orders. What was the simplest way?",
+    "outcomeKey": "Amit received an ₹18 Lakh working capital loan in days.",
+    "imageAsset": ""
+  }
+]

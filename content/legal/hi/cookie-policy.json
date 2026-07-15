@@ -1,0 +1,95 @@
+{
+  "meta": {
+    "title": "कुकी नीति",
+    "description": "NavDhan कुकीज़ और समान तकनीकों का उपयोग कैसे करता है।"
+  },
+  "lastUpdated": "2026-06-18",
+  "company": {
+    "name": "NavDhan",
+    "legalName": "Kubar Protocol Private Limited",
+    "cin": "U70200WB2024PTC274850",
+    "address": "156, Tarvakere, BTM Layout 1st Stage, Bengaluru, Karnataka",
+    "email": "support@kubar.tech",
+    "phone": "+91-80-XXXX-XXXX",
+    "website": "https://navdhan.app"
+  },
+  "intro": {
+    "heading": "कुकी नीति",
+    "body": "यह कुकी नीति बताती है कि कुकीज़ क्या हैं, NavDhan उनका उपयोग कैसे करता है, और आपके पास कौन से विकल्प हैं।"
+  },
+  "sections": [
+    {
+      "id": "what",
+      "title": "कुकीज़ क्या हैं?",
+      "content_type": "prose",
+      "body": "कुकीज़ छोटी टेक्स्ट फाइलें होती हैं जो आपकी डिवाइस पर स्टोर होती हैं जब आप कोई वेबसाइट देखते हैं। ये साइट को आपकी पसंद याद रखने, आपके उपयोग को समझने और आपके अनुभव को बेहतर बनाने में मदद करती हैं।"
+    },
+    {
+      "id": "cookies-used",
+      "title": "हमारी कुकीज़",
+      "content_type": "table",
+      "table": {
+        "caption": "NavDhan द्वारा उपयोग की जाने वाली कुकीज़",
+        "headers": ["कुकी / श्रेणी", "प्रकार", "उद्देश्य"],
+        "rows": [
+          ["navdhan_session", "आवश्यक", "आपका सत्र और लॉगिन स्थिति बनाए रखती है।"],
+          ["navdhan_consent", "आवश्यक", "आपकी कुकी सहमति की पसंद रिकॉर्ड करती है।"],
+          ["_analytics_id", "विश्लेषिकी", "हमें गुमनाम रूप से साइट उपयोग समझने में मदद करती है।"],
+          ["_conversion_event", "मार्केटिंग", "अभियानों की प्रभावशीलता मापती है।"]
+        ]
+      }
+    },
+    {
+      "id": "third-party",
+      "title": "तृतीय-पक्ष कुकीज़",
+      "content_type": "prose",
+      "body": "हम भरोसेमंद विश्लेषिकी और मार्केटिंग साझेदारों को अपनी साइट पर कुकीज़ सेट करने की अनुमति दे सकते हैं। ये साझेदार अनुबंध से बंधे हैं ताकि डेटा को जिम्मेदारी से संभाला जाए।"
+    },
+    {
+      "id": "manage",
+      "title": "कुकीज़ का प्रबंधन",
+      "content_type": "list",
+      "items": [
+        {
+          "heading": "ब्राउज़र सेटिंग्स",
+          "body": "आप अपनी ब्राउज़र सेटिंग्स के माध्यम से कुकीज़ को ब्लॉक या हटा सकते हैं।"
+        },
+        {
+          "heading": "सहमति बैनर",
+          "body": "हमारा सहमति बैनर आपको गैर-आवश्यक कुकीज़ स्वीकार या अस्वीकार करने देता है।"
+        },
+        {
+          "heading": "प्रभाव",
+          "body": "आवश्यक कुकीज़ को बंद करने से साइट की कार्यक्षमता प्रभावित हो सकती है।"
+        }
+      ]
+    },
+    {
+      "id": "updates",
+      "title": "इस नीति में अपडेट",
+      "content_type": "prose",
+      "body": "हम इस कुकी नीति को समय-समय पर अपडेट कर सकते हैं। नवीनतम संस्करण हमेशा इस पेज पर उपलब्ध होगा।"
+    },
+    {
+      "id": "contact",
+      "title": "हमसे संपर्क करें",
+      "content_type": "contact_card",
+      "contact": {
+        "name": "NavDhan Support",
+        "role": "Grievance / Data Protection Officer",
+        "email": "support@kubar.tech",
+        "address": "156, Tarvakere, BTM Layout 1st Stage, Bengaluru, Karnataka"
+      }
+    },
+    {
+      "id": "privacy-link",
+      "title": "गोपनीयता नीति",
+      "content_type": "prose",
+      "body": "व्यक्तिगत डेटा को संभालने के तरीके के बारे में अधिक जानकारी के लिए कृपया हमारी गोपनीयता नीति पढ़ें।",
+      "cross_link": {
+        "label": "गोपनीयता नीति पढ़ें",
+        "slug": "privacy-policy"
+      }
+    }
+  ]
+}

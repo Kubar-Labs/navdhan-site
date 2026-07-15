@@ -1,10 +1,10 @@
-name: Deploy to Cloudflare Pages
+name: Deploy to Cloudflare Workers
 
-# Push to main → build the site and deploy the Cloudflare Worker
-# "kubar-labs-navdhan-site" (Workers Static Assets; serves navdhan.app once the
-# custom domain is attached to the Worker). Replaces manual `npm run deploy:cf`.
-# The embedded DSA portal ships via the committed public/apply/ (re-sync locally
-# with `npm run sync:portal` when it changes).
+# Push to main → build the Next.js site with OpenNext and deploy the
+# Cloudflare Worker "kubar-labs-navdhan-site" (Workers Static Assets; serves
+# navdhan.app once the custom domain is attached to the Worker).
+# The embedded DSA portal ships via the committed public/apply/ (re-sync
+# locally with `npm run sync:portal` when it changes).
 
 on:
   push:
@@ -24,8 +24,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build (Cloudflare Workers output → dist/)
-        run: npm run build
+      - name: Build (OpenNext → .open-next/)
+        run: npm run cf:build
 
       - name: Deploy to Cloudflare Workers
         uses: cloudflare/wrangler-action@v3

@@ -1,1 +1,0 @@
-export { CtaBand } from "./CtaBand";
