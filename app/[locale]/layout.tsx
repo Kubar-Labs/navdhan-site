@@ -14,8 +14,8 @@ const inter = Inter({
 const instrumentSerif = Instrument_Serif({
   subsets: ["latin"],
   weight: ["400"],
-  style: ["italic"],
-  variable: "--font-instrument-serif",
+  style: ["normal"],
+  variable: "--font-safira-march",
   display: "swap",
   fallback: ["Georgia", "serif"],
 });
@@ -33,7 +33,7 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
   return (
     <html
       lang={locale}
-      className={`${inter.variable} ${instrumentSerif.variable} --font-inter --font-instrument-serif`}
+      className={`${inter.variable} ${instrumentSerif.variable} --font-inter --font-safira-march --font-instrument-serif`}
     >
       <body className="bg-nt-cream text-nt-slate-900 antialiased">{children}</body>
     </html>

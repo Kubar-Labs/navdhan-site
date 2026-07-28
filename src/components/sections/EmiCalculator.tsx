@@ -45,7 +45,7 @@ export function EmiCalculator({
   return (
     <>
       <p className="text-sm font-semibold uppercase tracking-wide text-nt-orange-600">{eyebrow}</p>
-      <h2 className="font-display mt-4 text-3xl italic tracking-tight text-nt-slate-900 md:text-4xl">
+      <h2 className="font-display mt-4 text-3xl tracking-tight text-nt-slate-900 md:text-4xl">
         {heading}
       </h2>
       <p className="mt-4 max-w-2xl text-nt-slate-600">{intro}</p>

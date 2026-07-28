@@ -224,7 +224,7 @@ export default async function HomePage({ params }: HomePageProps) {
       <Section background="white" id="products">
         <Container>
           <FadeIn>
-            <h2 className="font-display text-3xl italic tracking-tight text-nt-slate-900 md:text-4xl">
+            <h2 className="font-display text-3xl tracking-tight text-nt-slate-900 md:text-4xl">
               {t("loanProducts.heading")}
             </h2>
             <p className="mt-4 max-w-2xl text-nt-slate-600">{t("loanProducts.body")}</p>
@@ -284,7 +284,7 @@ export default async function HomePage({ params }: HomePageProps) {
             <p className="text-sm font-semibold uppercase tracking-wide text-nt-orange-600">
               {t("whyNavDhan.eyebrow")}
             </p>
-            <h2 className="font-display mt-4 max-w-2xl text-3xl italic tracking-tight text-nt-slate-900 md:text-4xl">
+            <h2 className="font-display mt-4 max-w-2xl text-3xl tracking-tight text-nt-slate-900 md:text-4xl">
               {t("whyNavDhan.heading")}
             </h2>
             <p className="mt-4 max-w-2xl text-nt-slate-600">{t("whyNavDhan.body")}</p>
@@ -350,7 +350,7 @@ export default async function HomePage({ params }: HomePageProps) {
       <Section background="cream">
         <Container className="text-center">
           <FadeIn>
-            <h2 className="font-display text-3xl italic tracking-tight text-nt-slate-900 md:text-4xl">
+            <h2 className="font-display text-3xl tracking-tight text-nt-slate-900 md:text-4xl">
               {t("finalCta.heading")}
             </h2>
             <p className="mx-auto mt-4 max-w-2xl text-nt-slate-600">{t("finalCta.subtext")}</p>
