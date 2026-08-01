@@ -16,7 +16,7 @@
   --color-nt-amber-500: #f59e0b;
 
   --font-sans: var(--font-inter), "Noto Sans Devanagari", system-ui, sans-serif;
-  --font-display: var(--font-instrument-serif), Georgia, serif;
+  --font-display: "Helvetica Neue", Helvetica, Arial, sans-serif;
 
   --spacing-section: clamp(5rem, 8vw, 7rem);
 
@@ -52,6 +52,7 @@ body {
 
 .font-display {
   font-family: var(--font-display);
+  font-style: normal;
 }
 
 /* Custom range slider styling */

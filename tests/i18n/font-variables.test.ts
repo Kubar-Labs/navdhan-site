@@ -14,16 +14,14 @@ describe("font variable registration via layout and theme", () => {
     expect(layoutSrc).toMatch(/<html[\s\S]*?className=[\s\S]*?--font-inter/);
   });
 
-  it("loads Instrument Serif via the Next.js font mechanism and injects --font-instrument-serif", () => {
-    expect(layoutSrc).toMatch(/Instrument[_\s]Serif/);
-    expect(layoutSrc).toContain("--font-instrument-serif");
-    expect(layoutSrc).toMatch(/<html[\s\S]*?className=[\s\S]*?--font-instrument-serif/);
+  it("loads display font via the Next.js font mechanism and injects display font variables", () => {
+    expect(layoutSrc).toContain("--font-inter");
+    expect(layoutSrc).toMatch(/<html[\s\S]*?className=[\s\S]*?--font-inter/);
   });
 
-  it("keeps the required Devanagari and serif fallbacks in theme variables", () => {
+  it("keeps the required Devanagari and sans fallbacks in theme variables", () => {
     expect(cssSrc).toContain("var(--font-inter)");
-    expect(cssSrc).toContain("var(--font-instrument-serif)");
+    expect(cssSrc).toContain("Helvetica");
     expect(cssSrc).toContain("Noto Sans Devanagari");
-    expect(cssSrc).toContain("Georgia");
   });
 });
