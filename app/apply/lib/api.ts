@@ -1,7 +1,22 @@
 "use client";
 
 import { v4 as uuidv4 } from "uuid";
-import { ApplyFormValues, SubmissionResultValues, OfferSummary } from "./types";
+import {
+  ApplyFormValues,
+  SubmissionResultValues,
+  OfferSummary,
+  type AadhaarIdentityPayload,
+  type ApplySessionResponse,
+  type BusinessProfilePayload,
+  type CollectionWriteResponse,
+  type EntityPanPayload,
+  type GstRegistrationPayload,
+  type LoanIntentPayload,
+  type PanIdentityPayload,
+  type PartyPayload,
+  type PartyUpdatePayload,
+  type PersonPayload,
+} from "./types";
 import { CSRF_HEADER, CSRF_HEADER_VALUE } from "./constants";
 
 class ApplyApiError extends Error {
@@ -17,11 +32,15 @@ class ApplyApiError extends Error {
 
 async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
-    const data = (await response.json().catch(() => ({}))) as { message?: string; code?: string };
+    const data = (await response.json().catch(() => ({}))) as {
+      message?: string;
+      code?: string;
+      error?: string;
+    };
     throw new ApplyApiError(
       data.message || `Request failed with status ${response.status}`,
       response.status,
-      data.code,
+      data.code ?? data.error,
     );
   }
   return (await response.json()) as T;
@@ -41,6 +60,28 @@ function makeHeaders(mutating = false): HeadersInit {
 export interface ApplyStateResponse {
   current_step: string;
   values: ApplyFormValues;
+}
+
+export async function createApplySession(): Promise<ApplySessionResponse> {
+  const response = await fetch("/api/apply/session", {
+    method: "POST",
+    headers: makeHeaders(),
+    credentials: "same-origin",
+  });
+  return handleResponse<ApplySessionResponse>(response);
+}
+
+export async function fetchCurrentApplication(): Promise<CollectionWriteResponse> {
+  const response = await fetch("/api/apply/applications/current", {
+    method: "GET",
+    headers: makeHeaders(),
+    credentials: "same-origin",
+  });
+  return handleResponse<CollectionWriteResponse>(response);
+}
+
+export function saveLoanIntent(payload: LoanIntentPayload): Promise<CollectionWriteResponse> {
+  return writeCollection("/api/apply/applications/current/loan-intent", payload);
 }
 
 export async function fetchApplyState(): Promise<ApplyStateResponse> {
@@ -231,6 +272,69 @@ export async function recordConsent(payload: ConsentPayload): Promise<ConsentRes
     body: JSON.stringify(payload),
   });
   return handleResponse<ConsentResponse>(response);
+}
+
+async function writeCollection<T>(
+  path: string,
+  payload: T,
+  method: "POST" | "PUT" = "PUT",
+): Promise<CollectionWriteResponse> {
+  const response = await fetch(path, {
+    method,
+    headers: makeHeaders(true),
+    credentials: "same-origin",
+    body: JSON.stringify(payload),
+  });
+  return handleResponse<CollectionWriteResponse>(response);
+}
+
+export function saveBusinessProfile(
+  payload: BusinessProfilePayload,
+): Promise<CollectionWriteResponse> {
+  return writeCollection("/api/apply/applications/current/business-profile", payload);
+}
+
+export function savePrimaryPerson(payload: PersonPayload): Promise<CollectionWriteResponse> {
+  return writeCollection("/api/apply/applications/current/primary-person", payload);
+}
+
+export function addApplicationParty(payload: PartyPayload): Promise<CollectionWriteResponse> {
+  return writeCollection("/api/apply/applications/current/parties", payload, "POST");
+}
+
+function partyResource(partyId: string, suffix = ""): string {
+  return `/api/apply/applications/current/parties/${encodeURIComponent(partyId)}${suffix}`;
+}
+
+export function updateApplicationParty(
+  partyId: string,
+  payload: PartyUpdatePayload,
+): Promise<CollectionWriteResponse> {
+  return writeCollection(partyResource(partyId), payload);
+}
+
+export function savePanIdentity(
+  partyId: string,
+  payload: PanIdentityPayload,
+): Promise<CollectionWriteResponse> {
+  return writeCollection(partyResource(partyId, "/identifiers/pan"), payload);
+}
+
+export function saveAadhaarIdentity(
+  partyId: string,
+  payload: AadhaarIdentityPayload,
+): Promise<CollectionWriteResponse> {
+  return writeCollection(partyResource(partyId, "/identifiers/aadhaar"), payload);
+}
+
+export function saveEntityPan(payload: EntityPanPayload): Promise<CollectionWriteResponse> {
+  return writeCollection("/api/apply/applications/current/entity-pan", payload);
+}
+
+export function saveGstRegistration(
+  payload: GstRegistrationPayload,
+): Promise<CollectionWriteResponse> {
+  return writeCollection("/api/apply/applications/current/gst-registration", payload);
 }
 
 export { ApplyApiError };

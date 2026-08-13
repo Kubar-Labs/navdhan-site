@@ -29,6 +29,13 @@ export const offersByApplicationId = new Map<string, LenderOfferRecord[]>();
 
 export const SESSION_TTL_MINUTES = 30;
 
+export class ApplicationOwnershipError extends Error {
+  constructor() {
+    super("Application does not belong to this session");
+    this.name = "ApplicationOwnershipError";
+  }
+}
+
 export function nowIso(): string {
   return new Date().toISOString();
 }
@@ -95,8 +102,9 @@ export function getOrCreateApplication(
   if (applicationId) {
     const existing = applicationsById.get(applicationId);
     if (existing) {
-      existing.sessionId = sessionId;
-      applicationsBySession.set(sessionId, existing);
+      if (existing.sessionId !== sessionId) {
+        throw new ApplicationOwnershipError();
+      }
       return touchApplication(existing);
     }
     return touchApplication(createApplication(sessionId, applicationId));

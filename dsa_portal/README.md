@@ -108,10 +108,14 @@ gcloud secrets versions access latest --secret=perfios-org-id
 
 ```bash
 cd backend
-../.venv/Scripts/python.exe -m uvicorn main:app --host 127.0.0.1 --port 8000
+../.venv/Scripts/python.exe -m uvicorn collection_app:app --host 127.0.0.1 --port 8000
 ```
 
 Health check: <http://localhost:8000/health>
+
+This command starts the collection-only runtime. Legacy provider modules remain
+in the source tree until their planned removal phase, but they are not imported
+or registered by this application.
 
 ### 6. Run frontend
 

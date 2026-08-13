@@ -13,6 +13,26 @@ dist-ssr
 .output
 .vercel
 *.local
+*.tsbuildinfo
+
+# Environment files and local secrets
+.env
+.env.*
+**/.env
+**/.env.*
+!.env.example
+!**/.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
 
 # Next.js
 .next/
@@ -33,15 +53,19 @@ dist-ssr
 *.sln
 *.sw?
 
-# dsa_portal is embedded directly in this repo. Its own dsa_portal/.gitignore
-# excludes secrets, but mirror the critical patterns here defensively.
-dsa_portal/.env
-dsa_portal/.env.*
-dsa_portal/backend/.env
-dsa_portal/backend/.env.*
-dsa_portal/frontend/.env
-dsa_portal/frontend/.env.*
-!dsa_portal/**/.env.example
+# dsa_portal is embedded directly in this repo. Mirror its non-environment
+# secret-file patterns here defensively.
 dsa_portal/**/*-key.json
 dsa_portal/**/*deployer*.json
 dsa_portal/**/.firebase/
+
+# Local agent and code-graph artifacts
+AGENTS.md
+.codex/
+graphify-out/
+.code-review-graph/
+
+# Local architecture and implementation planning artifacts
+data-model-reference.md
+data-model-reference.erd.json
+navdhan_collection_only_detailed_plan_v2.md

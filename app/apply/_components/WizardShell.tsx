@@ -1,10 +1,16 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Check } from "lucide-react";
 import { TrustBadgeBar } from "@/src/components/apply/TrustBadgeBar.stub";
 import { InlineFieldFeedback } from "@/src/components/apply/InlineFieldFeedback";
-import { ApplyFormValues, DocumentRef, WizardStepId } from "@/app/apply/lib/types";
+import {
+  ApplyFormValues,
+  CollectionWriteResponse,
+  Constitution,
+  DocumentRef,
+  WizardStepId,
+} from "@/app/apply/lib/types";
 import {
   LOAN_AMOUNT_MAX,
   LOAN_AMOUNT_MIN,
@@ -26,10 +32,24 @@ import {
   validateReferralCode,
   validateTenureMonths,
 } from "@/app/apply/lib/validation";
-import { STORAGE_KEY } from "@/app/apply/lib/constants";
+import {
+  ApplyApiError,
+  addApplicationParty,
+  createApplySession,
+  fetchCurrentApplication,
+  saveAadhaarIdentity,
+  saveBusinessProfile,
+  saveEntityPan,
+  saveGstRegistration,
+  saveLoanIntent,
+  savePanIdentity,
+  savePrimaryPerson,
+  updateApplicationParty,
+} from "@/app/apply/lib/api";
 import { Stepper, WizardStepDefinition } from "@/src/components/apply/Stepper";
 import { NavigationFooter } from "@/src/components/apply/NavigationFooter";
 import { ConsentOverlay } from "@/src/components/apply/ConsentOverlay";
+import { clearDraftValues } from "@/app/apply/lib/storage";
 
 const ITR_ALLOWED_TYPES = ["application/pdf"];
 const ITR_MAX_BYTES = 10 * 1024 * 1024;
@@ -47,6 +67,7 @@ export interface WizardMessages {
   submitting?: string;
   skip?: string;
   loanAmountLabel?: string;
+  constitutionLabel?: string;
   tenureLabel?: string;
   purposeLabel?: string;
   referralCodeLabel?: string;
@@ -93,6 +114,7 @@ export interface WizardMessages {
   viewDashboardLabel?: string;
   purposeLabels?: Record<string, string>;
   invalidLoanAmount?: string;
+  invalidConstitution?: string;
   invalidTenure?: string;
   invalidPurpose?: string;
   invalidName?: string;
@@ -127,6 +149,7 @@ const defaultMessages: WizardMessages = {
   submit: "Submit",
   skip: "Skip",
   loanAmountLabel: "Loan amount",
+  constitutionLabel: "Business constitution",
   tenureLabel: "Tenure (months)",
   purposeLabel: "Purpose",
   referralCodeLabel: "Referral code (optional)",
@@ -190,6 +213,7 @@ const defaultMessages: WizardMessages = {
     "500_plus": "₹5 Crore+",
   },
   invalidLoanAmount: "Invalid loan amount.",
+  invalidConstitution: "Select a business constitution.",
   invalidTenure: "Invalid tenure.",
   invalidPurpose: "Invalid purpose.",
   invalidName: "Invalid name.",
@@ -230,6 +254,74 @@ function maskPan(value?: string) {
   return `${value.slice(0, 3)}XX***${value.slice(-1)}`;
 }
 
+function maskEmail(value?: string) {
+  if (!value) return "";
+  const [local, domain] = value.split("@");
+  if (!local || !domain) return "";
+  return `${local.slice(0, 1)}${"*".repeat(Math.max(1, local.length - 1))}@${domain}`;
+}
+
+function maskGstin(value?: string) {
+  if (!value || value.length < 5) return "";
+  return `${value.slice(0, 2)}${"*".repeat(value.length - 5)}${value.slice(-3)}`;
+}
+
+function errorStatus(error: unknown): number | undefined {
+  if (error instanceof ApplyApiError) return error.status;
+  if (error && typeof error === "object" && "status" in error) {
+    const status = (error as { status?: unknown }).status;
+    return typeof status === "number" ? status : undefined;
+  }
+  return undefined;
+}
+
+function nextCollectionStep(snapshot: CollectionWriteResponse): WizardStepId {
+  const profile = snapshot.business_profile;
+  const primary = snapshot.parties.find((party) => party.is_primary);
+  const needsAdditionalRole =
+    snapshot.values.constitution === "partnership"
+      ? "co_applicant"
+      : snapshot.values.constitution === "private_limited"
+        ? "director"
+        : null;
+  const additional = needsAdditionalRole
+    ? snapshot.parties.find((party) => party.role === needsAdditionalRole)
+    : null;
+
+  if (
+    !profile.business_legal_name ||
+    !profile.business_type_code ||
+    !profile.income_type_code ||
+    !profile.type_of_office ||
+    !profile.location_tier ||
+    !profile.business_pincode ||
+    !profile.annual_turnover_range ||
+    profile.gst_registered === null ||
+    !primary?.full_name ||
+    !primary.type_of_residence ||
+    !primary.employment_status_code ||
+    (needsAdditionalRole &&
+      (!additional?.full_name ||
+        !additional.type_of_residence ||
+        !additional.employment_status_code))
+  ) {
+    return "personal_contact";
+  }
+  if (snapshot.parties.some((party) => !party.identifiers.aadhaar_masked)) {
+    return "aadhaar_verification";
+  }
+  if (
+    snapshot.parties.some((party) => !party.identifiers.pan_masked) ||
+    (needsAdditionalRole && !snapshot.registrations.entity_pan_masked)
+  ) {
+    return "pan_verification";
+  }
+  if (profile.gst_registered && !snapshot.registrations.gstin_masked) {
+    return "gst_verification";
+  }
+  return "itr_upload";
+}
+
 export function WizardShell({
   locale,
   steps,
@@ -241,7 +333,7 @@ export function WizardShell({
 }: WizardShellProps) {
   const t = { ...defaultMessages, ...messagesProp };
 
-  const orderedSteps: WizardStepId[] = steps.map((s) => s.id);
+  const orderedSteps = useMemo<WizardStepId[]>(() => steps.map((step) => step.id), [steps]);
   const initialIndex = Math.max(0, orderedSteps.indexOf(initialStepId));
 
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
@@ -254,6 +346,7 @@ export function WizardShell({
   });
 
   const [values, setValues] = useState<ApplyFormValues>(() => ({
+    constitution: initialValues.constitution,
     loan_amount: initialValues.loan_amount,
     tenure_months: initialValues.tenure_months,
     purpose: initialValues.purpose,
@@ -262,10 +355,27 @@ export function WizardShell({
     mobile_number: initialValues.mobile_number,
     email: initialValues.email,
     business_pin_code: initialValues.business_pin_code,
+    business_legal_name: initialValues.business_legal_name,
+    trade_name: initialValues.trade_name,
+    business_type_code: initialValues.business_type_code,
+    income_type_code: initialValues.income_type_code,
+    type_of_office: initialValues.type_of_office,
+    location_tier: initialValues.location_tier,
+    type_of_residence: initialValues.type_of_residence,
+    employment_status_code: initialValues.employment_status_code,
+    additional_party_full_name: initialValues.additional_party_full_name,
+    additional_party_mobile_number: initialValues.additional_party_mobile_number,
+    additional_party_email: initialValues.additional_party_email,
+    additional_party_type_of_residence: initialValues.additional_party_type_of_residence,
+    additional_party_employment_status_code: initialValues.additional_party_employment_status_code,
+    additional_party_ownership_pct: initialValues.additional_party_ownership_pct,
     aadhaar_number: initialValues.aadhaar_number,
+    party_aadhaar_numbers: initialValues.party_aadhaar_numbers ?? {},
     aadhaar_consent: initialValues.aadhaar_consent ?? false,
     aadhaar_otp: initialValues.aadhaar_otp,
     pan_number: initialValues.pan_number,
+    party_pan_numbers: initialValues.party_pan_numbers ?? {},
+    entity_pan: initialValues.entity_pan,
     pan_consent: initialValues.pan_consent ?? false,
     gst_registered: initialValues.gst_registered,
     gstin: initialValues.gstin,
@@ -283,31 +393,88 @@ export function WizardShell({
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
-
-  const storageKey = `${STORAGE_KEY}-${locale}`;
-
-  // Load a previously saved draft only when no explicit initial values are provided.
-  useEffect(() => {
-    if (typeof window === "undefined" || Object.keys(initialValues).length > 0 || process.env.VITEST) return;
-    const saved = localStorage.getItem(storageKey);
-    if (!saved) return;
-    try {
-      const draft = JSON.parse(saved) as Partial<ApplyFormValues>;
-      setValues((prev) => ({ ...prev, ...(draft ?? {}) }));
-    } catch {
-      // Ignore corrupted drafts.
-    }
-    // ponytail: load-once only; further updates come from user input.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const [application, setApplication] = useState<CollectionWriteResponse | null>(null);
+  const [isBootstrapping, setIsBootstrapping] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
 
   const currentStepId = orderedSteps[currentIndex] ?? "loan_intent";
 
-  // Persist the form as the user progresses, but clear on the result step.
+  const applySnapshot = useCallback(
+    (snapshot: CollectionWriteResponse, resume: boolean) => {
+      const primary = snapshot.parties.find((party) => party.is_primary);
+      const expectedAdditionalRole =
+        snapshot.values.constitution === "partnership"
+          ? "co_applicant"
+          : snapshot.values.constitution === "private_limited"
+            ? "director"
+            : null;
+      const additional = expectedAdditionalRole
+        ? snapshot.parties.find((party) => party.role === expectedAdditionalRole)
+        : undefined;
+      setApplication(snapshot);
+      setValues((previous) => ({
+        ...previous,
+        constitution: snapshot.values.constitution,
+        loan_amount: snapshot.values.requested_amount,
+        tenure_months: snapshot.values.requested_tenure_months,
+        purpose: snapshot.values.purpose,
+        referral_code: snapshot.values.referral_code ?? undefined,
+        business_legal_name: snapshot.business_profile.business_legal_name ?? undefined,
+        trade_name: snapshot.business_profile.trade_name ?? undefined,
+        business_type_code: snapshot.business_profile.business_type_code ?? undefined,
+        income_type_code: snapshot.business_profile.income_type_code ?? undefined,
+        type_of_office: snapshot.business_profile.type_of_office ?? undefined,
+        location_tier: snapshot.business_profile.location_tier ?? undefined,
+        business_pin_code: snapshot.business_profile.business_pincode ?? undefined,
+        annual_turnover: snapshot.business_profile.annual_turnover_range ?? undefined,
+        gst_registered: snapshot.business_profile.gst_registered ?? undefined,
+        full_name: primary?.full_name ?? undefined,
+        type_of_residence: primary?.type_of_residence ?? undefined,
+        employment_status_code: primary?.employment_status_code ?? undefined,
+        additional_party_full_name: additional?.full_name ?? undefined,
+        additional_party_type_of_residence: additional?.type_of_residence ?? undefined,
+        additional_party_employment_status_code: additional?.employment_status_code ?? undefined,
+        additional_party_ownership_pct: additional?.ownership_pct ?? undefined,
+      }));
+      if (resume) {
+        const resumeIndex = orderedSteps.indexOf(nextCollectionStep(snapshot));
+        if (resumeIndex >= 0) {
+          setCurrentIndex(resumeIndex);
+          setCompletedSteps(orderedSteps.slice(0, resumeIndex));
+        }
+      }
+    },
+    [orderedSteps],
+  );
+
   useEffect(() => {
-    if (typeof window === "undefined" || currentStepId === "submission_result" || process.env.VITEST) return;
-    localStorage.setItem(storageKey, JSON.stringify(values));
-  }, [values, currentStepId, storageKey]);
+    let active = true;
+    clearDraftValues(locale);
+    async function initializeBrowserSession() {
+      try {
+        const snapshot = await fetchCurrentApplication();
+        if (active) applySnapshot(snapshot, true);
+      } catch (error) {
+        const status = errorStatus(error);
+        if (status === 401) {
+          try {
+            await createApplySession();
+          } catch {
+            if (active) setApiError("We could not start your secure application session.");
+          }
+        } else if (status !== 404 && active) {
+          setApiError("We could not restore your application. Please try again.");
+        }
+      } finally {
+        if (active) setIsBootstrapping(false);
+      }
+    }
+    void initializeBrowserSession();
+    return () => {
+      active = false;
+    };
+  }, [applySnapshot, locale]);
 
   const updateValue = <K extends keyof ApplyFormValues>(field: K, value: ApplyFormValues[K]) => {
     setValues((prev) => ({ ...prev, [field]: value }));
@@ -321,6 +488,26 @@ export function WizardShell({
     }
   };
 
+  const updatePartyIdentifier = (
+    field: "party_aadhaar_numbers" | "party_pan_numbers",
+    partyId: string,
+    value: string,
+  ) => {
+    setValues((previous) => ({
+      ...previous,
+      [field]: { ...(previous[field] ?? {}), [partyId]: value },
+    }));
+    const errorField = `${field}_${partyId}`;
+    setTouched((previous) => ({ ...previous, [errorField]: true }));
+    if (errors[errorField]) {
+      setErrors((previous) => {
+        const next = { ...previous };
+        delete next[errorField];
+        return next;
+      });
+    }
+  };
+
   const validateCurrentStep = (
     stepId = currentStepId,
   ): { valid: boolean; errors: Record<string, string> } => {
@@ -328,6 +515,9 @@ export function WizardShell({
 
     switch (stepId) {
       case "loan_intent": {
+        if (!values.constitution) {
+          next.constitution = t.invalidConstitution ?? "Select a business constitution";
+        }
         if (!validateLoanAmount(values.loan_amount)) {
           next.loan_amount = t.invalidLoanAmount ?? "Invalid loan amount";
         }
@@ -343,6 +533,17 @@ export function WizardShell({
         break;
       }
       case "personal_contact": {
+        if (
+          !values.business_legal_name ||
+          values.business_legal_name.trim().length < 2 ||
+          values.business_legal_name.trim().length > 150
+        ) {
+          next.business_legal_name = "Enter the registered business name";
+        }
+        if (!values.business_type_code) next.business_type_code = "Select a business type";
+        if (!values.income_type_code) next.income_type_code = "Select an income type";
+        if (!values.type_of_office) next.type_of_office = "Select an office type";
+        if (!values.location_tier) next.location_tier = "Select a location tier";
         if (!validateFullName(values.full_name)) {
           next.full_name = t.invalidName ?? "Invalid name";
         }
@@ -355,11 +556,51 @@ export function WizardShell({
         if (!validateBusinessPinCode(values.business_pin_code)) {
           next.business_pin_code = t.invalidPinCode ?? "Invalid pin code";
         }
+        if (!validateAnnualTurnover(values.annual_turnover)) {
+          next.annual_turnover = "Select annual turnover";
+        }
+        if (typeof values.gst_registered !== "boolean") {
+          next.gst_registered = "Select your GST registration status";
+        }
+        if (!values.type_of_residence) next.type_of_residence = "Select a residence type";
+        if (!values.employment_status_code) {
+          next.employment_status_code = "Select employment status";
+        }
+        if (values.constitution && values.constitution !== "proprietorship") {
+          if (!validateFullName(values.additional_party_full_name)) {
+            next.additional_party_full_name = "Enter a valid name";
+          }
+          if (!validateMobileNumber(values.additional_party_mobile_number)) {
+            next.additional_party_mobile_number = t.invalidMobile ?? "Invalid mobile";
+          }
+          if (!validateEmail(values.additional_party_email)) {
+            next.additional_party_email = t.invalidEmail ?? "Invalid email";
+          }
+          if (!values.additional_party_type_of_residence) {
+            next.additional_party_type_of_residence = "Select a residence type";
+          }
+          if (!values.additional_party_employment_status_code) {
+            next.additional_party_employment_status_code = "Select employment status";
+          }
+          if (
+            values.additional_party_ownership_pct !== undefined &&
+            (values.additional_party_ownership_pct < 0 ||
+              values.additional_party_ownership_pct > 100)
+          ) {
+            next.additional_party_ownership_pct = "Ownership must be between 0 and 100";
+          }
+        }
         break;
       }
       case "aadhaar_verification": {
-        if (!validateAadhaarNumber(values.aadhaar_number)) {
-          next.aadhaar_number = t.invalidAadhaar ?? "Invalid aadhaar";
+        for (const party of application?.parties ?? []) {
+          const field = `party_aadhaar_numbers_${party.party_id}`;
+          const suppliedValue =
+            values.party_aadhaar_numbers?.[party.party_id] ??
+            (party.is_primary ? values.aadhaar_number : undefined);
+          if (!party.identifiers.aadhaar_masked && !validateAadhaarNumber(suppliedValue)) {
+            next[field] = t.invalidAadhaar ?? "Invalid aadhaar";
+          }
         }
         if (!values.aadhaar_consent) {
           next.aadhaar_consent = "Please accept the Aadhaar consent";
@@ -367,15 +608,41 @@ export function WizardShell({
         break;
       }
       case "pan_verification": {
-        if (!validatePanNumber(values.pan_number)) {
-          next.pan_number = t.invalidPan ?? "Invalid pan";
+        const enteredEntityPan = values.entity_pan?.trim().toUpperCase();
+        for (const party of application?.parties ?? []) {
+          const field = `party_pan_numbers_${party.party_id}`;
+          const suppliedValue =
+            values.party_pan_numbers?.[party.party_id] ??
+            (party.is_primary ? values.pan_number : undefined);
+          if (!party.identifiers.pan_masked && !validatePanNumber(suppliedValue)) {
+            next[field] = t.invalidPan ?? "Invalid pan";
+          }
+          if (
+            enteredEntityPan &&
+            typeof suppliedValue === "string" &&
+            suppliedValue.trim().toUpperCase() === enteredEntityPan
+          ) {
+            const message = "Business PAN must be different from every personal PAN";
+            next[field] = message;
+            next.entity_pan = message;
+          }
         }
         if (!values.pan_consent) {
           next.pan_consent = "Please accept the PAN consent";
         }
+        if (
+          values.constitution !== "proprietorship" &&
+          !application?.registrations.entity_pan_masked &&
+          !validatePanNumber(values.entity_pan)
+        ) {
+          next.entity_pan = t.invalidPan ?? "Invalid entity PAN";
+        }
         break;
       }
       case "gst_verification": {
+        if (typeof values.gst_registered !== "boolean") {
+          next.gst_registered = "Select your GST registration status";
+        }
         if (values.gst_registered === true) {
           if (!values.gstin || !validateGstin(values.gstin)) {
             next.gstin = t.invalidGstin ?? "Invalid gstin";
@@ -422,13 +689,26 @@ export function WizardShell({
   const canContinue = useMemo(() => {
     switch (currentStepId) {
       case "loan_intent": {
-        return !!values.loan_amount && !!values.tenure_months && !!values.purpose;
+        return (
+          !!values.constitution &&
+          !!values.loan_amount &&
+          !!values.tenure_months &&
+          !!values.purpose
+        );
       }
       case "personal_contact": {
         return true;
       }
       case "aadhaar_verification": {
-        return !!values.aadhaar_number && !!values.aadhaar_consent;
+        return (
+          !!values.aadhaar_consent &&
+          (application?.parties ?? []).every(
+            (party) =>
+              !!party.identifiers.aadhaar_masked ||
+              !!values.party_aadhaar_numbers?.[party.party_id] ||
+              (party.is_primary && !!values.aadhaar_number),
+          )
+        );
       }
       case "pan_verification": {
         return true;
@@ -474,7 +754,116 @@ export function WizardShell({
     }
   };
 
-  const handleContinue = () => {
+  const businessProfilePayload = (expectedLockVersion: number) => ({
+    business_legal_name: values.business_legal_name!.trim(),
+    ...(values.trade_name?.trim() ? { trade_name: values.trade_name.trim() } : {}),
+    business_type_code: values.business_type_code!,
+    income_type_code: values.income_type_code!,
+    type_of_office: values.type_of_office!,
+    location_tier: values.location_tier!,
+    business_pincode: values.business_pin_code!,
+    annual_turnover_range: values.annual_turnover as NonNullable<
+      CollectionWriteResponse["business_profile"]["annual_turnover_range"]
+    >,
+    gst_registered: values.gst_registered!,
+    expected_lock_version: expectedLockVersion,
+  });
+
+  const persistCollectionStep = async (): Promise<CollectionWriteResponse | null> => {
+    const lockVersion = application?.lock_version ?? 0;
+    switch (currentStepId) {
+      case "loan_intent":
+        return saveLoanIntent({
+          constitution: values.constitution!,
+          requested_amount: values.loan_amount!,
+          requested_tenure_months: values.tenure_months!,
+          purpose: values.purpose as CollectionWriteResponse["values"]["purpose"],
+          ...(values.referral_code ? { referral_code: values.referral_code } : {}),
+          expected_lock_version: lockVersion,
+        });
+      case "personal_contact": {
+        let snapshot = await saveBusinessProfile(businessProfilePayload(lockVersion));
+        snapshot = await savePrimaryPerson({
+          full_name: values.full_name!.trim(),
+          mobile_number: values.mobile_number!,
+          email: values.email!.trim().toLowerCase(),
+          type_of_residence: values.type_of_residence!,
+          employment_status_code: values.employment_status_code!,
+          expected_lock_version: snapshot.lock_version,
+        });
+        if (values.constitution !== "proprietorship") {
+          const role = values.constitution === "partnership" ? "co_applicant" : "director";
+          const existingParty = snapshot.parties.find((party) => party.role === role);
+          const partyPayload = {
+            full_name: values.additional_party_full_name!.trim(),
+            mobile_number: values.additional_party_mobile_number!,
+            email: values.additional_party_email!.trim().toLowerCase(),
+            type_of_residence: values.additional_party_type_of_residence!,
+            employment_status_code: values.additional_party_employment_status_code!,
+            ...(values.additional_party_ownership_pct !== undefined
+              ? { ownership_pct: values.additional_party_ownership_pct }
+              : {}),
+            expected_lock_version: snapshot.lock_version,
+          };
+          snapshot = existingParty
+            ? await updateApplicationParty(existingParty.party_id, partyPayload)
+            : await addApplicationParty({ ...partyPayload, role });
+        }
+        return snapshot;
+      }
+      case "aadhaar_verification": {
+        if (!application) throw new Error("Application is missing");
+        let snapshot = application;
+        for (const party of application.parties) {
+          const aadhaarNumber =
+            values.party_aadhaar_numbers?.[party.party_id] ??
+            (party.is_primary ? values.aadhaar_number : undefined);
+          if (!aadhaarNumber) continue;
+          snapshot = await saveAadhaarIdentity(party.party_id, {
+            aadhaar_number: aadhaarNumber,
+            expected_lock_version: snapshot.lock_version,
+          });
+        }
+        return snapshot;
+      }
+      case "pan_verification": {
+        if (!application) throw new Error("Application is missing");
+        let snapshot = application;
+        for (const party of application.parties) {
+          const panNumber =
+            values.party_pan_numbers?.[party.party_id] ??
+            (party.is_primary ? values.pan_number : undefined);
+          if (!panNumber) continue;
+          snapshot = await savePanIdentity(party.party_id, {
+            pan_number: panNumber,
+            expected_lock_version: snapshot.lock_version,
+          });
+        }
+        if (values.constitution !== "proprietorship" && values.entity_pan) {
+          snapshot = await saveEntityPan({
+            entity_pan: values.entity_pan!,
+            expected_lock_version: snapshot.lock_version,
+          });
+        }
+        return snapshot;
+      }
+      case "gst_verification": {
+        let snapshot = await saveBusinessProfile(businessProfilePayload(lockVersion));
+        snapshot = await saveGstRegistration({
+          gst_registered: values.gst_registered!,
+          ...(values.gst_registered
+            ? { gstin: values.gstin!, state_code: values.gstin!.slice(0, 2) }
+            : {}),
+          expected_lock_version: snapshot.lock_version,
+        });
+        return snapshot;
+      }
+      default:
+        return null;
+    }
+  };
+
+  const handleContinue = async () => {
     const { valid, errors: nextErrors } = validateCurrentStep();
     setTouched((prev) => {
       const touchedNext = { ...prev };
@@ -485,6 +874,56 @@ export function WizardShell({
     if (!valid) {
       setErrors(nextErrors);
       return;
+    }
+
+    if (
+      currentStepId === "loan_intent" ||
+      currentStepId === "personal_contact" ||
+      currentStepId === "aadhaar_verification" ||
+      currentStepId === "pan_verification" ||
+      currentStepId === "gst_verification"
+    ) {
+      setIsSaving(true);
+      setApiError(null);
+      try {
+        const snapshot = await persistCollectionStep();
+        if (snapshot) {
+          applySnapshot(snapshot, false);
+          setValues((previous) => ({
+            ...previous,
+            ...(currentStepId === "personal_contact"
+              ? {
+                  mobile_number: undefined,
+                  email: undefined,
+                  additional_party_mobile_number: undefined,
+                  additional_party_email: undefined,
+                }
+              : {}),
+            ...(currentStepId === "aadhaar_verification"
+              ? { aadhaar_number: undefined, party_aadhaar_numbers: {} }
+              : {}),
+            ...(currentStepId === "pan_verification"
+              ? { pan_number: undefined, party_pan_numbers: {}, entity_pan: undefined }
+              : {}),
+            ...(currentStepId === "gst_verification" ? { gstin: undefined } : {}),
+          }));
+        }
+      } catch (error) {
+        if (errorStatus(error) === 409) {
+          try {
+            const latest = await fetchCurrentApplication();
+            applySnapshot(latest, true);
+            setApiError("This application changed in another tab. We refreshed the latest data.");
+          } catch {
+            setApiError("This application changed. Refresh and try again.");
+          }
+        } else {
+          setApiError("We could not save this step. Please try again.");
+        }
+        setIsSaving(false);
+        return;
+      }
+      setIsSaving(false);
     }
 
     if (currentStepId === "review_submit") {
@@ -498,16 +937,46 @@ export function WizardShell({
     advance();
   };
 
-  const handleSkipGst = () => {
+  const handleSkipGst = async () => {
     updateValue("gst_registered", false);
     updateValue("gstin", undefined);
-    advance();
+    if (!application) return;
+    setIsSaving(true);
+    setApiError(null);
+    try {
+      let snapshot = await saveBusinessProfile({
+        ...businessProfilePayload(application.lock_version),
+        gst_registered: false,
+      });
+      snapshot = await saveGstRegistration({
+        gst_registered: false,
+        expected_lock_version: snapshot.lock_version,
+      });
+      applySnapshot(snapshot, false);
+      advance();
+    } catch {
+      setApiError("We could not save this step. Please try again.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const currentStepDef = steps.find((s) => s.id === currentStepId);
 
   const renderLoanIntent = () => (
     <div className="space-y-5">
+      <SelectField
+        id="constitution"
+        label={t.constitutionLabel ?? "Business constitution"}
+        value={values.constitution ?? ""}
+        options={[
+          { value: "proprietorship", label: "Proprietorship" },
+          { value: "partnership", label: "Partnership" },
+          { value: "private_limited", label: "Private limited company" },
+        ]}
+        onChange={(value) => updateValue("constitution", value as Constitution)}
+        error={touched.constitution ? errors.constitution : undefined}
+      />
       <TextField
         id="loan_amount"
         label={t.loanAmountLabel ?? "Loan amount"}
@@ -561,6 +1030,79 @@ export function WizardShell({
 
   const renderPersonalContact = () => (
     <div className="space-y-5">
+      <h2 className="text-base font-semibold text-nt-slate-900">Business profile</h2>
+      <TextField
+        id="business_legal_name"
+        label="Registered business name"
+        value={values.business_legal_name ?? ""}
+        onChange={(value) => updateValue("business_legal_name", value)}
+        error={touched.business_legal_name ? errors.business_legal_name : undefined}
+      />
+      <TextField
+        id="trade_name"
+        label="Trade name (optional)"
+        value={values.trade_name ?? ""}
+        onChange={(value) => updateValue("trade_name", value)}
+      />
+      <SelectField
+        id="business_type_code"
+        label="Business type"
+        value={values.business_type_code ?? ""}
+        options={[
+          { value: "trading", label: "Trading" },
+          { value: "manufacturing", label: "Manufacturing" },
+          { value: "services", label: "Services" },
+        ]}
+        onChange={(value) =>
+          updateValue("business_type_code", value as ApplyFormValues["business_type_code"])
+        }
+        error={touched.business_type_code ? errors.business_type_code : undefined}
+      />
+      <SelectField
+        id="income_type_code"
+        label="Primary income type"
+        value={values.income_type_code ?? ""}
+        options={[
+          { value: "business_income", label: "Business income" },
+          { value: "salary", label: "Salary" },
+          { value: "other", label: "Other" },
+        ]}
+        onChange={(value) =>
+          updateValue("income_type_code", value as ApplyFormValues["income_type_code"])
+        }
+        error={touched.income_type_code ? errors.income_type_code : undefined}
+      />
+      <SelectField
+        id="type_of_office"
+        label="Office type"
+        value={values.type_of_office ?? ""}
+        options={[
+          { value: "factory_premises", label: "Factory premises" },
+          { value: "home_office", label: "Home office" },
+          { value: "owned_office", label: "Owned office" },
+          { value: "rented_office", label: "Rented office" },
+          { value: "other", label: "Other" },
+        ]}
+        onChange={(value) =>
+          updateValue("type_of_office", value as ApplyFormValues["type_of_office"])
+        }
+        error={touched.type_of_office ? errors.type_of_office : undefined}
+      />
+      <SelectField
+        id="location_tier"
+        label="Business location tier"
+        value={values.location_tier ?? ""}
+        options={[
+          { value: "tier1", label: "Tier 1" },
+          { value: "tier2", label: "Tier 2" },
+          { value: "tier3", label: "Tier 3" },
+        ]}
+        onChange={(value) =>
+          updateValue("location_tier", value as ApplyFormValues["location_tier"])
+        }
+        error={touched.location_tier ? errors.location_tier : undefined}
+      />
+      <h2 className="pt-2 text-base font-semibold text-nt-slate-900">Primary applicant</h2>
       <TextField
         id="full_name"
         label={t.fullNameLabel ?? "Full name"}
@@ -576,6 +1118,7 @@ export function WizardShell({
         error={touched.mobile_number ? errors.mobile_number : undefined}
         inputMode="tel"
       />
+      <SavedValue value={application?.parties.find((party) => party.is_primary)?.mobile_masked} />
       <TextField
         id="email"
         label={t.emailLabel ?? "Email"}
@@ -584,6 +1127,7 @@ export function WizardShell({
         onChange={(value) => updateValue("email", value)}
         error={touched.email ? errors.email : undefined}
       />
+      <SavedValue value={application?.parties.find((party) => party.is_primary)?.email_masked} />
       <TextField
         id="business_pin_code"
         label={t.pinCodeLabel ?? "Business PIN code"}
@@ -601,25 +1145,190 @@ export function WizardShell({
           label: t.turnoverRanges?.[range] ?? range,
         }))}
         onChange={(value) => updateValue("annual_turnover", value)}
+        error={touched.annual_turnover ? errors.annual_turnover : undefined}
       />
       <InlineFieldFeedback
         fieldId="annual_turnover"
         state="info"
         messageTemplate="Select the turnover range that best reflects your last financial year."
       />
+      <SelectField
+        id="type_of_residence"
+        label="Residence type"
+        value={values.type_of_residence ?? ""}
+        options={[
+          { value: "family_owned", label: "Family owned" },
+          { value: "owned", label: "Owned" },
+          { value: "rented", label: "Rented" },
+          { value: "other", label: "Other" },
+        ]}
+        onChange={(value) =>
+          updateValue("type_of_residence", value as ApplyFormValues["type_of_residence"])
+        }
+        error={touched.type_of_residence ? errors.type_of_residence : undefined}
+      />
+      <SelectField
+        id="employment_status_code"
+        label="Employment status"
+        value={values.employment_status_code ?? ""}
+        options={[
+          { value: "self_employed", label: "Self employed" },
+          { value: "salaried", label: "Salaried" },
+          { value: "other", label: "Other" },
+        ]}
+        onChange={(value) =>
+          updateValue("employment_status_code", value as ApplyFormValues["employment_status_code"])
+        }
+        error={touched.employment_status_code ? errors.employment_status_code : undefined}
+      />
+      <fieldset className="space-y-3">
+        <legend className="text-sm font-medium text-nt-slate-700">
+          {t.gstRegisteredLabel ?? "Are you GST registered?"}
+        </legend>
+        <label className="flex items-center gap-2 text-sm text-nt-slate-700">
+          <input
+            type="radio"
+            name="profile_gst_registered"
+            checked={values.gst_registered === true}
+            onChange={() => updateValue("gst_registered", true)}
+          />
+          {t.gstRegisteredYes ?? "Registered under GST"}
+        </label>
+        <label className="flex items-center gap-2 text-sm text-nt-slate-700">
+          <input
+            type="radio"
+            name="profile_gst_registered"
+            checked={values.gst_registered === false}
+            onChange={() => updateValue("gst_registered", false)}
+          />
+          {t.gstRegisteredNo ?? "Not registered"}
+        </label>
+        <InlineFieldFeedback
+          fieldId="gst_registered"
+          state={touched.gst_registered && errors.gst_registered ? "error" : "idle"}
+          messageTemplate={errors.gst_registered ?? ""}
+        />
+      </fieldset>
+      {values.constitution !== undefined && values.constitution !== "proprietorship" && (
+        <div className="space-y-5 rounded-xl border border-nt-slate-200 p-4">
+          <h2 className="text-base font-semibold text-nt-slate-900">
+            {values.constitution === "partnership" ? "Co-applicant" : "Director"}
+          </h2>
+          <TextField
+            id="additional_party_full_name"
+            label="Full name"
+            value={values.additional_party_full_name ?? ""}
+            onChange={(value) => updateValue("additional_party_full_name", value)}
+            error={
+              touched.additional_party_full_name ? errors.additional_party_full_name : undefined
+            }
+          />
+          <TextField
+            id="additional_party_mobile_number"
+            label="Mobile number"
+            value={values.additional_party_mobile_number ?? ""}
+            onChange={(value) => updateValue("additional_party_mobile_number", value)}
+            error={
+              touched.additional_party_mobile_number
+                ? errors.additional_party_mobile_number
+                : undefined
+            }
+            inputMode="tel"
+          />
+          <TextField
+            id="additional_party_email"
+            label="Email"
+            type="email"
+            value={values.additional_party_email ?? ""}
+            onChange={(value) => updateValue("additional_party_email", value)}
+            error={touched.additional_party_email ? errors.additional_party_email : undefined}
+          />
+          <SelectField
+            id="additional_party_type_of_residence"
+            label="Residence type"
+            value={values.additional_party_type_of_residence ?? ""}
+            options={[
+              { value: "family_owned", label: "Family owned" },
+              { value: "owned", label: "Owned" },
+              { value: "rented", label: "Rented" },
+              { value: "other", label: "Other" },
+            ]}
+            onChange={(value) =>
+              updateValue(
+                "additional_party_type_of_residence",
+                value as ApplyFormValues["additional_party_type_of_residence"],
+              )
+            }
+            error={
+              touched.additional_party_type_of_residence
+                ? errors.additional_party_type_of_residence
+                : undefined
+            }
+          />
+          <SelectField
+            id="additional_party_employment_status_code"
+            label="Employment status"
+            value={values.additional_party_employment_status_code ?? ""}
+            options={[
+              { value: "self_employed", label: "Self employed" },
+              { value: "salaried", label: "Salaried" },
+              { value: "other", label: "Other" },
+            ]}
+            onChange={(value) =>
+              updateValue(
+                "additional_party_employment_status_code",
+                value as ApplyFormValues["additional_party_employment_status_code"],
+              )
+            }
+            error={
+              touched.additional_party_employment_status_code
+                ? errors.additional_party_employment_status_code
+                : undefined
+            }
+          />
+          <TextField
+            id="additional_party_ownership_pct"
+            label="Ownership percentage (optional)"
+            value={values.additional_party_ownership_pct ?? ""}
+            onChange={(value) =>
+              updateValue(
+                "additional_party_ownership_pct",
+                value === "" ? undefined : Number(value),
+              )
+            }
+            error={
+              touched.additional_party_ownership_pct
+                ? errors.additional_party_ownership_pct
+                : undefined
+            }
+            inputMode="numeric"
+          />
+        </div>
+      )}
     </div>
   );
 
   const renderAadhaar = () => (
     <div className="space-y-5">
-      <TextField
-        id="aadhaar_number"
-        label={t.aadhaarLabel ?? "Aadhaar number"}
-        value={values.aadhaar_number ?? ""}
-        onChange={(value) => updateValue("aadhaar_number", value)}
-        error={touched.aadhaar_number ? errors.aadhaar_number : undefined}
-        inputMode="numeric"
-      />
+      {(application?.parties ?? []).map((party) => {
+        const field = `party_aadhaar_numbers_${party.party_id}`;
+        const partyName = party.full_name ?? (party.is_primary ? "Primary applicant" : "Applicant");
+        return (
+          <div key={party.party_id} className="space-y-2">
+            <TextField
+              id={`aadhaar_number_${party.party_id}`}
+              label={`${t.aadhaarLabel ?? "Aadhaar number"} — ${partyName}`}
+              value={values.party_aadhaar_numbers?.[party.party_id] ?? ""}
+              onChange={(value) =>
+                updatePartyIdentifier("party_aadhaar_numbers", party.party_id, value)
+              }
+              error={touched[field] ? errors[field] : undefined}
+              inputMode="numeric"
+            />
+            <SavedValue value={party.identifiers.aadhaar_masked} />
+          </div>
+        );
+      })}
       <ConsentOverlay
         title={t.aadhaarConsentTitle ?? "Aadhaar consent"}
         summary={t.aadhaarConsentSummary ?? "We will verify your identity using Aadhaar OTP."}
@@ -637,13 +1346,36 @@ export function WizardShell({
 
   const renderPan = () => (
     <div className="space-y-5">
-      <TextField
-        id="pan_number"
-        label={t.panLabel ?? "PAN number"}
-        value={values.pan_number ?? ""}
-        onChange={(value) => updateValue("pan_number", value)}
-        error={touched.pan_number ? errors.pan_number : undefined}
-      />
+      {(application?.parties ?? []).map((party) => {
+        const field = `party_pan_numbers_${party.party_id}`;
+        const partyName = party.full_name ?? (party.is_primary ? "Primary applicant" : "Applicant");
+        return (
+          <div key={party.party_id} className="space-y-2">
+            <TextField
+              id={`pan_number_${party.party_id}`}
+              label={`${t.panLabel ?? "PAN number"} — ${partyName}`}
+              value={values.party_pan_numbers?.[party.party_id] ?? ""}
+              onChange={(value) =>
+                updatePartyIdentifier("party_pan_numbers", party.party_id, value.toUpperCase())
+              }
+              error={touched[field] ? errors[field] : undefined}
+            />
+            <SavedValue value={party.identifiers.pan_masked} />
+          </div>
+        );
+      })}
+      {values.constitution !== undefined && values.constitution !== "proprietorship" && (
+        <>
+          <TextField
+            id="entity_pan"
+            label="Business PAN"
+            value={values.entity_pan ?? ""}
+            onChange={(value) => updateValue("entity_pan", value.toUpperCase())}
+            error={touched.entity_pan ? errors.entity_pan : undefined}
+          />
+          <SavedValue value={application?.registrations.entity_pan_masked} />
+        </>
+      )}
       <ConsentOverlay
         title={t.panConsentTitle ?? "PAN consent"}
         summary={t.panConsentSummary ?? "We will fetch your PAN details to confirm identity."}
@@ -696,6 +1428,7 @@ export function WizardShell({
             onChange={(value) => updateValue("gstin", value.toUpperCase())}
             error={touched.gstin ? errors.gstin : undefined}
           />
+          <SavedValue value={application?.registrations.gstin_masked} />
           <ConsentOverlay
             title={t.gstConsentTitle ?? "GST consent"}
             summary={
@@ -714,6 +1447,7 @@ export function WizardShell({
         <button
           type="button"
           onClick={handleSkipGst}
+          disabled={isSaving || isBootstrapping}
           className="flex-1 rounded-md border border-nt-slate-300 bg-white px-6 py-3 text-sm font-semibold text-nt-slate-900 hover:bg-nt-slate-50"
         >
           {t.skip ?? "Skip"}
@@ -721,8 +1455,8 @@ export function WizardShell({
         <NavigationFooter
           showBack={false}
           onContinue={handleContinue}
-          continueDisabled={!canContinue}
-          continueLabel={t.continue}
+          continueDisabled={!canContinue || isSaving || isBootstrapping}
+          continueLabel={isSaving ? "Saving..." : t.continue}
           backLabel={t.back}
         />
       </div>
@@ -822,25 +1556,40 @@ export function WizardShell({
       { label: t.fullNameLabel ?? "Full name", value: values.full_name ?? "—" },
       {
         label: t.mobileLabel ?? "Mobile number",
-        value: maskMobile(values.mobile_number) ?? "—",
+        value:
+          maskMobile(values.mobile_number) ||
+          application?.parties.find((party) => party.is_primary)?.mobile_masked ||
+          "—",
       },
-      { label: t.emailLabel ?? "Email", value: values.email ?? "—" },
+      {
+        label: t.emailLabel ?? "Email",
+        value:
+          maskEmail(values.email) ||
+          application?.parties.find((party) => party.is_primary)?.email_masked ||
+          "—",
+      },
       {
         label: t.pinCodeLabel ?? "Business PIN code",
         value: values.business_pin_code ?? "—",
       },
       {
         label: t.aadhaarLabel ?? "Aadhaar",
-        value: maskAadhaar(values.aadhaar_number) ?? "—",
+        value:
+          maskAadhaar(values.aadhaar_number) ||
+          application?.parties.find((party) => party.is_primary)?.identifiers.aadhaar_masked ||
+          "—",
       },
       {
         label: t.panLabel ?? "PAN",
-        value: maskPan(values.pan_number) ?? "—",
+        value:
+          maskPan(values.pan_number) ||
+          application?.parties.find((party) => party.is_primary)?.identifiers.pan_masked ||
+          "—",
       },
       values.gst_registered === true || !!values.gstin
         ? {
             label: t.gstinLabel ?? "GSTIN",
-            value: values.gstin ?? "—",
+            value: maskGstin(values.gstin) || application?.registrations.gstin_masked || "—",
           }
         : { label: t.gstinLabel ?? "GSTIN", value: "Not registered" },
       {
@@ -977,7 +1726,7 @@ export function WizardShell({
       <div className="mb-6 pb-6 border-b border-nt-slate-100">
         <TrustBadgeBar badges={trustBadgeItems} layout="inline" variant="light" />
       </div>
-      
+
       <Stepper steps={stepperSteps} currentStepId={currentStepId} completedSteps={completedSteps} />
 
       {currentStepDef && (
@@ -993,19 +1742,35 @@ export function WizardShell({
 
       <div className="mt-6">{renderStepContent()}</div>
 
+      {apiError && (
+        <p
+          className="mt-4 rounded-lg bg-nt-red-500/10 px-4 py-3 text-sm text-nt-red-500"
+          role="alert"
+        >
+          {apiError}
+        </p>
+      )}
+
       {!showGstCustomFooter && currentStepId !== "submission_result" && (
         <NavigationFooter
           showBack={currentIndex > 0}
           onBack={goBack}
           onContinue={handleContinue}
-          continueDisabled={!canContinue}
-          continueLabel={isReviewStep ? (t.submit ?? "Submit") : t.continue}
+          continueDisabled={!canContinue || isSaving || isBootstrapping}
+          continueLabel={
+            isSaving ? "Saving..." : isReviewStep ? (t.submit ?? "Submit") : t.continue
+          }
           backLabel={t.back}
           variant={isReviewStep ? "submit" : "continue"}
         />
       )}
     </div>
   );
+}
+
+function SavedValue({ value }: { value?: string | null }) {
+  if (!value) return null;
+  return <p className="text-xs text-nt-slate-500">Saved: {value}</p>;
 }
 
 function TextField({
@@ -1027,7 +1792,10 @@ function TextField({
 }) {
   return (
     <div>
-      <label htmlFor={id} className="block text-xs font-semibold uppercase tracking-wider text-nt-slate-700">
+      <label
+        htmlFor={id}
+        className="block text-xs font-semibold uppercase tracking-wider text-nt-slate-700"
+      >
         {label}
       </label>
       <input
@@ -1065,7 +1833,10 @@ function SelectField({
 }) {
   return (
     <div>
-      <label htmlFor={id} className="block text-xs font-semibold uppercase tracking-wider text-nt-slate-700">
+      <label
+        htmlFor={id}
+        className="block text-xs font-semibold uppercase tracking-wider text-nt-slate-700"
+      >
         {label}
       </label>
       <select

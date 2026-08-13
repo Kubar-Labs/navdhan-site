@@ -4,7 +4,11 @@ import {
   sessionInvalidResponse,
   validationErrorResponse,
 } from "@/src/lib/apply/server/errors";
-import { getOrCreateApplication, touchApplication } from "@/src/lib/apply/server/store";
+import {
+  ApplicationOwnershipError,
+  getOrCreateApplication,
+  touchApplication,
+} from "@/src/lib/apply/server/store";
 import { APPLICATION_STEPS, type ApplicationStep } from "@/src/types/apply";
 import { isValidCsrfHeader } from "@/src/lib/apply/server/csrf";
 import {
@@ -24,7 +28,15 @@ export async function GET(request: Request): Promise<Response> {
   }
   const url = new URL(request.url);
   const requestedApplicationId = url.searchParams.get("application_id") ?? undefined;
-  const app = getOrCreateApplication(sessionId, requestedApplicationId);
+  let app: ReturnType<typeof getOrCreateApplication>;
+  try {
+    app = getOrCreateApplication(sessionId, requestedApplicationId);
+  } catch (error) {
+    if (error instanceof ApplicationOwnershipError) {
+      return jsonResponse({ error: "APPLICATION_NOT_FOUND" }, 404);
+    }
+    throw error;
+  }
   return jsonResponse({
     application_id: app.id,
     current_step: app.currentStep,
@@ -92,7 +104,15 @@ export async function POST(request: Request): Promise<Response> {
     typeof body.application_id === "string" && body.application_id
       ? body.application_id
       : undefined;
-  const app = getOrCreateApplication(sessionId, requestedApplicationId);
+  let app: ReturnType<typeof getOrCreateApplication>;
+  try {
+    app = getOrCreateApplication(sessionId, requestedApplicationId);
+  } catch (error) {
+    if (error instanceof ApplicationOwnershipError) {
+      return jsonResponse({ error: "APPLICATION_NOT_FOUND" }, 404);
+    }
+    throw error;
+  }
   const requestedStep = body.current_step;
 
   if (!isApplicationStep(requestedStep)) {
