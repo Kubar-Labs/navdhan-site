@@ -28,7 +28,7 @@ from sqlalchemy import (
     func,
     text,
 )
-from sqlalchemy.dialects.postgresql import CITEXT, ENUM, JSONB, UUID
+from sqlalchemy.dialects.postgresql import CITEXT, ENUM, INET, JSONB, UUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -194,6 +194,43 @@ class ChecklistVersion(CollectionBase):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
+
+
+class DocumentType(CollectionBase):
+    __tablename__ = "document_types"
+
+    document_type_code: Mapped[str] = mapped_column(CITEXT, primary_key=True)
+    display_name: Mapped[str] = mapped_column(Text, nullable=False)
+    category: Mapped[str] = mapped_column(
+        ENUM(
+            "kyc", "entity_proof", "vintage", "financial", "banking", "tax", "obligation",
+            "premises", "legal", name="document_category", create_type=False,
+        ),
+        nullable=False,
+    )
+    attaches_to: Mapped[str] = mapped_column(
+        ENUM("entity", "person", "facility", "document", "registration", name="attaches_to", create_type=False),
+        nullable=False,
+    )
+    is_periodic: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    periodicity: Mapped[str] = mapped_column(
+        ENUM("none", "monthly", "quarterly", "annual", name="periodicity", create_type=False),
+        nullable=False,
+    )
+    is_multi_instance: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    allows_consolidated_file: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    max_size_bytes: Mapped[int] = mapped_column(Integer, nullable=False)
+    max_page_count: Mapped[int | None] = mapped_column(Integer)
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("true"))
+
+
+class DocumentTypeMimeType(CollectionBase):
+    __tablename__ = "document_type_mime_types"
+
+    document_type_code: Mapped[str] = mapped_column(
+        CITEXT, ForeignKey("document_types.document_type_code"), primary_key=True
+    )
+    mime_type: Mapped[str] = mapped_column(Text, primary_key=True)
 
 
 class Borrower(CollectionBase):
@@ -802,3 +839,317 @@ class ApplicationRequirement(CollectionBase):
     due_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+
+
+class ApplicationRequirementEvent(CollectionBase):
+    __tablename__ = "application_requirement_events"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["marketplace_id", "application_requirement_id"],
+            [
+                "application_requirements.marketplace_id",
+                "application_requirements.application_requirement_id",
+            ],
+        ),
+    )
+
+    event_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    marketplace_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    application_requirement_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    event_type: Mapped[str] = mapped_column(
+        ENUM(
+            "status_change", "waived", "rejected", "recalculated",
+            name="requirement_event_type", create_type=False,
+        ),
+        nullable=False,
+    )
+    from_status: Mapped[str | None] = mapped_column(
+        ENUM(
+            "pending", "partial", "collected", "accepted_for_review", "rejected", "waived",
+            "not_applicable", "missing", name="requirement_status", create_type=False,
+        )
+    )
+    to_status: Mapped[str | None] = mapped_column(
+        ENUM(
+            "pending", "partial", "collected", "accepted_for_review", "rejected", "waived",
+            "not_applicable", "missing", name="requirement_status", create_type=False,
+        )
+    )
+    reason: Mapped[str | None] = mapped_column(Text)
+    actor_type: Mapped[str] = mapped_column(
+        ENUM("borrower", "marketplace", "ops", "system", "lender", name="actor_type", create_type=False),
+        nullable=False,
+    )
+    actor_ref: Mapped[str | None] = mapped_column(Text)
+    occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    metadata_: Mapped[dict[str, Any]] = mapped_column("metadata", JSONB, nullable=False, default=dict)
+
+
+class ApplicationCreditDeclaration(CollectionBase):
+    __tablename__ = "application_credit_declarations"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["marketplace_id", "application_id"],
+            ["loan_applications.marketplace_id", "loan_applications.application_id"],
+        ),
+        ForeignKeyConstraint(
+            ["marketplace_id", "application_id", "application_party_id"],
+            [
+                "application_parties.marketplace_id",
+                "application_parties.application_id",
+                "application_parties.application_party_id",
+            ],
+        ),
+    )
+
+    declaration_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    marketplace_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    application_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    application_party_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    declared_cibil_score: Mapped[int | None] = mapped_column(Integer)
+    score_source: Mapped[str] = mapped_column(
+        ENUM("self_declared", "bureau_fetched", name="score_source", create_type=False),
+        nullable=False,
+        default="self_declared",
+    )
+    has_active_credit_facilities: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    declared_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    superseded_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+
+
+class ApplicationExistingCreditFacility(CollectionBase):
+    __tablename__ = "application_existing_credit_facilities"
+    __table_args__ = (
+        UniqueConstraint("marketplace_id", "facility_id"),
+        UniqueConstraint("marketplace_id", "application_id", "facility_id"),
+        ForeignKeyConstraint(
+            ["marketplace_id", "application_id"],
+            ["loan_applications.marketplace_id", "loan_applications.application_id"],
+        ),
+    )
+
+    facility_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    marketplace_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    application_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    facility_type: Mapped[str] = mapped_column(
+        ENUM(
+            "home", "personal", "car", "education", "vehicle", "business", "gold", "credit", "other",
+            name="facility_type", create_type=False,
+        ),
+        nullable=False,
+    )
+    lender_name: Mapped[str] = mapped_column(Text, nullable=False)
+    original_loan_amount: Mapped[Decimal | None] = mapped_column(Numeric(18, 2))
+    outstanding_amount: Mapped[Decimal | None] = mapped_column(Numeric(18, 2))
+    emi_amount: Mapped[Decimal | None] = mapped_column(Numeric(18, 2))
+    interest_rate_percent: Mapped[Decimal | None] = mapped_column(Numeric(5, 2))
+    currency: Mapped[str] = mapped_column(CHAR(3), nullable=False, server_default="INR")
+    tenure_months: Mapped[int | None] = mapped_column(SmallInteger)
+    start_date: Mapped[date | None] = mapped_column(Date)
+    end_date: Mapped[date | None] = mapped_column(Date)
+    emis_paid_count: Mapped[int | None] = mapped_column(Integer)
+    total_amount_paid: Mapped[Decimal | None] = mapped_column(Numeric(18, 2))
+    is_closed: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("false"))
+    source: Mapped[str] = mapped_column(
+        ENUM("declared", "bureau", "bank_statement", "gst", name="facility_source", create_type=False),
+        nullable=False,
+        server_default="declared",
+    )
+    declared_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+
+
+class Document(CollectionBase):
+    __tablename__ = "documents"
+    __table_args__ = (
+        UniqueConstraint("marketplace_id", "document_id"),
+        UniqueConstraint("marketplace_id", "application_id", "document_id"),
+        UniqueConstraint("marketplace_id", "idempotency_key"),
+        ForeignKeyConstraint(
+            ["marketplace_id", "application_id"],
+            ["loan_applications.marketplace_id", "loan_applications.application_id"],
+        ),
+        ForeignKeyConstraint(
+            ["marketplace_id", "application_id", "application_party_id"],
+            [
+                "application_parties.marketplace_id",
+                "application_parties.application_id",
+                "application_parties.application_party_id",
+            ],
+        ),
+        ForeignKeyConstraint(
+            ["marketplace_id", "application_id", "facility_id"],
+            [
+                "application_existing_credit_facilities.marketplace_id",
+                "application_existing_credit_facilities.application_id",
+                "application_existing_credit_facilities.facility_id",
+            ],
+        ),
+        ForeignKeyConstraint(
+            ["marketplace_id", "supersedes_document_id"],
+            ["documents.marketplace_id", "documents.document_id"],
+        ),
+    )
+
+    document_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    marketplace_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    application_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    document_type_code: Mapped[str] = mapped_column(
+        CITEXT, ForeignKey("document_types.document_type_code"), nullable=False
+    )
+    attaches_to: Mapped[str] = mapped_column(
+        ENUM("entity", "person", "facility", "document", "registration", name="attaches_to", create_type=False),
+        nullable=False,
+    )
+    borrower_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
+    application_party_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
+    facility_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
+    gcs_bucket: Mapped[str] = mapped_column(Text, nullable=False)
+    gcs_object: Mapped[str] = mapped_column(Text, nullable=False)
+    gcs_generation: Mapped[int | None] = mapped_column(Integer)
+    sha256: Mapped[bytes | None] = mapped_column(LargeBinary)
+    mime_type: Mapped[str] = mapped_column(Text, nullable=False)
+    size_bytes: Mapped[int] = mapped_column(Integer, nullable=False)
+    page_count: Mapped[int | None] = mapped_column(Integer)
+    is_password_protected: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("false"))
+    coverage_from: Mapped[date | None] = mapped_column(Date)
+    coverage_to: Mapped[date | None] = mapped_column(Date)
+    fiscal_year_start: Mapped[date | None] = mapped_column(Date)
+    status: Mapped[str] = mapped_column(
+        ENUM("uploading", "uploaded", "scan_failed", "superseded", "purged", name="document_status", create_type=False),
+        nullable=False,
+        server_default="uploading",
+    )
+    scan_result: Mapped[str] = mapped_column(
+        ENUM("pending", "clean", "infected", "unreadable", name="scan_result", create_type=False),
+        nullable=False,
+        server_default="pending",
+    )
+    extraction_status: Mapped[str] = mapped_column(
+        ENUM("not_attempted", "pending", "parsed", "failed", name="extraction_status", create_type=False),
+        nullable=False,
+        server_default="not_attempted",
+    )
+    extracted_data: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
+    supersedes_document_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
+    idempotency_key: Mapped[str] = mapped_column(Text, nullable=False)
+    uploaded_by_type: Mapped[str] = mapped_column(
+        ENUM("borrower", "marketplace", "ops", "system", "lender", name="actor_type", create_type=False),
+        nullable=False,
+    )
+    uploaded_by_ref: Mapped[str | None] = mapped_column(Text)
+    uploaded_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    retention_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    purged_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+
+
+class DocumentRequirementSatisfaction(CollectionBase):
+    __tablename__ = "document_requirement_satisfactions"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["marketplace_id", "application_id"],
+            ["loan_applications.marketplace_id", "loan_applications.application_id"],
+        ),
+        ForeignKeyConstraint(
+            ["marketplace_id", "application_id", "application_requirement_id"],
+            [
+                "application_requirements.marketplace_id",
+                "application_requirements.application_id",
+                "application_requirements.application_requirement_id",
+            ],
+        ),
+        ForeignKeyConstraint(
+            ["marketplace_id", "application_id", "document_id"],
+            ["documents.marketplace_id", "documents.application_id", "documents.document_id"],
+        ),
+    )
+
+    satisfaction_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    marketplace_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    application_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    application_requirement_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    document_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    linked_by_type: Mapped[str] = mapped_column(
+        ENUM("borrower", "marketplace", "ops", "system", "lender", name="actor_type", create_type=False),
+        nullable=False,
+    )
+    linked_by_ref: Mapped[str | None] = mapped_column(Text)
+    linked_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    unlinked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    unlink_reason: Mapped[str | None] = mapped_column(Text)
+
+
+class DocumentEvent(CollectionBase):
+    __tablename__ = "document_events"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["marketplace_id", "document_id"],
+            ["documents.marketplace_id", "documents.document_id"],
+        ),
+    )
+
+    event_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    marketplace_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    document_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    event_type: Mapped[str] = mapped_column(
+        ENUM(
+            "uploaded", "scanned", "parsed", "linked", "unlinked", "superseded", "purged",
+            name="document_event_type", create_type=False,
+        ),
+        nullable=False,
+    )
+    actor_type: Mapped[str] = mapped_column(
+        ENUM("borrower", "marketplace", "ops", "system", "lender", name="actor_type", create_type=False),
+        nullable=False,
+    )
+    actor_ref: Mapped[str | None] = mapped_column(Text)
+    occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    metadata_: Mapped[dict[str, Any]] = mapped_column("metadata", JSONB, nullable=False, default=dict)
+
+
+class ConsentPurpose(CollectionBase):
+    __tablename__ = "consent_purposes"
+
+    purpose_code: Mapped[str] = mapped_column(CITEXT, primary_key=True)
+    display_name: Mapped[str] = mapped_column(Text, nullable=False)
+    notice_text: Mapped[str] = mapped_column(Text, nullable=False)
+    notice_version: Mapped[int] = mapped_column(Integer, nullable=False)
+    is_mandatory: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("false"))
+    retention_months: Mapped[int] = mapped_column(Integer, nullable=False)
+    effective_from: Mapped[date] = mapped_column(Date, nullable=False)
+    effective_to: Mapped[date | None] = mapped_column(Date)
+
+
+class ConsentGrant(CollectionBase):
+    __tablename__ = "consent_grants"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["marketplace_id", "application_id"],
+            ["loan_applications.marketplace_id", "loan_applications.application_id"],
+        ),
+        ForeignKeyConstraint(
+            ["marketplace_id", "person_id"],
+            ["persons.marketplace_id", "persons.person_id"],
+        ),
+    )
+
+    grant_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    marketplace_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    application_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    person_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    purpose_code: Mapped[str] = mapped_column(
+        CITEXT, ForeignKey("consent_purposes.purpose_code"), nullable=False
+    )
+    destination_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    notice_version: Mapped[int] = mapped_column(Integer, nullable=False)
+    action: Mapped[str] = mapped_column(
+        ENUM("granted", "revoked", name="consent_action", create_type=False), nullable=False
+    )
+    artefact_hash: Mapped[bytes | None] = mapped_column(LargeBinary)
+    ip_address: Mapped[str | None] = mapped_column(INET)
+    user_agent: Mapped[str | None] = mapped_column(Text)
+    occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())

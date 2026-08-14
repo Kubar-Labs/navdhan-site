@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 import asyncio
+import base64
+import os
+import secrets
 from pathlib import Path
 import sys
 import unittest
@@ -11,9 +14,13 @@ from fastapi.testclient import TestClient
 from collection_app import LOCAL_COLLECTION_DATABASE_URL, build_collection_app
 
 
+def _valid_key() -> str:
+    return base64.b64encode(secrets.token_bytes(32)).decode()
+
+
 class CollectionAppTests(unittest.TestCase):
     def test_health_endpoint_is_available_without_legacy_runtime(self) -> None:
-        app = build_collection_app(run_database_probe=False)
+        app = build_collection_app(run_database_probe=False, validate_crypto=False)
 
         with TestClient(app) as client:
             response = client.get("/health")
@@ -23,7 +30,7 @@ class CollectionAppTests(unittest.TestCase):
         self.assertNotIn("services.perfios", sys.modules)
 
     def test_collection_runtime_exposes_collection_routes_only(self) -> None:
-        app = build_collection_app(run_database_probe=False)
+        app = build_collection_app(run_database_probe=False, validate_crypto=False)
 
         paths = set(app.openapi()["paths"])
 
@@ -60,7 +67,7 @@ class CollectionAppTests(unittest.TestCase):
             patch("db.session.check_connection", new_callable=AsyncMock) as check_connection,
             patch("db.session.close_engine", new_callable=AsyncMock),
         ):
-            app = build_collection_app(database_url=database_location)
+            app = build_collection_app(database_url=database_location, validate_crypto=False)
             with TestClient(app) as client:
                 response = client.get("/health")
 
@@ -78,7 +85,9 @@ class CollectionAppTests(unittest.TestCase):
             ),
             patch("db.session.close_engine", new_callable=AsyncMock) as close_engine,
         ):
-            app = build_collection_app(database_url="postgresql+asyncpg://local/test")
+            app = build_collection_app(
+                database_url="postgresql+asyncpg://local/test", validate_crypto=False
+            )
 
             async def start_app() -> None:
                 async with app.router.lifespan_context(app):
@@ -95,11 +104,82 @@ class CollectionAppTests(unittest.TestCase):
             patch("db.session.check_connection", new_callable=AsyncMock),
             patch("db.session.close_engine", new_callable=AsyncMock),
         ):
-            app = build_collection_app()
+            app = build_collection_app(validate_crypto=False)
             with TestClient(app):
                 pass
 
         init_engine.assert_called_once_with(LOCAL_COLLECTION_DATABASE_URL)
+
+
+class CollectionAppCryptoStartupTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self._previous_encryption_key = os.environ.get("ENCRYPTION_KEY")
+        self._previous_lookup_key = os.environ.get("LOOKUP_HMAC_KEY")
+
+    def tearDown(self) -> None:
+        for name, prior in (
+            ("ENCRYPTION_KEY", self._previous_encryption_key),
+            ("LOOKUP_HMAC_KEY", self._previous_lookup_key),
+        ):
+            if prior is None:
+                os.environ.pop(name, None)
+            else:
+                os.environ[name] = prior
+        from security import crypto
+
+        crypto._cached_key = None
+
+    def _start(self) -> None:
+        app = build_collection_app(run_database_probe=False)
+        with TestClient(app):
+            pass
+
+    def test_startup_fails_clearly_when_encryption_key_is_missing(self) -> None:
+        os.environ.pop("ENCRYPTION_KEY", None)
+        os.environ["LOOKUP_HMAC_KEY"] = _valid_key()
+        from security import crypto
+
+        crypto._cached_key = None
+
+        with self.assertRaisesRegex(RuntimeError, "ENCRYPTION_KEY"):
+            self._start()
+
+    def test_startup_fails_clearly_when_encryption_key_is_the_wrong_length(self) -> None:
+        os.environ["ENCRYPTION_KEY"] = base64.b64encode(secrets.token_bytes(16)).decode()
+        os.environ["LOOKUP_HMAC_KEY"] = _valid_key()
+        from security import crypto
+
+        crypto._cached_key = None
+
+        with self.assertRaisesRegex(RuntimeError, "ENCRYPTION_KEY"):
+            self._start()
+
+    def test_startup_fails_clearly_when_lookup_hmac_key_is_missing(self) -> None:
+        os.environ["ENCRYPTION_KEY"] = _valid_key()
+        os.environ.pop("LOOKUP_HMAC_KEY", None)
+
+        with self.assertRaisesRegex(RuntimeError, "LOOKUP_HMAC_KEY"):
+            self._start()
+
+    def test_startup_fails_clearly_when_lookup_hmac_key_is_too_short(self) -> None:
+        os.environ["ENCRYPTION_KEY"] = _valid_key()
+        os.environ["LOOKUP_HMAC_KEY"] = base64.b64encode(secrets.token_bytes(8)).decode()
+
+        with self.assertRaisesRegex(RuntimeError, "LOOKUP_HMAC_KEY"):
+            self._start()
+
+    def test_startup_succeeds_when_both_crypto_keys_are_valid(self) -> None:
+        os.environ["ENCRYPTION_KEY"] = _valid_key()
+        os.environ["LOOKUP_HMAC_KEY"] = _valid_key()
+        from security import crypto
+
+        crypto._cached_key = None
+
+        app = build_collection_app(run_database_probe=False)
+        with TestClient(app) as client:
+            response = client.get("/health")
+
+        self.assertEqual(200, response.status_code)
 
 
 if __name__ == "__main__":

@@ -4,11 +4,14 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Check } from "lucide-react";
 import { TrustBadgeBar } from "@/src/components/apply/TrustBadgeBar.stub";
 import { InlineFieldFeedback } from "@/src/components/apply/InlineFieldFeedback";
+import { DocumentChecklist, useRequirements } from "@/app/apply/_components/DocumentChecklist";
+import { ExistingLoansPanel } from "@/app/apply/_components/ExistingLoansPanel";
 import {
   ApplyFormValues,
   CollectionWriteResponse,
+  ConsentStatusResponse,
   Constitution,
-  DocumentRef,
+  SubmitApplicationResponse,
   WizardStepId,
 } from "@/app/apply/lib/types";
 import {
@@ -36,14 +39,17 @@ import {
   ApplyApiError,
   addApplicationParty,
   createApplySession,
+  fetchConsentStatus,
   fetchCurrentApplication,
   saveAadhaarIdentity,
   saveBusinessProfile,
+  saveConsentGrants,
   saveEntityPan,
   saveGstRegistration,
   saveLoanIntent,
   savePanIdentity,
   savePrimaryPerson,
+  submitCollectionApplication,
   updateApplicationParty,
 } from "@/app/apply/lib/api";
 import { Stepper, WizardStepDefinition } from "@/src/components/apply/Stepper";
@@ -51,8 +57,50 @@ import { NavigationFooter } from "@/src/components/apply/NavigationFooter";
 import { ConsentOverlay } from "@/src/components/apply/ConsentOverlay";
 import { clearDraftValues } from "@/app/apply/lib/storage";
 
-const ITR_ALLOWED_TYPES = ["application/pdf"];
-const ITR_MAX_BYTES = 10 * 1024 * 1024;
+const SATISFIED_REQUIREMENT_STATUSES = new Set([
+  "collected",
+  "accepted_for_review",
+  "waived",
+  "not_applicable",
+]);
+
+function useConsentStatus(enabled: boolean): {
+  consentStatus: ConsentStatusResponse | null;
+  loading: boolean;
+  error: string | null;
+  reload: () => Promise<void>;
+  setConsentStatus: (status: ConsentStatusResponse) => void;
+} {
+  const [consentStatus, setConsentStatus] = useState<ConsentStatusResponse | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const reload = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await fetchConsentStatus();
+      setConsentStatus(data);
+    } catch (fetchError) {
+      setError(
+        fetchError instanceof ApplyApiError
+          ? fetchError.message
+          : "Could not load consent details.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (enabled && !consentStatus) {
+      void reload();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enabled, reload]);
+
+  return { consentStatus, loading, error, reload, setConsentStatus };
+}
 
 export interface WizardSubmissionResult {
   outcome: "submitted_success" | "submission_failed";
@@ -385,10 +433,6 @@ export function WizardShell({
     itr_consent: initialValues.itr_consent ?? false,
     bank_linked: initialValues.bank_linked ?? false,
     bank_consent: initialValues.bank_consent ?? false,
-    privacy_consent: initialValues.privacy_consent ?? false,
-    terms_consent: initialValues.terms_consent ?? false,
-    credit_consent: initialValues.credit_consent ?? false,
-    communication_consent: initialValues.communication_consent ?? false,
   }));
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -397,6 +441,76 @@ export function WizardShell({
   const [isBootstrapping, setIsBootstrapping] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
+
+  const {
+    requirements,
+    loading: requirementsLoading,
+    error: requirementsError,
+    reload: reloadRequirements,
+    setRequirements,
+  } = useRequirements(application !== null);
+
+  const {
+    consentStatus,
+    loading: consentLoading,
+    error: consentError,
+    reload: reloadConsent,
+    setConsentStatus,
+  } = useConsentStatus(application !== null);
+
+  const [consentGrants, setConsentGrants] = useState<Record<string, boolean>>({});
+  const [submissionResultState, setSubmissionResultState] = useState<SubmitApplicationResponse | null>(
+    null,
+  );
+
+  useEffect(() => {
+    if (!consentStatus) return;
+    setConsentGrants((previous) => {
+      const next = { ...previous };
+      let changed = false;
+      for (const purpose of consentStatus.purposes) {
+        if (!(purpose.purpose_code in next)) {
+          next[purpose.purpose_code] = purpose.granted;
+          changed = true;
+        }
+      }
+      return changed ? next : previous;
+    });
+  }, [consentStatus]);
+
+  // `application`, `requirements`, and `consentStatus` are three separately
+  // fetched/mutated snapshots of the SAME backend `loan_applications` row —
+  // every one of their write endpoints advances the one shared
+  // `lock_version` column and returns it, but only into its own slice of
+  // state. A document upload, credit-declaration save, or consent grant on
+  // one slice otherwise leaves the other two holding a stale
+  // `expected_lock_version`, so the very next write from *this same tab*
+  // gets rejected as if a second tab had raced it. Reconcile all three to
+  // whichever value is highest immediately after every render, so any
+  // handler reading any slice's `lock_version` always sees the real
+  // current one. This does not affect genuine multi-tab conflicts: a write
+  // from another tab changes the backend row without ever touching this
+  // tab's React state, so this tab's next write still carries a version
+  // behind what the backend now holds and is still correctly rejected.
+  useEffect(() => {
+    const versions = [
+      application?.lock_version,
+      requirements?.lock_version,
+      consentStatus?.lock_version,
+    ].filter((value): value is number => typeof value === "number");
+    if (versions.length < 2) return;
+    const latest = Math.max(...versions);
+
+    if (application && application.lock_version < latest) {
+      setApplication({ ...application, lock_version: latest });
+    }
+    if (requirements && requirements.lock_version < latest) {
+      setRequirements({ ...requirements, lock_version: latest });
+    }
+    if (consentStatus && consentStatus.lock_version < latest) {
+      setConsentStatus({ ...consentStatus, lock_version: latest });
+    }
+  }, [application, requirements, consentStatus, setRequirements, setConsentStatus]);
 
   const currentStepId = orderedSteps[currentIndex] ?? "loan_intent";
 
@@ -650,33 +764,15 @@ export function WizardShell({
         }
         break;
       }
-      case "itr_upload": {
-        if (
-          !values.itr_document ||
-          !ITR_ALLOWED_TYPES.includes(values.itr_document.type) ||
-          values.itr_document.size > ITR_MAX_BYTES
-        ) {
-          next.itr_document = t.invalidItr ?? "Invalid itr";
-        }
-        if (!values.itr_consent) {
-          next.itr_consent = "Please accept the ITR consent";
-        }
-        break;
-      }
+      case "itr_upload":
       case "bank_statements": {
-        if (!values.bank_linked) {
-          next.bank_linked = "Please link your bank account";
-        }
-        if (!values.bank_consent) {
-          next.bank_consent = "Please accept the bank statement consent";
-        }
         break;
       }
       case "review_submit": {
-        if (!values.privacy_consent) next.privacy_consent = "Required";
-        if (!values.terms_consent) next.terms_consent = "Required";
-        if (!values.credit_consent) next.credit_consent = "Required";
-        if (!values.communication_consent) next.communication_consent = "Required";
+        // Consent completeness is gated by canContinue (backed by
+        // consentStatus/consentGrants) and re-checked authoritatively by
+        // the backend on submit; there is no client-only field to validate
+        // here.
         break;
       }
       default:
@@ -717,23 +813,29 @@ export function WizardShell({
         return true;
       }
       case "itr_upload": {
-        return !!values.itr_document && !!values.itr_consent;
+        return true;
       }
       case "bank_statements": {
-        return !!values.bank_linked && !!values.bank_consent;
+        return true;
       }
       case "review_submit": {
+        const mandatoryConsentGranted = (consentStatus?.purposes ?? [])
+          .filter((purpose) => purpose.is_mandatory)
+          .every((purpose) => consentGrants[purpose.purpose_code] ?? purpose.granted);
+        const documentsSatisfied = (requirements?.requirements ?? []).every(
+          (row) => !row.blocks_submission || SATISFIED_REQUIREMENT_STATUSES.has(row.status),
+        );
         return (
-          !!values.privacy_consent &&
-          !!values.terms_consent &&
-          !!values.credit_consent &&
-          !!values.communication_consent
+          !!consentStatus &&
+          !!requirements &&
+          mandatoryConsentGranted &&
+          documentsSatisfied
         );
       }
       default:
         return true;
     }
-  }, [values, currentStepId]);
+  }, [values, currentStepId, consentStatus, consentGrants, requirements]);
 
   const advance = () => {
     setCompletedSteps((prev) => {
@@ -927,10 +1029,47 @@ export function WizardShell({
     }
 
     if (currentStepId === "review_submit") {
-      if (submissionResult?.outcome === "submitted_success") {
-        updateValue("application_reference", submissionResult.reference_number ?? undefined);
+      if (!application || !consentStatus) return;
+      setIsSaving(true);
+      setApiError(null);
+      try {
+        const consentResult = await saveConsentGrants({
+          grants: Object.fromEntries(
+            consentStatus.purposes.map((purpose) => [
+              purpose.purpose_code,
+              consentGrants[purpose.purpose_code] ?? purpose.granted,
+            ]),
+          ),
+          expected_lock_version: application.lock_version,
+        });
+        setConsentStatus(consentResult);
+        const result = await submitCollectionApplication({
+          expected_lock_version: consentResult.lock_version,
+        });
+        setSubmissionResultState(result);
+        setApplication((previous) =>
+          previous
+            ? { ...previous, lock_version: result.lock_version, status: result.status }
+            : previous,
+        );
+        advance();
+      } catch (error) {
+        if (errorStatus(error) === 422) {
+          setApiError("Your application is not complete yet. Please review the checklist above.");
+        } else if (errorStatus(error) === 409) {
+          try {
+            const latest = await fetchCurrentApplication();
+            applySnapshot(latest, true);
+            setApiError("This application changed in another tab. We refreshed the latest data.");
+          } catch {
+            setApiError("This application changed. Refresh and try again.");
+          }
+        } else {
+          setApiError("We could not submit your application. Please try again.");
+        }
+      } finally {
+        setIsSaving(false);
       }
-      advance();
       return;
     }
 
@@ -1463,81 +1602,75 @@ export function WizardShell({
     </div>
   );
 
-  const renderItr = () => (
-    <div className="space-y-5">
-      <div>
-        <label htmlFor="itr_document" className="block text-sm font-medium text-nt-slate-700">
-          {t.itrUploadLabel ?? "Upload ITR (PDF)"}
-        </label>
-        <input
-          id="itr_document"
-          name="itr_document"
-          type="file"
-          accept="application/pdf"
-          onChange={(e) => {
-            const file = e.target.files?.[0];
-            const doc: DocumentRef | undefined = file
-              ? {
-                  name: file.name,
-                  type: file.type,
-                  size: file.size,
-                }
-              : undefined;
-            updateValue("itr_document", doc);
-          }}
-          className="mt-2 block w-full text-sm text-nt-slate-700 file:mr-4 file:rounded-md file:border-0 file:bg-nt-orange-600 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-nt-orange-700"
-        />
-        <InlineFieldFeedback
-          fieldId="itr_document"
-          state={touched.itr_document && errors.itr_document ? "error" : "idle"}
-          messageTemplate={errors.itr_document ?? ""}
-        />
-      </div>
-      <ConsentOverlay
-        title={t.itrConsentTitle ?? "ITR consent"}
-        summary={
-          t.itrConsentSummary ?? "Please upload your latest filed Income Tax Return in PDF format."
-        }
-        details={t.itrConsentDetails ?? ""}
-        accepted={values.itr_consent ?? false}
-        onChange={(accepted) => updateValue("itr_consent", accepted)}
-        checkboxLabel={t.itrConsentLabel ?? "I confirm this is my latest ITR"}
-        ariaLabel="ITR consent"
-      />
+  const renderRequirementsError = () => (
+    <div className="space-y-3">
+      <p className="text-sm text-nt-red-500" role="alert">
+        {requirementsError}
+      </p>
+      <button
+        type="button"
+        onClick={() => void reloadRequirements()}
+        disabled={requirementsLoading}
+        className="rounded-md border border-nt-slate-300 px-4 py-2 text-sm font-semibold text-nt-slate-900 hover:bg-nt-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        {requirementsLoading ? "Retrying…" : "Retry"}
+      </button>
     </div>
   );
 
-  const renderBank = () => (
-    <div className="space-y-5">
+  const renderRequirementsErrorBanner = () => (
+    <div className="mb-3 flex items-center justify-between gap-3 rounded-md bg-nt-red-500/10 px-4 py-2">
+      <p className="text-sm text-nt-red-500" role="alert">
+        {requirementsError}
+      </p>
       <button
         type="button"
-        onClick={() => updateValue("bank_linked", true)}
-        disabled={values.bank_linked}
-        className="w-full rounded-md border border-nt-slate-300 bg-white px-6 py-3 text-sm font-semibold text-nt-slate-900 hover:bg-nt-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+        onClick={() => void reloadRequirements()}
+        disabled={requirementsLoading}
+        className="shrink-0 text-sm font-semibold text-nt-slate-900 underline disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {values.bank_linked ? (
-          <span className="flex items-center justify-center gap-2">
-            <Check className="h-4 w-4" />
-            Bank account linked
-          </span>
-        ) : (
-          (t.linkBankLabel ?? "Link bank account")
-        )}
+        {requirementsLoading ? "Retrying…" : "Retry"}
       </button>
-      <ConsentOverlay
-        title={t.bankConsentTitle ?? "Bank statement consent"}
-        summary={
-          t.bankConsentSummary ??
-          "We will fetch the last 6-12 months of your business bank statements."
-        }
-        details={t.bankConsentDetails ?? ""}
-        accepted={values.bank_consent ?? false}
-        onChange={(accepted) => updateValue("bank_consent", accepted)}
-        checkboxLabel={t.bankConsentLabel ?? "I consent to fetch bank statements"}
-        ariaLabel="Bank statement consent"
-      />
     </div>
   );
+
+  const renderItr = () => {
+    // Check the error first: once a fetch has failed, `requirements` stays
+    // null forever, so checking `!requirements` first would show an
+    // indefinite loading message instead of the real error.
+    if (requirementsError && !requirements) {
+      return renderRequirementsError();
+    }
+    if (!requirements) {
+      return <p className="text-sm text-nt-slate-500">Loading your document checklist…</p>;
+    }
+    return (
+      <>
+        {requirementsError && renderRequirementsErrorBanner()}
+        <DocumentChecklist
+          requirements={requirements}
+          onChange={setRequirements}
+          filter={(row) => row.attaches_to !== "facility"}
+          emptyMessage="No documents required for this application yet."
+        />
+      </>
+    );
+  };
+
+  const renderBank = () => {
+    if (requirementsError && !requirements) {
+      return renderRequirementsError();
+    }
+    if (!requirements) {
+      return <p className="text-sm text-nt-slate-500">Loading…</p>;
+    }
+    return (
+      <>
+        {requirementsError && renderRequirementsErrorBanner()}
+        <ExistingLoansPanel requirements={requirements} onChange={setRequirements} />
+      </>
+    );
+  };
 
   const renderReview = () => {
     const rows: { label: string; value: string }[] = [
@@ -1600,24 +1733,29 @@ export function WizardShell({
             : (values.annual_turnover ?? "—"),
       },
       {
-        label: t.itrUploadLabel ?? "ITR",
-        value: values.itr_document ? values.itr_document.name : "Not uploaded",
+        label: t.itrUploadLabel ?? "Documents",
+        value: requirements
+          ? `${requirements.requirements.filter((row) => row.status === "collected").length} of ${requirements.requirements.length} uploaded`
+          : "—",
       },
       {
-        label: t.linkBankLabel ?? "Bank statements",
-        value: values.bank_linked ? "Linked" : "Not linked",
+        label: t.linkBankLabel ?? "Existing loans",
+        value:
+          requirements?.credit_declaration.has_active_credit_facilities === true
+            ? `${requirements.facilities.length} declared`
+            : requirements?.credit_declaration.has_active_credit_facilities === false
+              ? "None declared"
+              : "—",
       },
     ];
 
-    const consentCheckboxes: {
-      field: keyof ApplyFormValues;
-      label?: string;
-    }[] = [
-      { field: "privacy_consent", label: t.privacyConsentLabel },
-      { field: "terms_consent", label: t.termsConsentLabel },
-      { field: "credit_consent", label: t.creditConsentLabel },
-      { field: "communication_consent", label: t.communicationConsentLabel },
-    ];
+    const outstandingRequirements = (requirements?.requirements ?? []).filter(
+      (row) => row.blocks_submission && !SATISFIED_REQUIREMENT_STATUSES.has(row.status),
+    );
+
+    const toggleConsent = (purposeCode: string, checked: boolean) => {
+      setConsentGrants((previous) => ({ ...previous, [purposeCode]: checked }));
+    };
 
     return (
       <div className="space-y-5">
@@ -1633,25 +1771,79 @@ export function WizardShell({
           ))}
         </dl>
 
-        <div className="space-y-3">
-          {consentCheckboxes.map(({ field, label }) => (
-            <label key={field} className="flex items-start gap-3 text-sm text-nt-slate-700">
-              <input
-                type="checkbox"
-                checked={(values[field] as boolean) ?? false}
-                onChange={(e) => updateValue(field, e.target.checked)}
-                className="mt-0.5 h-4 w-4 rounded border-nt-slate-300 text-nt-orange-600 focus:ring-nt-orange-600"
-              />
-              <span>{label ?? field}</span>
-            </label>
-          ))}
-        </div>
+        {outstandingRequirements.length > 0 && (
+          <div className="rounded-lg bg-nt-red-500/10 px-4 py-3 text-sm text-nt-red-500">
+            <p className="font-semibold">Complete these before submitting:</p>
+            <ul className="mt-1 list-disc pl-5">
+              {outstandingRequirements.map((row) => (
+                <li key={row.application_requirement_id}>{row.display_name}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {consentError && !consentStatus ? (
+          <div className="space-y-3">
+            <p className="text-sm text-nt-red-500" role="alert">
+              {consentError}
+            </p>
+            <button
+              type="button"
+              onClick={() => void reloadConsent()}
+              disabled={consentLoading}
+              className="rounded-md border border-nt-slate-300 px-4 py-2 text-sm font-semibold text-nt-slate-900 hover:bg-nt-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {consentLoading ? "Retrying…" : "Retry"}
+            </button>
+          </div>
+        ) : !consentStatus ? (
+          <p className="text-sm text-nt-slate-500">Loading consent details…</p>
+        ) : (
+          <div className="space-y-3">
+            {consentError && (
+              <div className="mb-3 flex items-center justify-between gap-3 rounded-md bg-nt-red-500/10 px-4 py-2">
+                <p className="text-sm text-nt-red-500" role="alert">
+                  {consentError}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => void reloadConsent()}
+                  disabled={consentLoading}
+                  className="shrink-0 text-sm font-semibold text-nt-slate-900 underline disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {consentLoading ? "Retrying…" : "Retry"}
+                </button>
+              </div>
+            )}
+            {consentStatus.purposes.map((purpose) => (
+              <label
+                key={purpose.purpose_code}
+                className="flex items-start gap-3 text-sm text-nt-slate-700"
+              >
+                <input
+                  type="checkbox"
+                  checked={consentGrants[purpose.purpose_code] ?? purpose.granted}
+                  onChange={(e) => toggleConsent(purpose.purpose_code, e.target.checked)}
+                  className="mt-0.5 h-4 w-4 rounded border-nt-slate-300 text-nt-orange-600 focus:ring-nt-orange-600"
+                />
+                <span>
+                  <span>
+                    {purpose.display_name}
+                    {!purpose.is_mandatory && " (optional)"}
+                  </span>
+                  {purpose.notice_text !== purpose.display_name && (
+                    <span className="block text-xs text-nt-slate-500">{purpose.notice_text}</span>
+                  )}
+                </span>
+              </label>
+            ))}
+          </div>
+        )}
       </div>
     );
   };
 
   const renderResult = () => {
-    const success = submissionResult?.outcome === "submitted_success";
     return (
       <div className="space-y-6 text-center">
         <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-nt-green-500/10 text-nt-green-500">
@@ -1670,7 +1862,10 @@ export function WizardShell({
             className="mt-1 text-lg font-semibold text-nt-slate-900"
             data-testid="reference-number"
           >
-            {submissionResult?.reference_number ?? values.application_reference ?? "—"}
+            {submissionResultState?.application_no ??
+              submissionResult?.reference_number ??
+              values.application_reference ??
+              "—"}
           </p>
         </div>
         <button

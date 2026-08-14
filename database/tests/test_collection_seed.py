@@ -97,6 +97,10 @@ class CollectionSeedContractTests(unittest.TestCase):
             r"\('communications'\s*,.*?\sfalse\s*,\s*\d+\s*,",
         )
 
+    def test_a_consent_grant_destination_is_seeded(self) -> None:
+        self.assertIn("insert into destinations", self.normalized)
+        self.assertIn("'manual_dashboard'", self.normalized)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -70,10 +70,6 @@ export interface ApplyFormValues {
   itr_consent?: boolean;
   bank_linked?: boolean;
   bank_consent?: boolean;
-  privacy_consent?: boolean;
-  terms_consent?: boolean;
-  credit_consent?: boolean;
-  communication_consent?: boolean;
   application_reference?: string;
 }
 
@@ -223,6 +219,116 @@ export interface CollectionWriteResponse {
     gstin_masked: string | null;
     gst_state_code: string | null;
   };
+}
+
+export type FacilityType =
+  | "home" | "personal" | "car" | "education" | "vehicle" | "business" | "gold" | "credit" | "other";
+
+export interface CreditDeclarationPayload extends VersionedCollectionWrite {
+  has_active_credit_facilities: boolean;
+  declared_cibil_score: number;
+}
+
+export interface CreditFacilityPayload extends VersionedCollectionWrite {
+  facility_type: FacilityType;
+  lender_name: string;
+  original_loan_amount: number;
+  outstanding_amount: number;
+  emi_amount: number;
+  interest_rate_percent: number;
+  tenure_months: number;
+  start_date: string;
+  end_date: string;
+  emis_paid_count: number;
+  is_closed?: boolean;
+}
+
+export interface RequirementDocument {
+  document_id: string;
+  mime_type: string;
+  size_bytes: number;
+  uploaded_at: string | null;
+  coverage_from: string | null;
+  coverage_to: string | null;
+}
+
+export type RequirementStatus =
+  | "pending" | "partial" | "collected" | "accepted_for_review" | "rejected"
+  | "waived" | "not_applicable" | "missing";
+
+export interface RequirementRow {
+  application_requirement_id: string;
+  document_type_code: string;
+  display_name: string;
+  category: string | null;
+  attaches_to: "entity" | "person" | "facility" | "document" | "registration";
+  application_party_id: string | null;
+  facility_id: string | null;
+  obligation: "mandatory" | "optional" | "conditional";
+  blocks_submission: boolean;
+  alt_group: string | null;
+  coverage_mode: "none" | "month_range" | "fiscal_year" | "per_facility";
+  min_count: number;
+  required_period_from: string | null;
+  required_period_to: string | null;
+  fiscal_year_start: string | null;
+  status: RequirementStatus;
+  documents: RequirementDocument[];
+}
+
+export interface FacilityRow {
+  facility_id: string;
+  facility_type: FacilityType;
+  lender_name: string;
+  original_loan_amount: number | null;
+  outstanding_amount: number | null;
+  emi_amount: number | null;
+  interest_rate_percent: number | null;
+  tenure_months: number | null;
+  start_date: string | null;
+  end_date: string | null;
+  emis_paid_count: number | null;
+  is_closed: boolean;
+}
+
+export interface RequirementsResponse {
+  application_id: string;
+  lock_version: number;
+  credit_declaration: {
+    has_active_credit_facilities: boolean | null;
+    declared_cibil_score: number | null;
+  };
+  facilities: FacilityRow[];
+  requirements: RequirementRow[];
+}
+
+export interface ConsentPurposeRow {
+  purpose_code: string;
+  display_name: string;
+  notice_text: string;
+  notice_version: number;
+  is_mandatory: boolean;
+  granted: boolean;
+}
+
+export interface ConsentStatusResponse {
+  application_id: string;
+  lock_version: number;
+  purposes: ConsentPurposeRow[];
+}
+
+export interface ConsentGrantPayload extends VersionedCollectionWrite {
+  grants: Record<string, boolean>;
+}
+
+export type SubmitApplicationPayload = VersionedCollectionWrite;
+
+export interface SubmitApplicationResponse {
+  application_id: string;
+  application_no: string;
+  status: string;
+  submitted_at: string | null;
+  lock_version: number;
 }
 
 export function isWizardStepId(value: unknown): value is WizardStepId {

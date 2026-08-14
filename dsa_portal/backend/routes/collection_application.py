@@ -22,6 +22,7 @@ from models.collection_application import (
     SessionCreate,
 )
 from services.collection_application import (
+    ApplicationLockedError,
     ApplicationNotStartedError,
     InvalidApplicationOperationError,
     InvalidSessionError,
@@ -49,6 +50,10 @@ def _unauthorized() -> HTTPException:
     return HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired session")
 
 
+def _locked() -> HTTPException:
+    return HTTPException(status_code=409, detail="This application has already been submitted.")
+
+
 async def _write(
     session_digest: DigestHex | None,
     operation: Callable[[bytes], Awaitable[dict[str, object]]],
@@ -63,6 +68,8 @@ async def _write(
         raise HTTPException(status_code=404, detail="Application not started") from error
     except PartyNotFoundError as error:
         raise HTTPException(status_code=404, detail="Application party not found") from error
+    except ApplicationLockedError as error:
+        raise _locked() from error
     except StaleApplicationError as error:
         raise HTTPException(
             status_code=409,
@@ -106,6 +113,8 @@ async def put_loan_intent(
         return await save_loan_intent(bytes.fromhex(session_digest), payload)
     except InvalidSessionError as error:
         raise _unauthorized() from error
+    except ApplicationLockedError as error:
+        raise _locked() from error
     except StaleApplicationError as error:
         raise HTTPException(
             status_code=409,

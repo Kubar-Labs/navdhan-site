@@ -33,9 +33,9 @@ export function NavigationFooter({
         </button>
       )}
       <button
-        type={variant === "submit" ? "submit" : "button"}
+        type="button"
         disabled={continueDisabled}
-        onClick={variant === "submit" ? undefined : onContinue}
+        onClick={onContinue}
         className="flex-1 rounded-xl bg-gradient-to-r from-nt-orange-600 to-nt-orange-500 px-6 py-3.5 text-sm font-semibold text-white shadow-md shadow-nt-orange-600/20 hover:from-nt-orange-700 hover:to-nt-orange-600 disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none focus:outline-none focus:ring-2 focus:ring-nt-orange-600 focus:ring-offset-2 active:scale-[0.99] transition-all cursor-pointer"
       >
         <span className="flex items-center justify-center gap-2">

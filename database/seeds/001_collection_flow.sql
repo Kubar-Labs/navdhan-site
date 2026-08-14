@@ -244,6 +244,24 @@ ON CONFLICT (requirement_id) DO UPDATE SET
     display_order = EXCLUDED.display_order,
     notes = EXCLUDED.notes;
 
+INSERT INTO destinations (
+    destination_id, code, display_name, destination_type, lender_id, payload_format
+) VALUES (
+    '40000000-0000-0000-0000-000000000001',
+    'manual_dashboard',
+    'Manual Ops Dashboard',
+    'manual_dashboard',
+    NULL,
+    'ndp_v1'
+)
+ON CONFLICT (destination_id) DO UPDATE SET
+    code = EXCLUDED.code,
+    display_name = EXCLUDED.display_name,
+    destination_type = EXCLUDED.destination_type,
+    lender_id = EXCLUDED.lender_id,
+    payload_format = EXCLUDED.payload_format,
+    updated_at = now();
+
 INSERT INTO consent_purposes (
     purpose_code, display_name, notice_text, notice_version, is_mandatory,
     retention_months, effective_from, effective_to

@@ -9,10 +9,15 @@ from typing import Any
 from sqlalchemy import select
 
 from db.collection_models import (
+    ApplicationCreditDeclaration,
+    ApplicationExistingCreditFacility,
     ApplicationParty,
     ApplicationRequirement,
     Borrower,
     BorrowerRegistration,
+    Document,
+    DocumentRequirementSatisfaction,
+    DocumentType,
     LoanApplication,
     Person,
     PersonIdentifier,
@@ -155,4 +160,169 @@ async def serialize_application(
             "gstin_masked": gstin.masked_value if gstin is not None else None,
             "gst_state_code": gstin.state_code if gstin is not None else None,
         },
+    }
+
+
+async def serialize_requirements(
+    database: Any, application: LoanApplication, marketplace_id: uuid.UUID
+) -> dict[str, Any]:
+    requirement_rows = (
+        await database.scalars(
+            select(ApplicationRequirement)
+            .where(
+                ApplicationRequirement.marketplace_id == marketplace_id,
+                ApplicationRequirement.application_id == application.application_id,
+            )
+            .order_by(ApplicationRequirement.created_at)
+        )
+    ).all()
+    document_type_codes = {row.document_type_code for row in requirement_rows}
+    document_types = (
+        {
+            document_type.document_type_code: document_type
+            for document_type in (
+                await database.scalars(
+                    select(DocumentType).where(
+                        DocumentType.document_type_code.in_(document_type_codes)
+                    )
+                )
+            ).all()
+        }
+        if document_type_codes
+        else {}
+    )
+    requirement_ids = [row.application_requirement_id for row in requirement_rows]
+    documents_by_requirement: dict[uuid.UUID, list[dict[str, Any]]] = {
+        requirement_id: [] for requirement_id in requirement_ids
+    }
+    if requirement_ids:
+        linked_rows = (
+            await database.execute(
+                select(DocumentRequirementSatisfaction, Document)
+                .join(Document, Document.document_id == DocumentRequirementSatisfaction.document_id)
+                .where(
+                    DocumentRequirementSatisfaction.marketplace_id == marketplace_id,
+                    DocumentRequirementSatisfaction.application_requirement_id.in_(requirement_ids),
+                    DocumentRequirementSatisfaction.unlinked_at.is_(None),
+                    Document.status == "uploaded",
+                )
+                .order_by(Document.uploaded_at)
+            )
+        ).all()
+        for satisfaction, document in linked_rows:
+            documents_by_requirement[satisfaction.application_requirement_id].append(
+                {
+                    "document_id": str(document.document_id),
+                    "mime_type": document.mime_type,
+                    "size_bytes": document.size_bytes,
+                    "uploaded_at": (
+                        document.uploaded_at.isoformat() if document.uploaded_at else None
+                    ),
+                    "coverage_from": (
+                        document.coverage_from.isoformat() if document.coverage_from else None
+                    ),
+                    "coverage_to": (
+                        document.coverage_to.isoformat() if document.coverage_to else None
+                    ),
+                }
+            )
+
+    declaration = await database.scalar(
+        select(ApplicationCreditDeclaration).where(
+            ApplicationCreditDeclaration.marketplace_id == marketplace_id,
+            ApplicationCreditDeclaration.application_id == application.application_id,
+            ApplicationCreditDeclaration.superseded_at.is_(None),
+        )
+    )
+    facility_rows = (
+        await database.scalars(
+            select(ApplicationExistingCreditFacility)
+            .where(
+                ApplicationExistingCreditFacility.marketplace_id == marketplace_id,
+                ApplicationExistingCreditFacility.application_id == application.application_id,
+            )
+            .order_by(ApplicationExistingCreditFacility.created_at)
+        )
+    ).all()
+
+    return {
+        "application_id": str(application.application_id),
+        "lock_version": application.lock_version,
+        "credit_declaration": {
+            "has_active_credit_facilities": (
+                declaration.has_active_credit_facilities if declaration is not None else None
+            ),
+            "declared_cibil_score": (
+                declaration.declared_cibil_score if declaration is not None else None
+            ),
+        },
+        "facilities": [
+            {
+                "facility_id": str(facility.facility_id),
+                "facility_type": facility.facility_type,
+                "lender_name": facility.lender_name,
+                "original_loan_amount": (
+                    float(facility.original_loan_amount)
+                    if facility.original_loan_amount is not None
+                    else None
+                ),
+                "outstanding_amount": (
+                    float(facility.outstanding_amount)
+                    if facility.outstanding_amount is not None
+                    else None
+                ),
+                "emi_amount": (
+                    float(facility.emi_amount) if facility.emi_amount is not None else None
+                ),
+                "interest_rate_percent": (
+                    float(facility.interest_rate_percent)
+                    if facility.interest_rate_percent is not None
+                    else None
+                ),
+                "tenure_months": facility.tenure_months,
+                "start_date": facility.start_date.isoformat() if facility.start_date else None,
+                "end_date": facility.end_date.isoformat() if facility.end_date else None,
+                "emis_paid_count": facility.emis_paid_count,
+                "is_closed": facility.is_closed,
+            }
+            for facility in facility_rows
+        ],
+        "requirements": [
+            {
+                "application_requirement_id": str(row.application_requirement_id),
+                "document_type_code": row.document_type_code,
+                "display_name": (
+                    document_types[row.document_type_code].display_name
+                    if row.document_type_code in document_types
+                    else row.document_type_code
+                ),
+                "category": (
+                    document_types[row.document_type_code].category
+                    if row.document_type_code in document_types
+                    else None
+                ),
+                "attaches_to": row.attaches_to,
+                "application_party_id": (
+                    str(row.application_party_id) if row.application_party_id else None
+                ),
+                "facility_id": str(row.facility_id) if row.facility_id else None,
+                "obligation": row.obligation,
+                "blocks_submission": row.blocks_submission,
+                "alt_group": row.alt_group,
+                "coverage_mode": row.coverage_mode,
+                "min_count": row.min_count,
+                "required_period_from": (
+                    row.required_period_from.isoformat() if row.required_period_from else None
+                ),
+                "required_period_to": (
+                    row.required_period_to.isoformat() if row.required_period_to else None
+                ),
+                "fiscal_year_start": (
+                    row.fiscal_year_start.isoformat() if row.fiscal_year_start else None
+                ),
+                "status": row.status,
+                "documents": documents_by_requirement.get(row.application_requirement_id, []),
+            }
+            for row in requirement_rows
+        ],
     }

@@ -6,7 +6,6 @@ import uuid
 import hashlib
 import calendar
 import base64
-import os
 from datetime import date, datetime, timedelta, timezone
 from typing import Any
 
@@ -39,7 +38,7 @@ from models.collection_application import (
     PersonalPan,
 )
 from security.crypto import encrypt
-from security.lookup_hash import tenant_lookup_digest
+from security.lookup_hash import load_lookup_key, tenant_lookup_digest
 from services.collection_snapshot import serialize_application
 
 
@@ -64,6 +63,10 @@ class StaleApplicationError(Exception):
         super().__init__("Application version is stale")
 
 
+class ApplicationLockedError(Exception):
+    """The application is already submitted and can no longer be modified."""
+
+
 class InvalidApplicationOperationError(Exception):
     """The requested mutation is incompatible with application state."""
 
@@ -77,16 +80,7 @@ def _credential_hash(presented_digest: bytes) -> bytes:
 
 
 def _lookup_key() -> bytes:
-    encoded = os.getenv("LOOKUP_HMAC_KEY")
-    if not encoded:
-        raise RuntimeError("Lookup hashing is not configured")
-    try:
-        key = base64.b64decode(encoded, validate=True)
-    except ValueError as error:
-        raise RuntimeError("Lookup hashing is not configured correctly") from error
-    if len(key) < 32:
-        raise RuntimeError("Lookup hashing is not configured correctly")
-    return key
+    return load_lookup_key()
 
 
 def _encrypted_bytes(value: str) -> bytes:
@@ -137,6 +131,9 @@ async def save_loan_intent(digest: bytes, intent: LoanIntent) -> dict[str, Any]:
             application = await database.get(LoanApplication, browser_session.application_id)
             if application is None:
                 raise InvalidSessionError
+            # This path predates (and bypasses) _application_for_write, so it
+            # needs the submitted-state guard applied directly.
+            _guard_not_submitted(application)
             if application.lock_version != intent.expected_lock_version:
                 raise StaleApplicationError(application.lock_version)
             await _update_application(database, application, intent)
@@ -399,9 +396,22 @@ async def _application_for_write(
     )
     if application is None:
         raise ApplicationNotStartedError
+    _guard_not_submitted(application)
     if application.lock_version != expected_lock_version:
         raise StaleApplicationError(application.lock_version)
     return browser_session, application
+
+
+def _guard_not_submitted(application: LoanApplication) -> None:
+    """Refuse every borrower mutation once the application is submitted.
+
+    A submitted application is the record of what was actually sent. Letting
+    a later write land would silently change that record while `status`,
+    `submitted_at`, and the status-event trail still describe the original
+    submission.
+    """
+    if application.status == "submitted":
+        raise ApplicationLockedError
 
 
 async def _advance_lock(

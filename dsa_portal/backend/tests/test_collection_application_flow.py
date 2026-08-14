@@ -13,10 +13,15 @@ from unittest.mock import AsyncMock, patch
 import asyncpg
 from fastapi.testclient import TestClient
 
-from collection_app import LOCAL_COLLECTION_DATABASE_URL, build_collection_app
+from collection_app import build_collection_app
+from tests.db_test_support import (
+    TEST_DATABASE_URL,
+    TEST_PG_DSN as PG_DSN,
+    ensure_test_schema,
+    guard_live_connection_is_test_database,
+)
 
 
-PG_DSN = "postgresql://postgres@127.0.0.1:55432/postgres"
 MARKETPLACE_ID = "10000000-0000-0000-0000-000000000001"
 SESSION_HEADER = "x-navdhan-session-digest"
 
@@ -49,6 +54,7 @@ async def _clear_transaction_rows() -> None:
     """Delete only collection-flow transaction data, never seed/reference rows."""
     connection = await asyncpg.connect(PG_DSN)
     try:
+        await guard_live_connection_is_test_database(connection)
         async with connection.transaction():
             for table in (
                 "application_requirements",
@@ -77,8 +83,9 @@ class CollectionApplicationFlowTests(unittest.TestCase):
         from security import crypto
 
         crypto._cached_key = None
+        asyncio.run(ensure_test_schema())
         asyncio.run(_clear_transaction_rows())
-        cls.app = build_collection_app(database_url=LOCAL_COLLECTION_DATABASE_URL)
+        cls.app = build_collection_app(database_url=TEST_DATABASE_URL)
         cls.client_context = TestClient(cls.app)
         cls.client = cls.client_context.__enter__()
 

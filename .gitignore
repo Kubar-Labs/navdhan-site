@@ -64,6 +64,10 @@ AGENTS.md
 .codex/
 graphify-out/
 .code-review-graph/
+.claude/
+
+# Local Phase 4 document storage (LocalDocumentStorage)
+dsa_portal/backend/.local_documents/
 
 # Local architecture and implementation planning artifacts
 data-model-reference.md

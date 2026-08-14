@@ -2,7 +2,7 @@ const APPLY_BACKEND_BASE_URL = "http://127.0.0.1:8000";
 const SESSION_DIGEST_HEADER = "x-navdhan-session-digest";
 
 interface ProxyRequestOptions {
-  method: "GET" | "POST" | "PUT";
+  method: "GET" | "POST" | "PUT" | "DELETE";
   sessionDigest?: string;
   body?: unknown;
 }
@@ -27,6 +27,29 @@ export async function requestApplyBackend(
   }
 
   return fetch(`${APPLY_BACKEND_BASE_URL}${path}`, init);
+}
+
+interface ProxyFormRequestOptions {
+  method: "POST";
+  sessionDigest?: string;
+  formData: FormData;
+}
+
+export async function requestApplyBackendForm(
+  path: string,
+  options: ProxyFormRequestOptions,
+): Promise<Response> {
+  const headers = new Headers();
+  if (options.sessionDigest) {
+    headers.set(SESSION_DIGEST_HEADER, options.sessionDigest);
+  }
+
+  return fetch(`${APPLY_BACKEND_BASE_URL}${path}`, {
+    method: options.method,
+    headers,
+    cache: "no-store",
+    body: options.formData,
+  });
 }
 
 export async function passBackendResponse(response: Response): Promise<Response> {

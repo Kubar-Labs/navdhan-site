@@ -3,8 +3,12 @@ import type {
   ApplicationPartyRole,
   BusinessProfilePayload,
   BusinessTypeCode,
+  ConsentGrantPayload,
+  CreditDeclarationPayload,
+  CreditFacilityPayload,
   EmploymentStatusCode,
   EntityPanPayload,
+  FacilityType,
   GstRegistrationPayload,
   IncomeTypeCode,
   LocationTier,
@@ -14,6 +18,7 @@ import type {
   PartyUpdatePayload,
   PersonPayload,
   ResidenceType,
+  SubmitApplicationPayload,
 } from "./types";
 
 export const PURPOSE_OPTIONS = [
@@ -308,6 +313,138 @@ export function validateEntityPan(input: unknown): CollectionValidationResult<En
       entity_pan: input.entity_pan as string,
       expected_lock_version: input.expected_lock_version as number,
     },
+    errors,
+  };
+}
+
+const FACILITY_TYPES = [
+  "home", "personal", "car", "education", "vehicle", "business", "gold", "credit", "other",
+] as const;
+
+export function validateCreditDeclaration(
+  input: unknown,
+): CollectionValidationResult<CreditDeclarationPayload> {
+  if (!isRecord(input)) {
+    return { errors: [{ field: "body", message_i18n_key: "apply.errors.invalidRequest" }] };
+  }
+  const errors: CollectionFieldError[] = [];
+  if (typeof input.has_active_credit_facilities !== "boolean")
+    addError(errors, "has_active_credit_facilities");
+  if (
+    !Number.isInteger(input.declared_cibil_score) ||
+    (input.declared_cibil_score as number) < 300 ||
+    (input.declared_cibil_score as number) > 900
+  )
+    addError(errors, "declared_cibil_score");
+  if (!validLockVersion(input.expected_lock_version)) addError(errors, "expected_lock_version");
+  if (errors.length > 0) return { errors };
+  return {
+    value: {
+      has_active_credit_facilities: input.has_active_credit_facilities as boolean,
+      declared_cibil_score: input.declared_cibil_score as number,
+      expected_lock_version: input.expected_lock_version as number,
+    },
+    errors,
+  };
+}
+
+const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+function validIsoDate(value: unknown): value is string {
+  if (typeof value !== "string" || !ISO_DATE_RE.test(value)) return false;
+  const parsed = new Date(`${value}T00:00:00Z`);
+  return !Number.isNaN(parsed.getTime());
+}
+
+export function validateCreditFacility(
+  input: unknown,
+): CollectionValidationResult<CreditFacilityPayload> {
+  if (!isRecord(input)) {
+    return { errors: [{ field: "body", message_i18n_key: "apply.errors.invalidRequest" }] };
+  }
+  const errors: CollectionFieldError[] = [];
+  if (!allowed(input.facility_type, FACILITY_TYPES)) addError(errors, "facility_type");
+  if (!validRequiredString(input.lender_name, 1, 150)) addError(errors, "lender_name");
+  if (!Number.isInteger(input.original_loan_amount) || (input.original_loan_amount as number) < 0)
+    addError(errors, "original_loan_amount");
+  if (!Number.isInteger(input.outstanding_amount) || (input.outstanding_amount as number) < 0)
+    addError(errors, "outstanding_amount");
+  if (!Number.isInteger(input.emi_amount) || (input.emi_amount as number) < 0)
+    addError(errors, "emi_amount");
+  if (
+    typeof input.interest_rate_percent !== "number" ||
+    input.interest_rate_percent < 0 ||
+    input.interest_rate_percent > 100
+  )
+    addError(errors, "interest_rate_percent");
+  if (!Number.isInteger(input.tenure_months) || (input.tenure_months as number) <= 0)
+    addError(errors, "tenure_months");
+  if (!validIsoDate(input.start_date)) addError(errors, "start_date");
+  if (!validIsoDate(input.end_date)) addError(errors, "end_date");
+  if (
+    validIsoDate(input.start_date) &&
+    validIsoDate(input.end_date) &&
+    (input.end_date as string) < (input.start_date as string)
+  )
+    addError(errors, "end_date");
+  if (!Number.isInteger(input.emis_paid_count) || (input.emis_paid_count as number) < 0)
+    addError(errors, "emis_paid_count");
+  if (!validLockVersion(input.expected_lock_version)) addError(errors, "expected_lock_version");
+  if (errors.length > 0) return { errors };
+  const value: CreditFacilityPayload = {
+    facility_type: input.facility_type as FacilityType,
+    lender_name: (input.lender_name as string).trim(),
+    original_loan_amount: input.original_loan_amount as number,
+    outstanding_amount: input.outstanding_amount as number,
+    emi_amount: input.emi_amount as number,
+    interest_rate_percent: input.interest_rate_percent as number,
+    tenure_months: input.tenure_months as number,
+    start_date: input.start_date as string,
+    end_date: input.end_date as string,
+    emis_paid_count: input.emis_paid_count as number,
+    expected_lock_version: input.expected_lock_version as number,
+  };
+  if (typeof input.is_closed === "boolean") value.is_closed = input.is_closed;
+  return { value, errors };
+}
+
+export function validateConsentGrants(
+  input: unknown,
+): CollectionValidationResult<ConsentGrantPayload> {
+  if (!isRecord(input)) {
+    return { errors: [{ field: "body", message_i18n_key: "apply.errors.invalidRequest" }] };
+  }
+  const errors: CollectionFieldError[] = [];
+  if (!isRecord(input.grants)) {
+    addError(errors, "grants");
+  } else if (
+    !Object.values(input.grants).every((value) => typeof value === "boolean") ||
+    Object.keys(input.grants).length === 0
+  ) {
+    addError(errors, "grants");
+  }
+  if (!validLockVersion(input.expected_lock_version)) addError(errors, "expected_lock_version");
+  if (errors.length > 0) return { errors };
+  return {
+    value: {
+      grants: input.grants as Record<string, boolean>,
+      expected_lock_version: input.expected_lock_version as number,
+    },
+    errors,
+  };
+}
+
+export function validateSubmitApplication(
+  input: unknown,
+): CollectionValidationResult<SubmitApplicationPayload> {
+  if (!isRecord(input)) {
+    return { errors: [{ field: "body", message_i18n_key: "apply.errors.invalidRequest" }] };
+  }
+  const errors: CollectionFieldError[] = [];
+  if (!validLockVersion(input.expected_lock_version)) addError(errors, "expected_lock_version");
+  if (errors.length > 0) return { errors };
+  return {
+    value: { expected_lock_version: input.expected_lock_version as number },
     errors,
   };
 }
