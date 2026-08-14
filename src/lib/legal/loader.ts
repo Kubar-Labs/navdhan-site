@@ -40,8 +40,8 @@ export async function loadLegalPage(locale: string, slug: string): Promise<Legal
 
   for (const candidate of candidates) {
     try {
-      const module = await import(`@/content/legal/${candidate}/${slug}.json`);
-      return legalPageSchema.parse(module.default);
+      const legalModule = await import(`@/content/legal/${candidate}/${slug}.json`);
+      return legalPageSchema.parse(legalModule.default);
     } catch (err) {
       lastError = err;
     }

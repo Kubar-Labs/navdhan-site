@@ -26,7 +26,7 @@ function getString(messages: Messages, path: string): string | undefined {
   return typeof current === "string" ? current : undefined;
 }
 
-export function useTeamLocalization(
+export function getTeamLocalization(
   messages: Messages,
   locale: string,
   fallbackLocale = "en",
