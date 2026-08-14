@@ -7,6 +7,7 @@ const CSRF_HEADERS = { "x-navdhan-requested-with": "apply" };
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  vi.unstubAllEnvs();
 });
 
 describe("POST /api/apply/session", () => {
@@ -65,6 +66,10 @@ describe("POST /api/apply/session", () => {
   });
 
   it("stores a random browser token while sending only its digest to the backend", async () => {
+    // __Host- + Secure is the production cookie contract (see
+    // src/lib/apply/server/session.ts) — it requires HTTPS, so pin
+    // NODE_ENV here rather than relying on vitest's ambient env.
+    vi.stubEnv("NODE_ENV", "production");
     const fetchMock = vi.fn().mockImplementation((_: string, init: RequestInit) => {
       const body = JSON.parse(String(init.body)) as { token_digest: string };
       return Promise.resolve(
@@ -113,5 +118,35 @@ describe("POST /api/apply/session", () => {
     expect(responseText).not.toContain(token!);
     expect(responseText).not.toContain(backendBody.token_digest);
     expect(JSON.parse(responseText)).toEqual({ created: true });
+  });
+
+  it("drops __Host-/Secure outside production so the session cookie actually persists over http://localhost", async () => {
+    // Regression: a Secure cookie set over plain http (as `next dev` serves
+    // by default) is silently dropped by the browser — every request after
+    // session creation then comes back unauthenticated. See
+    // src/lib/apply/server/session.ts.
+    vi.stubEnv("NODE_ENV", "development");
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockImplementation((_: string, init: RequestInit) => {
+        const body = JSON.parse(String(init.body)) as { token_digest: string };
+        return Promise.resolve(
+          Response.json({ created: true, token_digest: body.token_digest }, { status: 201 }),
+        );
+      }),
+    );
+
+    const response = await POST(
+      new Request("http://localhost/api/apply/session", {
+        method: "POST",
+        headers: CSRF_HEADERS,
+      }),
+    );
+
+    const cookie = response.headers.get("set-cookie");
+    expect(cookie).toContain("nd_session=");
+    expect(cookie).not.toContain("__Host-");
+    expect(cookie).not.toContain("Secure");
+    expect(cookie).toContain("HttpOnly");
   });
 });

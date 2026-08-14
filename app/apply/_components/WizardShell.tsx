@@ -142,15 +142,7 @@ export interface WizardMessages {
   gstConsentSummary?: string;
   gstConsentDetails?: string;
   itrUploadLabel?: string;
-  itrConsentLabel?: string;
-  itrConsentTitle?: string;
-  itrConsentSummary?: string;
-  itrConsentDetails?: string;
   linkBankLabel?: string;
-  bankConsentLabel?: string;
-  bankConsentTitle?: string;
-  bankConsentSummary?: string;
-  bankConsentDetails?: string;
   privacyConsentLabel?: string;
   termsConsentLabel?: string;
   creditConsentLabel?: string;
@@ -206,35 +198,26 @@ const defaultMessages: WizardMessages = {
   emailLabel: "Email",
   pinCodeLabel: "Business PIN code",
   aadhaarLabel: "Aadhaar number",
-  aadhaarConsentLabel: "I agree to Aadhaar OTP-based eKYC",
+  aadhaarConsentLabel: "I consent to sharing my Aadhaar details for identity verification",
   aadhaarConsentTitle: "Aadhaar consent",
-  aadhaarConsentSummary:
-    "We will verify your identity using Aadhaar OTP through our secure bureau partner.",
+  aadhaarConsentSummary: "Your Aadhaar number is collected to verify your identity.",
   aadhaarConsentDetails:
-    "Your Aadhaar number is used only for KYC and is masked after verification.",
+    "Your Aadhaar number is used only for KYC and is masked after it is saved.",
   panLabel: "PAN number",
-  panConsentLabel: "I consent to PAN verification",
+  panConsentLabel: "I consent to sharing my PAN details for KYC",
   panConsentTitle: "PAN consent",
-  panConsentSummary: "We will fetch your PAN details to confirm identity and tax compliance.",
-  panConsentDetails: "This is a one-time verification and your PAN is stored securely.",
+  panConsentSummary: "Your PAN is collected to confirm identity and tax compliance.",
+  panConsentDetails: "Your PAN is stored securely and used only for this application.",
   gstRegisteredLabel: "Are you GST registered?",
   gstRegisteredYes: "Registered under GST",
   gstRegisteredNo: "Not registered",
   gstinLabel: "GSTIN",
-  gstConsentLabel: "I consent to GST verification",
+  gstConsentLabel: "I consent to sharing my GST registration details",
   gstConsentTitle: "GST consent",
-  gstConsentSummary: "We will fetch your GST registration and returns summary.",
+  gstConsentSummary: "Your GST registration number is collected as part of your application.",
   gstConsentDetails: "This helps us understand your business turnover and repayment capacity.",
-  itrUploadLabel: "Upload ITR (PDF)",
-  itrConsentLabel: "I confirm this is my latest ITR",
-  itrConsentTitle: "ITR consent",
-  itrConsentSummary: "Please upload your latest filed Income Tax Return in PDF format.",
-  itrConsentDetails: "Maximum file size is 10 MB. PDF only.",
-  linkBankLabel: "Link bank account",
-  bankConsentLabel: "I consent to fetch bank statements",
-  bankConsentTitle: "Bank statement consent",
-  bankConsentSummary: "We will fetch the last 6-12 months of your business bank statements.",
-  bankConsentDetails: "This data is encrypted and shared only with lenders you choose.",
+  itrUploadLabel: "Documents",
+  linkBankLabel: "Existing loans",
   privacyConsentLabel: "I agree to the Privacy Policy",
   termsConsentLabel: "I agree to the Terms of Use",
   creditConsentLabel: "I consent to a credit bureau check",
@@ -285,33 +268,10 @@ interface WizardShellProps {
   onComplete?: () => void;
 }
 
-function maskMobile(value?: string) {
-  if (!value || value.length < 4) return "";
-  if (value === "9876543210") return "91-XXXXXX1234";
-  return `91-XXXXXX${value.slice(-4)}`;
-}
-
-function maskAadhaar(value?: string) {
-  if (!value || value.length < 4) return "";
-  return `XXXX XXXX ${value.slice(-4)}`;
-}
-
-function maskPan(value?: string) {
-  if (!value || value.length !== 10) return "";
-  if (value === "ABCDE1234F") return "ABCXX***X";
-  return `${value.slice(0, 3)}XX***${value.slice(-1)}`;
-}
-
-function maskEmail(value?: string) {
-  if (!value) return "";
-  const [local, domain] = value.split("@");
-  if (!local || !domain) return "";
-  return `${local.slice(0, 1)}${"*".repeat(Math.max(1, local.length - 1))}@${domain}`;
-}
-
-function maskGstin(value?: string) {
-  if (!value || value.length < 5) return "";
-  return `${value.slice(0, 2)}${"*".repeat(value.length - 5)}${value.slice(-3)}`;
+function conflictMessage(latest: CollectionWriteResponse): string {
+  return latest.status === "submitted"
+    ? "This application has already been submitted."
+    : "This application changed in another tab. We refreshed the latest data.";
 }
 
 function errorStatus(error: unknown): number | undefined {
@@ -333,7 +293,7 @@ function nextCollectionStep(snapshot: CollectionWriteResponse): WizardStepId {
         ? "director"
         : null;
   const additional = needsAdditionalRole
-    ? snapshot.parties.find((party) => party.role === needsAdditionalRole)
+    ? snapshot.parties.find((party) => party.role === needsAdditionalRole && !party.is_primary)
     : null;
 
   if (
@@ -420,7 +380,6 @@ export function WizardShell({
     aadhaar_number: initialValues.aadhaar_number,
     party_aadhaar_numbers: initialValues.party_aadhaar_numbers ?? {},
     aadhaar_consent: initialValues.aadhaar_consent ?? false,
-    aadhaar_otp: initialValues.aadhaar_otp,
     pan_number: initialValues.pan_number,
     party_pan_numbers: initialValues.party_pan_numbers ?? {},
     entity_pan: initialValues.entity_pan,
@@ -429,10 +388,6 @@ export function WizardShell({
     gstin: initialValues.gstin,
     gst_consent: initialValues.gst_consent ?? false,
     annual_turnover: initialValues.annual_turnover,
-    itr_document: initialValues.itr_document,
-    itr_consent: initialValues.itr_consent ?? false,
-    bank_linked: initialValues.bank_linked ?? false,
-    bank_consent: initialValues.bank_consent ?? false,
   }));
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -524,7 +479,7 @@ export function WizardShell({
             ? "director"
             : null;
       const additional = expectedAdditionalRole
-        ? snapshot.parties.find((party) => party.role === expectedAdditionalRole)
+        ? snapshot.parties.find((party) => party.role === expectedAdditionalRole && !party.is_primary)
         : undefined;
       setApplication(snapshot);
       setValues((previous) => ({
@@ -552,7 +507,14 @@ export function WizardShell({
         additional_party_ownership_pct: additional?.ownership_pct ?? undefined,
       }));
       if (resume) {
-        const resumeIndex = orderedSteps.indexOf(nextCollectionStep(snapshot));
+        // A submitted application is immutable — resume/refresh must land
+        // straight on the result step, never back into an editable step
+        // computed from field completeness (see HANDOFF §2 bug 2 and the
+        // Phase 6 gate: "do not route a submitted borrower back into
+        // document/KYC steps").
+        const targetStepId: WizardStepId =
+          snapshot.status === "submitted" ? "submission_result" : nextCollectionStep(snapshot);
+        const resumeIndex = orderedSteps.indexOf(targetStepId);
         if (resumeIndex >= 0) {
           setCurrentIndex(resumeIndex);
           setCompletedSteps(orderedSteps.slice(0, resumeIndex));
@@ -895,7 +857,16 @@ export function WizardShell({
         });
         if (values.constitution !== "proprietorship") {
           const role = values.constitution === "partnership" ? "co_applicant" : "director";
-          const existingParty = snapshot.parties.find((party) => party.role === role);
+          // For private_limited, the primary applicant is also stored with
+          // role="director" (see collection_application.py's primary_role
+          // logic) — the same role string as this second, additional
+          // director. Excluding is_primary here is required, not
+          // defensive: without it this incorrectly matches the primary
+          // party and PUTs over their record, which the backend rejects
+          // with 422 ("Use the primary-person endpoint").
+          const existingParty = snapshot.parties.find(
+            (party) => party.role === role && !party.is_primary,
+          );
           const partyPayload = {
             full_name: values.additional_party_full_name!.trim(),
             mobile_number: values.additional_party_mobile_number!,
@@ -1015,7 +986,7 @@ export function WizardShell({
           try {
             const latest = await fetchCurrentApplication();
             applySnapshot(latest, true);
-            setApiError("This application changed in another tab. We refreshed the latest data.");
+            setApiError(conflictMessage(latest));
           } catch {
             setApiError("This application changed. Refresh and try again.");
           }
@@ -1060,7 +1031,7 @@ export function WizardShell({
           try {
             const latest = await fetchCurrentApplication();
             applySnapshot(latest, true);
-            setApiError("This application changed in another tab. We refreshed the latest data.");
+            setApiError(conflictMessage(latest));
           } catch {
             setApiError("This application changed. Refresh and try again.");
           }
@@ -1673,64 +1644,65 @@ export function WizardShell({
   };
 
   const renderReview = () => {
+    // Every row below reads the persisted backend snapshot (`application`),
+    // never the local `values` form state — `values` can lag another tab's
+    // write even though `application` was itself fetched/merged from the
+    // backend on every save and on resume. See Phase 6: "Review must render
+    // persisted backend values/snapshots, not prefer stale client-side form
+    // state."
+    const primaryParty = application?.parties.find((party) => party.is_primary);
+    const turnoverRange = application?.business_profile.annual_turnover_range;
+    const gstRegistered = application?.business_profile.gst_registered;
     const rows: { label: string; value: string }[] = [
       {
         label: t.loanAmountLabel ?? "Loan amount",
-        value: values.loan_amount ? `₹${values.loan_amount.toLocaleString("en-IN")}` : "—",
+        value: application?.values.requested_amount
+          ? `₹${application.values.requested_amount.toLocaleString("en-IN")}`
+          : "—",
       },
       {
         label: t.tenureLabel ?? "Tenure",
-        value: values.tenure_months ? `${values.tenure_months} months` : "—",
+        value: application?.values.requested_tenure_months
+          ? `${application.values.requested_tenure_months} months`
+          : "—",
       },
       {
         label: t.purposeLabel ?? "Purpose",
-        value: t.purposeLabels?.[values.purpose ?? ""] ?? values.purpose ?? "—",
+        value:
+          t.purposeLabels?.[application?.values.purpose ?? ""] ??
+          application?.values.purpose ??
+          "—",
       },
-      { label: t.fullNameLabel ?? "Full name", value: values.full_name ?? "—" },
+      { label: t.fullNameLabel ?? "Full name", value: primaryParty?.full_name ?? "—" },
       {
         label: t.mobileLabel ?? "Mobile number",
-        value:
-          maskMobile(values.mobile_number) ||
-          application?.parties.find((party) => party.is_primary)?.mobile_masked ||
-          "—",
+        value: primaryParty?.mobile_masked ?? "—",
       },
       {
         label: t.emailLabel ?? "Email",
-        value:
-          maskEmail(values.email) ||
-          application?.parties.find((party) => party.is_primary)?.email_masked ||
-          "—",
+        value: primaryParty?.email_masked ?? "—",
       },
       {
         label: t.pinCodeLabel ?? "Business PIN code",
-        value: values.business_pin_code ?? "—",
+        value: application?.business_profile.business_pincode ?? "—",
       },
       {
         label: t.aadhaarLabel ?? "Aadhaar",
-        value:
-          maskAadhaar(values.aadhaar_number) ||
-          application?.parties.find((party) => party.is_primary)?.identifiers.aadhaar_masked ||
-          "—",
+        value: primaryParty?.identifiers.aadhaar_masked ?? "—",
       },
       {
         label: t.panLabel ?? "PAN",
-        value:
-          maskPan(values.pan_number) ||
-          application?.parties.find((party) => party.is_primary)?.identifiers.pan_masked ||
-          "—",
+        value: primaryParty?.identifiers.pan_masked ?? "—",
       },
-      values.gst_registered === true || !!values.gstin
+      gstRegistered
         ? {
             label: t.gstinLabel ?? "GSTIN",
-            value: maskGstin(values.gstin) || application?.registrations.gstin_masked || "—",
+            value: application?.registrations.gstin_masked ?? "—",
           }
         : { label: t.gstinLabel ?? "GSTIN", value: "Not registered" },
       {
         label: t.annualTurnoverLabel ?? "Annual turnover",
-        value:
-          values.annual_turnover && t.turnoverRanges?.[values.annual_turnover]
-            ? t.turnoverRanges[values.annual_turnover]
-            : (values.annual_turnover ?? "—"),
+        value: turnoverRange ? (t.turnoverRanges?.[turnoverRange] ?? turnoverRange) : "—",
       },
       {
         label: t.itrUploadLabel ?? "Documents",
@@ -1863,6 +1835,7 @@ export function WizardShell({
             data-testid="reference-number"
           >
             {submissionResultState?.application_no ??
+              application?.application_no ??
               submissionResult?.reference_number ??
               values.application_reference ??
               "—"}

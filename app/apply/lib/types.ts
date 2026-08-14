@@ -13,22 +13,6 @@ export type WizardStepId =
   | "review_submit"
   | "submission_result";
 
-export type WizardStatus = "idle" | "loading" | "saving" | "submitting" | "submitted" | "error";
-
-export type VerificationStatus = "idle" | "requesting" | "verifying" | "verified" | "error";
-
-export type DocumentUploadStatus = "empty" | "selected" | "uploading" | "uploaded" | "error";
-
-export type BankLinkStatus = "idle" | "linking" | "linked" | "error";
-
-export interface DocumentRef {
-  name: string;
-  type: string;
-  size: number;
-  url?: string;
-  error?: string;
-}
-
 export interface ApplyFormValues {
   constitution?: Constitution;
   loan_amount?: number;
@@ -56,8 +40,6 @@ export interface ApplyFormValues {
   aadhaar_number?: string;
   party_aadhaar_numbers?: Record<string, string>;
   aadhaar_consent?: boolean;
-  aadhaar_otp?: string;
-  aadhaar_status?: VerificationStatus;
   pan_number?: string;
   party_pan_numbers?: Record<string, string>;
   entity_pan?: string;
@@ -66,10 +48,6 @@ export interface ApplyFormValues {
   gstin?: string;
   gst_consent?: boolean;
   annual_turnover?: string;
-  itr_document?: DocumentRef;
-  itr_consent?: boolean;
-  bank_linked?: boolean;
-  bank_consent?: boolean;
   application_reference?: string;
 }
 
