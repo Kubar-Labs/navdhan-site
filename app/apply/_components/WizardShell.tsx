@@ -797,7 +797,7 @@ export function WizardShell({
       default:
         return true;
     }
-  }, [values, currentStepId, consentStatus, consentGrants, requirements]);
+  }, [values, currentStepId, consentStatus, consentGrants, requirements, application?.parties]);
 
   const advance = () => {
     setCompletedSteps((prev) => {
@@ -1441,14 +1441,18 @@ export function WizardShell({
       })}
       <ConsentOverlay
         title={t.aadhaarConsentTitle ?? "Aadhaar consent"}
-        summary={t.aadhaarConsentSummary ?? "We will verify your identity using Aadhaar OTP."}
+        summary={
+          t.aadhaarConsentSummary ?? "Your Aadhaar number is collected to verify your identity."
+        }
         details={
           t.aadhaarConsentDetails ??
           "Your Aadhaar number is used only for KYC and is masked after verification."
         }
         accepted={values.aadhaar_consent ?? false}
         onChange={(accepted) => updateValue("aadhaar_consent", accepted)}
-        checkboxLabel={t.aadhaarConsentLabel ?? "I agree to Aadhaar eKYC"}
+        checkboxLabel={
+          t.aadhaarConsentLabel ?? "I consent to sharing my Aadhaar details for identity verification"
+        }
         ariaLabel="Aadhaar consent"
       />
     </div>
@@ -1488,7 +1492,9 @@ export function WizardShell({
       )}
       <ConsentOverlay
         title={t.panConsentTitle ?? "PAN consent"}
-        summary={t.panConsentSummary ?? "We will fetch your PAN details to confirm identity."}
+        summary={
+          t.panConsentSummary ?? "Your PAN is collected to confirm identity and tax compliance."
+        }
         details={
           t.panConsentDetails ?? "This is a one-time verification and your PAN is stored securely."
         }
@@ -1542,7 +1548,8 @@ export function WizardShell({
           <ConsentOverlay
             title={t.gstConsentTitle ?? "GST consent"}
             summary={
-              t.gstConsentSummary ?? "We will fetch your GST registration and returns summary."
+              t.gstConsentSummary ??
+              "Your GST registration number is collected as part of your application."
             }
             details={t.gstConsentDetails ?? ""}
             accepted={values.gst_consent ?? false}

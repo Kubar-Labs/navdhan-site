@@ -61,23 +61,6 @@ export interface WizardErrors {
   [field: string]: string | undefined;
 }
 
-export interface SubmissionResultValues {
-  application_reference: string;
-  status: "success" | "failure";
-  message?: string;
-  offers_available?: boolean;
-}
-
-export interface OfferSummary {
-  id: string;
-  lender: string;
-  amount: number;
-  tenure_months: number;
-  interest_rate_annual: number;
-  emi: number;
-  processing_fee: number;
-}
-
 export type BusinessTypeCode = "trading" | "manufacturing" | "services";
 export type Constitution = "proprietorship" | "partnership" | "private_limited";
 export type IncomeTypeCode = "business_income" | "salary" | "other";

@@ -21,13 +21,9 @@ _engine: AsyncEngine | None = None
 _SessionFactory: async_sessionmaker[AsyncSession] | None = None
 
 
-def init_engine(database_url: str | None = None) -> None:
-    """Initialize the async engine, resolving the legacy default lazily."""
+def init_engine(database_url: str) -> None:
+    """Initialize the async engine for the given database URL."""
     global _engine, _SessionFactory
-    if database_url is None:
-        from config import DATABASE_URL
-
-        database_url = DATABASE_URL
 
     _engine = create_async_engine(
         database_url,

@@ -95,11 +95,6 @@ export function validateAadhaarNumber(value: unknown): boolean {
   return /^\d{12}$/.test(value);
 }
 
-export function validateAadhaarOtp(value: unknown): boolean {
-  if (typeof value !== "string") return false;
-  return /^\d{6}$/.test(value);
-}
-
 export function validatePanNumber(value: unknown): boolean {
   if (typeof value !== "string") return false;
   return /^[A-Z]{5}[0-9]{4}[A-Z]$/.test(value);
