@@ -37,11 +37,11 @@
       "items": [
         {
           "heading": "Identity verification",
-          "body": "Consent to verify your identity using PAN, Aadhaar OTP, or other KYC documents."
+          "body": "Consent to collect and store your PAN, Aadhaar, and other KYC details as part of your application."
         },
         {
           "heading": "Business verification",
-          "body": "Consent to fetch GST returns, bank statements, and business records."
+          "body": "Consent to collect and store your GST registration details, bank statements, and business records as part of your application."
         },
         {
           "heading": "Lender sharing",
