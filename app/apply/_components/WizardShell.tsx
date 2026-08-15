@@ -469,6 +469,27 @@ export function WizardShell({
 
   const currentStepId = orderedSteps[currentIndex] ?? "loan_intent";
 
+  // Requirements are fetched once, the first time `application` becomes
+  // non-null (see useRequirements above) — normally right after the loan-
+  // intent step. Adding a co-applicant/director party (partnership/private
+  // limited, step 2) materializes new person-scoped requirements on the
+  // backend afterward, which that stale snapshot never picks up: the
+  // Documents step would silently omit the co-applicant/director's PAN Card
+  // and Aadhaar KYC upload rows until an unrelated full page reload
+  // happened to refetch everything. Refetch on every entry into the
+  // Documents step so it always reflects the current party set. Guarded on
+  // `requirements` already being non-null so this never races the initial
+  // fetch useRequirements kicks off on the same render application first
+  // becomes non-null (both effects can fire in that one commit) — without
+  // the guard, two concurrent fetches on mount desync any caller (tests
+  // included) that queues exactly one mocked response per expected call.
+  useEffect(() => {
+    if (currentStepId === "itr_upload" && requirements !== null) {
+      void reloadRequirements();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentStepId]);
+
   const applySnapshot = useCallback(
     (snapshot: CollectionWriteResponse, resume: boolean) => {
       const primary = snapshot.parties.find((party) => party.is_primary);

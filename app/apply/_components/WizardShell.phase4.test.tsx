@@ -167,4 +167,52 @@ describe("WizardShell Phase 4 requirements loading", () => {
     expect(await screen.findByText("PAN Card")).toBeVisible();
     expect(screen.queryByRole("button", { name: "Retry" })).toBeNull();
   });
+
+  it("refetches requirements on re-entering the Documents step, so a row materialized after the first fetch appears", async () => {
+    const firstRequirements = requirementsResponse();
+    const secondRequirements: RequirementsResponse = {
+      ...firstRequirements,
+      requirements: [
+        ...firstRequirements.requirements,
+        {
+          application_requirement_id: "req-2",
+          document_type_code: "aadhaar_kyc",
+          display_name: "Aadhaar KYC",
+          category: "kyc",
+          attaches_to: "person",
+          application_party_id: "40000000-0000-4000-8000-000000000002",
+          facility_id: null,
+          obligation: "mandatory",
+          blocks_submission: true,
+          alt_group: null,
+          coverage_mode: "none",
+          min_count: 1,
+          required_period_from: null,
+          required_period_to: null,
+          fiscal_year_start: null,
+          status: "pending",
+          documents: [],
+        },
+      ],
+    };
+    api.fetchRequirements
+      .mockResolvedValueOnce(firstRequirements)
+      .mockResolvedValueOnce(secondRequirements);
+    api.saveBusinessProfile.mockResolvedValue(completeSnapshot());
+    api.saveGstRegistration.mockResolvedValue(completeSnapshot());
+
+    render(<WizardShell locale="en" steps={steps} />);
+
+    await screen.findByRole("heading", { name: "Documents" });
+    expect(screen.getByText("PAN Card")).toBeVisible();
+    expect(screen.queryByText("Aadhaar KYC")).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Back" }));
+    const skipButton = await screen.findByRole("button", { name: "Skip" });
+    fireEvent.click(skipButton);
+
+    await screen.findByRole("heading", { name: "Documents" });
+    expect(await screen.findByText("Aadhaar KYC")).toBeVisible();
+    expect(api.fetchRequirements).toHaveBeenCalledTimes(2);
+  });
 });
