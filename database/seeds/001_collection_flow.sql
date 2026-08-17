@@ -269,7 +269,7 @@ INSERT INTO consent_purposes (
     ('privacy_policy', 'I agree to the Privacy Policy', 'I agree to the Privacy Policy', 1, true, 60, DATE '2025-04-01', NULL),
     ('terms_of_use', 'I agree to the Terms of Use', 'I agree to the Terms of Use', 1, true, 60, DATE '2025-04-01', NULL),
     ('credit_bureau_check', 'I consent to a credit bureau check', 'I consent to a credit bureau check', 1, true, 60, DATE '2025-04-01', NULL),
-    ('communications', 'I consent to receive communication from NavDhan', 'I consent to receive communication from NavDhan', 1, false, 24, DATE '2025-04-01', NULL)
+    ('communications', 'I consent to receive communication from NavDhan', 'I consent to receive communication from NavDhan', 1, true, 24, DATE '2025-04-01', NULL)
 ON CONFLICT (purpose_code) DO UPDATE SET
     display_name = EXCLUDED.display_name,
     notice_text = EXCLUDED.notice_text,

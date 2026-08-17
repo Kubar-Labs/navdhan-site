@@ -1115,30 +1115,6 @@ export function WizardShell({
     advance();
   };
 
-  const handleSkipGst = async () => {
-    updateValue("gst_registered", false);
-    updateValue("gstin", undefined);
-    if (!application) return;
-    setIsSaving(true);
-    setApiError(null);
-    try {
-      let snapshot = await saveBusinessProfile({
-        ...businessProfilePayload(application.lock_version),
-        gst_registered: false,
-      });
-      snapshot = await saveGstRegistration({
-        gst_registered: false,
-        expected_lock_version: snapshot.lock_version,
-      });
-      applySnapshot(snapshot, false);
-      advance();
-    } catch {
-      setApiError("We could not save this step. Please try again.");
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
   const currentStepDef = steps.find((s) => s.id === currentStepId);
 
   const renderLoanIntent = () => (

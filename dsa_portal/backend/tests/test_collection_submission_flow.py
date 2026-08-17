@@ -215,7 +215,7 @@ class CollectionSubmissionFlowTests(unittest.TestCase):
                 "privacy_policy": grant_mandatory,
                 "terms_of_use": grant_mandatory,
                 "credit_bureau_check": grant_mandatory,
-                "communications": False,
+                "communications": grant_mandatory,
             },
             "expected_lock_version": lock_version,
         }
@@ -256,7 +256,7 @@ class CollectionSubmissionFlowTests(unittest.TestCase):
         self.assertTrue(mandatory["privacy_policy"])
         self.assertTrue(mandatory["terms_of_use"])
         self.assertTrue(mandatory["credit_bureau_check"])
-        self.assertFalse(mandatory["communications"])
+        self.assertTrue(mandatory["communications"])
         self.assertTrue(all(row["granted"] is False for row in body["purposes"]))
 
     def test_save_consent_rejects_missing_mandatory_purpose(self) -> None:
@@ -302,10 +302,6 @@ class CollectionSubmissionFlowTests(unittest.TestCase):
         self.assertTrue(
             all(row["granted"] for row in reloaded["purposes"] if row["is_mandatory"])
         )
-        communications = next(
-            row for row in reloaded["purposes"] if row["purpose_code"] == "communications"
-        )
-        self.assertFalse(communications["granted"])
 
     # -- submission gates ----------------------------------------------------
 
