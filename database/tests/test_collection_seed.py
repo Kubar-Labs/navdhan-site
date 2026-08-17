@@ -94,7 +94,7 @@ class CollectionSeedContractTests(unittest.TestCase):
                 self.assertIn(f"'{purpose}'", self.normalized)
         self.assertRegex(
             self.normalized,
-            r"\('communications'\s*,.*?\sfalse\s*,\s*\d+\s*,",
+            r"\('communications'\s*,.*?\strue\s*,\s*\d+\s*,",
         )
 
     def test_a_consent_grant_destination_is_seeded(self) -> None:

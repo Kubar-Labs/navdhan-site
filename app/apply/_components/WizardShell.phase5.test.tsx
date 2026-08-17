@@ -188,7 +188,7 @@ describe("WizardShell Phase 5 consent and submission", () => {
 
     expect(screen.getByText("I agree to the Privacy Policy")).toBeVisible();
     expect(
-      screen.getByText("I consent to receive communication from NavDhan (optional)"),
+      screen.getByText("I consent to receive communication from NavDhan"),
     ).toBeVisible();
     expect(screen.getByRole("button", { name: "Submit" })).toBeDisabled();
   });

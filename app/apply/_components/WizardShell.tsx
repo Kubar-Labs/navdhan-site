@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Check } from "lucide-react";
-import { TrustBadgeBar } from "@/src/components/apply/TrustBadgeBar.stub";
+import { cn } from "@/src/lib/utils/cn";
 import { InlineFieldFeedback } from "@/src/components/apply/InlineFieldFeedback";
 import { DocumentChecklist, useRequirements } from "@/app/apply/_components/DocumentChecklist";
 import { ExistingLoansPanel } from "@/app/apply/_components/ExistingLoansPanel";
@@ -586,13 +586,17 @@ export function WizardShell({
   };
 
   const updatePartyIdentifier = (
-    field: "party_aadhaar_numbers" | "party_pan_numbers",
+    field:
+      | "party_aadhaar_numbers"
+      | "party_pan_numbers"
+      | "confirm_party_aadhaar_numbers"
+      | "confirm_party_pan_numbers",
     partyId: string,
     value: string,
   ) => {
     setValues((previous) => ({
       ...previous,
-      [field]: { ...(previous[field] ?? {}), [partyId]: value },
+      [field]: { ...((previous[field] as Record<string, string>) ?? {}), [partyId]: value },
     }));
     const errorField = `${field}_${partyId}`;
     setTouched((previous) => ({ ...previous, [errorField]: true }));
@@ -692,11 +696,24 @@ export function WizardShell({
       case "aadhaar_verification": {
         for (const party of application?.parties ?? []) {
           const field = `party_aadhaar_numbers_${party.party_id}`;
+          const confirmField = `confirm_party_aadhaar_numbers_${party.party_id}`;
           const suppliedValue =
             values.party_aadhaar_numbers?.[party.party_id] ??
             (party.is_primary ? values.aadhaar_number : undefined);
+          const confirmValue =
+            values.confirm_party_aadhaar_numbers?.[party.party_id] ??
+            (party.is_primary ? values.confirm_aadhaar_number : undefined);
+
           if (!party.identifiers.aadhaar_masked && !validateAadhaarNumber(suppliedValue)) {
             next[field] = t.invalidAadhaar ?? "Invalid aadhaar";
+          }
+          if (
+            !party.identifiers.aadhaar_masked &&
+            confirmValue !== undefined &&
+            confirmValue !== "" &&
+            confirmValue !== suppliedValue
+          ) {
+            next[confirmField] = "Aadhaar numbers do not match";
           }
         }
         if (!values.aadhaar_consent) {
@@ -706,13 +723,27 @@ export function WizardShell({
       }
       case "pan_verification": {
         const enteredEntityPan = values.entity_pan?.trim().toUpperCase();
+        const confirmEntityPan = values.confirm_entity_pan?.trim().toUpperCase();
         for (const party of application?.parties ?? []) {
           const field = `party_pan_numbers_${party.party_id}`;
+          const confirmField = `confirm_party_pan_numbers_${party.party_id}`;
           const suppliedValue =
             values.party_pan_numbers?.[party.party_id] ??
             (party.is_primary ? values.pan_number : undefined);
+          const confirmValue =
+            values.confirm_party_pan_numbers?.[party.party_id] ??
+            (party.is_primary ? values.confirm_pan_number : undefined);
+
           if (!party.identifiers.pan_masked && !validatePanNumber(suppliedValue)) {
             next[field] = t.invalidPan ?? "Invalid pan";
+          }
+          if (
+            !party.identifiers.pan_masked &&
+            confirmValue !== undefined &&
+            confirmValue !== "" &&
+            confirmValue.toUpperCase() !== (suppliedValue ?? "").toUpperCase()
+          ) {
+            next[confirmField] = "PAN numbers do not match";
           }
           if (
             enteredEntityPan &&
@@ -734,6 +765,15 @@ export function WizardShell({
         ) {
           next.entity_pan = t.invalidPan ?? "Invalid entity PAN";
         }
+        if (
+          values.constitution !== "proprietorship" &&
+          !application?.registrations.entity_pan_masked &&
+          confirmEntityPan !== undefined &&
+          confirmEntityPan !== "" &&
+          confirmEntityPan !== enteredEntityPan
+        ) {
+          next.confirm_entity_pan = "Business PANs do not match";
+        }
         break;
       }
       case "gst_verification": {
@@ -743,6 +783,13 @@ export function WizardShell({
         if (values.gst_registered === true) {
           if (!values.gstin || !validateGstin(values.gstin)) {
             next.gstin = t.invalidGstin ?? "Invalid gstin";
+          }
+          if (
+            values.confirm_gstin !== undefined &&
+            values.confirm_gstin !== "" &&
+            values.confirm_gstin.trim().toUpperCase() !== values.gstin?.trim().toUpperCase()
+          ) {
+            next.confirm_gstin = "GSTINs do not match";
           }
         }
         break;
@@ -1068,30 +1115,6 @@ export function WizardShell({
     advance();
   };
 
-  const handleSkipGst = async () => {
-    updateValue("gst_registered", false);
-    updateValue("gstin", undefined);
-    if (!application) return;
-    setIsSaving(true);
-    setApiError(null);
-    try {
-      let snapshot = await saveBusinessProfile({
-        ...businessProfilePayload(application.lock_version),
-        gst_registered: false,
-      });
-      snapshot = await saveGstRegistration({
-        gst_registered: false,
-        expected_lock_version: snapshot.lock_version,
-      });
-      applySnapshot(snapshot, false);
-      advance();
-    } catch {
-      setApiError("We could not save this step. Please try again.");
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
   const currentStepDef = steps.find((s) => s.id === currentStepId);
 
   const renderLoanIntent = () => (
@@ -1315,6 +1338,7 @@ export function WizardShell({
       <fieldset className="space-y-3">
         <legend className="text-sm font-medium text-nt-slate-700">
           {t.gstRegisteredLabel ?? "Are you GST registered?"}
+          <span className="ml-1 font-bold text-nt-red-500">*</span>
         </legend>
         <label className="flex items-center gap-2 text-sm text-nt-slate-700">
           <input
@@ -1443,9 +1467,10 @@ export function WizardShell({
     <div className="space-y-5">
       {(application?.parties ?? []).map((party) => {
         const field = `party_aadhaar_numbers_${party.party_id}`;
+        const confirmField = `confirm_party_aadhaar_numbers_${party.party_id}`;
         const partyName = party.full_name ?? (party.is_primary ? "Primary applicant" : "Applicant");
         return (
-          <div key={party.party_id} className="space-y-2">
+          <div key={party.party_id} className="space-y-3">
             <TextField
               id={`aadhaar_number_${party.party_id}`}
               label={`${t.aadhaarLabel ?? "Aadhaar number"} — ${partyName}`}
@@ -1456,6 +1481,18 @@ export function WizardShell({
               error={touched[field] ? errors[field] : undefined}
               inputMode="numeric"
             />
+            {!party.identifiers.aadhaar_masked && (
+              <TextField
+                id={`confirm_aadhaar_number_${party.party_id}`}
+                label={`Confirm Aadhaar number — ${partyName}`}
+                value={values.confirm_party_aadhaar_numbers?.[party.party_id] ?? ""}
+                onChange={(value) =>
+                  updatePartyIdentifier("confirm_party_aadhaar_numbers", party.party_id, value)
+                }
+                error={touched[confirmField] ? errors[confirmField] : undefined}
+                inputMode="numeric"
+              />
+            )}
             <SavedValue value={party.identifiers.aadhaar_masked} />
           </div>
         );
@@ -1483,9 +1520,10 @@ export function WizardShell({
     <div className="space-y-5">
       {(application?.parties ?? []).map((party) => {
         const field = `party_pan_numbers_${party.party_id}`;
+        const confirmField = `confirm_party_pan_numbers_${party.party_id}`;
         const partyName = party.full_name ?? (party.is_primary ? "Primary applicant" : "Applicant");
         return (
-          <div key={party.party_id} className="space-y-2">
+          <div key={party.party_id} className="space-y-3">
             <TextField
               id={`pan_number_${party.party_id}`}
               label={`${t.panLabel ?? "PAN number"} — ${partyName}`}
@@ -1495,12 +1533,27 @@ export function WizardShell({
               }
               error={touched[field] ? errors[field] : undefined}
             />
+            {!party.identifiers.pan_masked && (
+              <TextField
+                id={`confirm_pan_number_${party.party_id}`}
+                label={`Confirm PAN number — ${partyName}`}
+                value={values.confirm_party_pan_numbers?.[party.party_id] ?? ""}
+                onChange={(value) =>
+                  updatePartyIdentifier(
+                    "confirm_party_pan_numbers",
+                    party.party_id,
+                    value.toUpperCase(),
+                  )
+                }
+                error={touched[confirmField] ? errors[confirmField] : undefined}
+              />
+            )}
             <SavedValue value={party.identifiers.pan_masked} />
           </div>
         );
       })}
       {values.constitution !== undefined && values.constitution !== "proprietorship" && (
-        <>
+        <div className="space-y-3">
           <TextField
             id="entity_pan"
             label="Business PAN"
@@ -1508,8 +1561,17 @@ export function WizardShell({
             onChange={(value) => updateValue("entity_pan", value.toUpperCase())}
             error={touched.entity_pan ? errors.entity_pan : undefined}
           />
+          {!application?.registrations.entity_pan_masked && (
+            <TextField
+              id="confirm_entity_pan"
+              label="Confirm Business PAN"
+              value={values.confirm_entity_pan ?? ""}
+              onChange={(value) => updateValue("confirm_entity_pan", value.toUpperCase())}
+              error={touched.confirm_entity_pan ? errors.confirm_entity_pan : undefined}
+            />
+          )}
           <SavedValue value={application?.registrations.entity_pan_masked} />
-        </>
+        </div>
       )}
       <ConsentOverlay
         title={t.panConsentTitle ?? "PAN consent"}
@@ -1532,6 +1594,7 @@ export function WizardShell({
       <fieldset className="space-y-3">
         <legend className="text-sm font-medium text-nt-slate-700">
           {t.gstRegisteredLabel ?? "Are you GST registered?"}
+          <span className="ml-1 font-bold text-nt-red-500">*</span>
         </legend>
         <label className="flex items-center gap-2 text-sm text-nt-slate-700">
           <input
@@ -1557,7 +1620,7 @@ export function WizardShell({
       </fieldset>
 
       {values.gst_registered === true && (
-        <>
+        <div className="space-y-3">
           <TextField
             id="gstin"
             label={t.gstinLabel ?? "GSTIN"}
@@ -1565,6 +1628,15 @@ export function WizardShell({
             onChange={(value) => updateValue("gstin", value.toUpperCase())}
             error={touched.gstin ? errors.gstin : undefined}
           />
+          {!application?.registrations.gstin_masked && (
+            <TextField
+              id="confirm_gstin"
+              label="Confirm GSTIN"
+              value={values.confirm_gstin ?? ""}
+              onChange={(value) => updateValue("confirm_gstin", value.toUpperCase())}
+              error={touched.confirm_gstin ? errors.confirm_gstin : undefined}
+            />
+          )}
           <SavedValue value={application?.registrations.gstin_masked} />
           <ConsentOverlay
             title={t.gstConsentTitle ?? "GST consent"}
@@ -1578,26 +1650,8 @@ export function WizardShell({
             checkboxLabel={t.gstConsentLabel ?? "I consent to GST verification"}
             ariaLabel="GST consent"
           />
-        </>
+        </div>
       )}
-
-      <div className="flex flex-col-reverse gap-3 sm:flex-row">
-        <button
-          type="button"
-          onClick={handleSkipGst}
-          disabled={isSaving || isBootstrapping}
-          className="flex-1 rounded-md border border-nt-slate-300 bg-white px-6 py-3 text-sm font-semibold text-nt-slate-900 hover:bg-nt-slate-50"
-        >
-          {t.skip ?? "Skip"}
-        </button>
-        <NavigationFooter
-          showBack={false}
-          onContinue={handleContinue}
-          continueDisabled={!canContinue || isSaving || isBootstrapping}
-          continueLabel={isSaving ? "Saving..." : t.continue}
-          backLabel={t.back}
-        />
-      </div>
     </div>
   );
 
@@ -1829,7 +1883,6 @@ export function WizardShell({
                 <span>
                   <span>
                     {purpose.display_name}
-                    {!purpose.is_mandatory && " (optional)"}
                   </span>
                   {purpose.notice_text !== purpose.display_name && (
                     <span className="block text-xs text-nt-slate-500">{purpose.notice_text}</span>
@@ -1906,23 +1959,14 @@ export function WizardShell({
   };
 
   const isReviewStep = currentStepId === "review_submit";
-  const showGstCustomFooter = currentStepId === "gst_verification";
 
   const stepperSteps: WizardStepDefinition[] = steps.map((s) => ({
     id: s.id,
     title: s.title,
   }));
 
-  const trustBadgeItems = (t.trustBadges ?? defaultMessages.trustBadges ?? [])
-    .filter((name): name is string => typeof name === "string")
-    .map((name) => ({ name }));
-
   return (
     <div className="mx-auto max-w-3xl rounded-3xl border border-nt-slate-200/80 bg-white p-6 sm:p-10 shadow-xl shadow-slate-200/50 backdrop-blur-xs">
-      <div className="mb-6 pb-6 border-b border-nt-slate-100">
-        <TrustBadgeBar badges={trustBadgeItems} layout="inline" variant="light" />
-      </div>
-
       <Stepper steps={stepperSteps} currentStepId={currentStepId} completedSteps={completedSteps} />
 
       {currentStepDef && (
@@ -1947,7 +1991,7 @@ export function WizardShell({
         </p>
       )}
 
-      {!showGstCustomFooter && currentStepId !== "submission_result" && (
+      {currentStepId !== "submission_result" && (
         <NavigationFooter
           showBack={currentIndex > 0}
           onBack={goBack}
@@ -1977,6 +2021,7 @@ function TextField({
   onChange,
   error,
   inputMode,
+  required,
 }: {
   id: string;
   label: string;
@@ -1985,12 +2030,17 @@ function TextField({
   onChange: (value: string) => void;
   error?: string;
   inputMode?: "text" | "numeric" | "tel";
+  required?: boolean;
 }) {
+  const isRequired = required ?? !label.toLowerCase().includes("optional");
   return (
     <div>
       <label
         htmlFor={id}
-        className="block text-xs font-semibold uppercase tracking-wider text-nt-slate-700"
+        className={cn(
+          "block text-xs font-semibold uppercase tracking-wider text-nt-slate-700",
+          isRequired && "after:content-['*'] after:ml-1 after:text-nt-red-500 after:font-bold",
+        )}
       >
         {label}
       </label>
@@ -2019,6 +2069,7 @@ function SelectField({
   options,
   onChange,
   error,
+  required,
 }: {
   id: string;
   label: string;
@@ -2026,12 +2077,17 @@ function SelectField({
   options: { value: string; label: string }[];
   onChange: (value: string) => void;
   error?: string;
+  required?: boolean;
 }) {
+  const isRequired = required ?? !label.toLowerCase().includes("optional");
   return (
     <div>
       <label
         htmlFor={id}
-        className="block text-xs font-semibold uppercase tracking-wider text-nt-slate-700"
+        className={cn(
+          "block text-xs font-semibold uppercase tracking-wider text-nt-slate-700",
+          isRequired && "after:content-['*'] after:ml-1 after:text-nt-red-500 after:font-bold",
+        )}
       >
         {label}
       </label>
