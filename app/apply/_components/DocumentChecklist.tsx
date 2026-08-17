@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useState } from "react";
+import { Upload, FileText } from "lucide-react";
 import { cn } from "@/src/lib/utils/cn";
 import {
   ApplyApiError,
@@ -124,7 +125,13 @@ const DocumentRow: React.FC<{
     >
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-sm font-medium text-slate-800">
+          <p
+            className={cn(
+              "text-sm font-medium text-slate-800",
+              row.obligation !== "optional" &&
+                "after:content-['*'] after:ml-1 after:text-nt-red-500 after:font-bold",
+            )}
+          >
             {row.display_name}
             {row.obligation === "optional" && (
               <span className="ml-2 text-xs text-slate-500">(optional)</span>
@@ -223,20 +230,36 @@ const DocumentRow: React.FC<{
               </select>
             </label>
           )}
-          <input
-            type="file"
-            accept="application/pdf"
-            onChange={(event) => setFile(event.target.files?.[0] ?? null)}
-            className="text-sm"
-          />
-          <button
-            type="button"
-            onClick={handleUpload}
-            disabled={busy || !file}
-            className="rounded bg-orange-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-orange-700 disabled:opacity-50"
-          >
-            {busy ? "Uploading…" : replaceTargetId ? "Replace" : "Upload"}
-          </button>
+          <div className="flex flex-wrap items-center gap-3">
+            <label className="relative inline-flex items-center gap-2 rounded-xl border border-nt-slate-300 bg-nt-slate-50 px-4 py-2 text-sm font-semibold text-nt-slate-800 shadow-xs hover:border-nt-orange-500 hover:bg-nt-orange-50/60 hover:text-nt-orange-700 active:scale-[0.98] transition-all cursor-pointer">
+              <Upload className="h-4 w-4 text-nt-orange-600 shrink-0" />
+              <span>{file ? "Change File" : "Choose File"}</span>
+              <input
+                type="file"
+                accept="application/pdf"
+                onChange={(event) => setFile(event.target.files?.[0] ?? null)}
+                className="sr-only"
+              />
+            </label>
+            <span className="text-xs text-nt-slate-600 max-w-[220px] truncate">
+              {file ? (
+                <span className="inline-flex items-center gap-1.5 rounded-lg bg-nt-orange-50 px-2.5 py-1 font-medium text-nt-orange-900 border border-nt-orange-200">
+                  <FileText className="h-3.5 w-3.5 text-nt-orange-600 shrink-0" />
+                  <span className="truncate">{file.name}</span>
+                </span>
+              ) : (
+                <span className="text-nt-slate-400 italic">No file chosen</span>
+              )}
+            </span>
+            <button
+              type="button"
+              onClick={handleUpload}
+              disabled={busy || !file}
+              className="rounded-xl bg-nt-orange-600 px-4 py-2 text-sm font-semibold text-white shadow-xs hover:bg-nt-orange-700 disabled:cursor-not-allowed disabled:opacity-50 active:scale-[0.98] transition-all cursor-pointer sm:ml-auto"
+            >
+              {busy ? "Uploading…" : replaceTargetId ? "Replace" : "Upload"}
+            </button>
+          </div>
         </div>
       )}
 

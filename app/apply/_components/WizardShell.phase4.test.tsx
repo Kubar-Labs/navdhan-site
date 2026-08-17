@@ -204,12 +204,12 @@ describe("WizardShell Phase 4 requirements loading", () => {
     render(<WizardShell locale="en" steps={steps} />);
 
     await screen.findByRole("heading", { name: "Documents" });
-    expect(screen.getByText("PAN Card")).toBeVisible();
+    expect(await screen.findByText("PAN Card")).toBeVisible();
     expect(screen.queryByText("Aadhaar KYC")).toBeNull();
 
     fireEvent.click(screen.getByRole("button", { name: "Back" }));
-    const skipButton = await screen.findByRole("button", { name: "Skip" });
-    fireEvent.click(skipButton);
+    const continueButton = await screen.findByRole("button", { name: "Continue" });
+    fireEvent.click(continueButton);
 
     await screen.findByRole("heading", { name: "Documents" });
     expect(await screen.findByText("Aadhaar KYC")).toBeVisible();

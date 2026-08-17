@@ -574,4 +574,32 @@ describe("WizardShell Phase 3 browser integration", () => {
     expect(api.savePanIdentity).not.toHaveBeenCalled();
     expect(api.saveEntityPan).not.toHaveBeenCalled();
   });
+
+  it("validates that confirmation fields match Aadhaar, PAN, and GSTIN before proceeding", async () => {
+    const primary = snapshot().parties[0];
+    const resumed = snapshot({
+      lock_version: 9,
+      business_profile: { ...completeProfile, gst_registered: true },
+      parties: [
+        {
+          ...primary,
+          full_name: "Anita Rao",
+          type_of_residence: "owned",
+          employment_status_code: "self_employed",
+          identifiers: { pan_masked: null, aadhaar_masked: null },
+        },
+      ],
+    });
+    api.fetchCurrentApplication.mockResolvedValue(resumed);
+    render(<WizardShell locale="en" steps={steps} />);
+
+    await screen.findByRole("heading", { name: "Aadhaar verification" });
+    changeField(`aadhaar_number_${primary.party_id}`, "123412341234");
+    changeField(`confirm_aadhaar_number_${primary.party_id}`, "123412341235");
+    fireEvent.click(screen.getByRole("checkbox", { name: "Aadhaar consent" }));
+    fireEvent.click(screen.getByRole("button", { name: /continue/i }));
+
+    expect(await screen.findByText("Aadhaar numbers do not match")).toBeVisible();
+    expect(api.saveAadhaarIdentity).not.toHaveBeenCalled();
+  });
 });
