@@ -296,6 +296,9 @@ function nextCollectionStep(snapshot: CollectionWriteResponse): WizardStepId {
     ? snapshot.parties.find((party) => party.role === needsAdditionalRole && !party.is_primary)
     : null;
 
+  if (!profile.business_legal_name && snapshot.parties.length === 0) {
+    return "loan_intent";
+  }
   if (
     !profile.business_legal_name ||
     !profile.business_type_code ||
@@ -484,7 +487,7 @@ export function WizardShell({
   // the guard, two concurrent fetches on mount desync any caller (tests
   // included) that queues exactly one mocked response per expected call.
   useEffect(() => {
-    if (currentStepId === "itr_upload" && requirements !== null) {
+    if ((currentStepId === "itr_upload" || currentStepId === "review_submit") && requirements !== null) {
       void reloadRequirements();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -534,7 +537,11 @@ export function WizardShell({
         // Phase 6 gate: "do not route a submitted borrower back into
         // document/KYC steps").
         const targetStepId: WizardStepId =
-          snapshot.status === "submitted" ? "submission_result" : nextCollectionStep(snapshot);
+          snapshot.status === "submitted"
+            ? "submission_result"
+            : snapshot.current_step && orderedSteps.includes(snapshot.current_step as WizardStepId)
+              ? (snapshot.current_step as WizardStepId)
+              : nextCollectionStep(snapshot);
         const resumeIndex = orderedSteps.indexOf(targetStepId);
         if (resumeIndex >= 0) {
           setCurrentIndex(resumeIndex);
@@ -843,10 +850,18 @@ export function WizardShell({
         return true;
       }
       case "itr_upload": {
-        return true;
+        const reqs = requirements?.requirements ?? [];
+        if (reqs.length === 0) return true;
+        const mandatorySatisfied = reqs
+          .filter((row) => row.obligation === "mandatory" || row.blocks_submission)
+          .every((row) => SATISFIED_REQUIREMENT_STATUSES.has(row.status));
+        return mandatorySatisfied;
       }
       case "bank_statements": {
-        return true;
+        return (
+          requirements?.credit_declaration?.has_active_credit_facilities !== null &&
+          requirements?.credit_declaration?.has_active_credit_facilities !== undefined
+        );
       }
       case "review_submit": {
         const mandatoryConsentGranted = (consentStatus?.purposes ?? [])
@@ -1115,6 +1130,30 @@ export function WizardShell({
     advance();
   };
 
+  const handleSkipGst = async () => {
+    updateValue("gst_registered", false);
+    updateValue("gstin", undefined);
+    if (!application) return;
+    setIsSaving(true);
+    setApiError(null);
+    try {
+      let snapshot = await saveBusinessProfile({
+        ...businessProfilePayload(application.lock_version),
+        gst_registered: false,
+      });
+      snapshot = await saveGstRegistration({
+        gst_registered: false,
+        expected_lock_version: snapshot.lock_version,
+      });
+      applySnapshot(snapshot, false);
+      advance();
+    } catch {
+      setApiError("We could not save this step. Please try again.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const currentStepDef = steps.find((s) => s.id === currentStepId);
 
   const renderLoanIntent = () => (
@@ -1142,6 +1181,23 @@ export function WizardShell({
         error={touched.loan_amount ? errors.loan_amount : undefined}
         inputMode="numeric"
       />
+      <div className="flex flex-wrap gap-2">
+        {[100000, 500000, 1000000, 2500000, 5000000].map((amt) => (
+          <button
+            key={amt}
+            type="button"
+            onClick={() => updateValue("loan_amount", amt)}
+            className={cn(
+              "rounded-lg border px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer",
+              values.loan_amount === amt
+                ? "border-nt-orange-600 bg-nt-orange-50 text-nt-orange-700 shadow-xs"
+                : "border-nt-slate-200 bg-white text-nt-slate-700 hover:border-nt-slate-300",
+            )}
+          >
+            ₹{amt >= 100000 ? `${amt / 100000} Lakh${amt > 100000 ? "s" : ""}` : amt}
+          </button>
+        ))}
+      </div>
       <p className="text-xs text-nt-slate-500">
         Min ₹{LOAN_AMOUNT_MIN.toLocaleString("en-IN")} - Max ₹
         {LOAN_AMOUNT_MAX.toLocaleString("en-IN")} in multiples of ₹
@@ -1158,6 +1214,23 @@ export function WizardShell({
         error={touched.tenure_months ? errors.tenure_months : undefined}
         inputMode="numeric"
       />
+      <div className="flex flex-wrap gap-2">
+        {[3, 6, 9, 12].map((months) => (
+          <button
+            key={months}
+            type="button"
+            onClick={() => updateValue("tenure_months", months)}
+            className={cn(
+              "rounded-lg border px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer",
+              values.tenure_months === months
+                ? "border-nt-orange-600 bg-nt-orange-50 text-nt-orange-700 shadow-xs"
+                : "border-nt-slate-200 bg-white text-nt-slate-700 hover:border-nt-slate-300",
+            )}
+          >
+            {months} Months
+          </button>
+        ))}
+      </div>
       <p className="text-xs text-nt-slate-500">
         {TENURE_MIN} to {TENURE_MAX} months
       </p>
@@ -2009,8 +2082,7 @@ export function WizardShell({
 }
 
 function SavedValue({ value }: { value?: string | null }) {
-  if (!value) return null;
-  return <p className="text-xs text-nt-slate-500">Saved: {value}</p>;
+  return null;
 }
 
 function TextField({
