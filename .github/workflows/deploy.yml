@@ -8,7 +8,7 @@ name: Deploy to Cloudflare Workers
 
 on:
   push:
-    branches: [main, release-v2]
+    branches: [main]
   workflow_dispatch: {}
 
 jobs:
