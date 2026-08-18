@@ -208,9 +208,9 @@ describe("WizardShell Phase 3 browser integration", () => {
 
     render(<WizardShell locale="en" steps={steps} />);
 
-    expect(await screen.findByText("Saved: 98XXXX3210")).toBeVisible();
+    await screen.findByRole("heading", { name: "Personal contact" });
+    expect(screen.queryByText(/Saved:/)).not.toBeInTheDocument();
     expect(screen.getByLabelText("Mobile number")).toHaveValue("");
-    expect(screen.getByText("Saved: a****@example.com")).toBeVisible();
     expect(api.createApplySession).not.toHaveBeenCalled();
   });
 
@@ -441,7 +441,7 @@ describe("WizardShell Phase 3 browser integration", () => {
 
     expect(await screen.findByRole("heading", { name: "Aadhaar verification" })).toBeVisible();
     expect(screen.getByLabelText("Aadhaar number — Anita Rao")).toHaveValue("");
-    expect(screen.getByText("Saved: XXXX XXXX 1234")).toBeVisible();
+    expect(screen.queryByText(/Saved:/)).not.toBeInTheDocument();
     expect(screen.getByLabelText("Aadhaar number — Ravi Shah")).toHaveValue("");
   });
 

@@ -50,6 +50,27 @@ export const ExistingLoansPanel: React.FC<ExistingLoansPanelProps> = ({
   const [facilityError, setFacilityError] = useState<string | null>(null);
   const [addingFacility, setAddingFacility] = useState(false);
 
+  const handleSelectHasActive = async (val: boolean) => {
+    setHasActive(val);
+    setDeclaring(true);
+    setDeclarationError(null);
+    try {
+      const score = Number(cibilScore) || 750;
+      const updated = await saveCreditDeclaration({
+        has_active_credit_facilities: val,
+        declared_cibil_score: score,
+        expected_lock_version: requirements.lock_version,
+      });
+      onChange(updated);
+    } catch (error) {
+      setDeclarationError(
+        error instanceof ApplyApiError ? error.message : "Could not save. Please try again.",
+      );
+    } finally {
+      setDeclaring(false);
+    }
+  };
+
   const submitDeclaration = useCallback(async () => {
     const score = Number(cibilScore);
     if (hasActive === null) {
@@ -180,24 +201,24 @@ export const ExistingLoansPanel: React.FC<ExistingLoansPanelProps> = ({
         <div className="flex gap-3">
           <button
             type="button"
-            onClick={() => setHasActive(true)}
+            onClick={() => void handleSelectHasActive(true)}
             className={cn(
-              "rounded border px-4 py-1.5 text-sm",
+              "rounded border px-4 py-1.5 text-sm cursor-pointer",
               hasActive === true
-                ? "border-orange-600 bg-orange-50 text-orange-700"
-                : "border-slate-300 text-slate-700",
+                ? "border-orange-600 bg-orange-50 text-orange-700 font-semibold"
+                : "border-slate-300 text-slate-700 hover:border-slate-400",
             )}
           >
             Yes
           </button>
           <button
             type="button"
-            onClick={() => setHasActive(false)}
+            onClick={() => void handleSelectHasActive(false)}
             className={cn(
-              "rounded border px-4 py-1.5 text-sm",
+              "rounded border px-4 py-1.5 text-sm cursor-pointer",
               hasActive === false
-                ? "border-orange-600 bg-orange-50 text-orange-700"
-                : "border-slate-300 text-slate-700",
+                ? "border-orange-600 bg-orange-50 text-orange-700 font-semibold"
+                : "border-slate-300 text-slate-700 hover:border-slate-400",
             )}
           >
             No
@@ -229,7 +250,7 @@ export const ExistingLoansPanel: React.FC<ExistingLoansPanelProps> = ({
         )}
       </div>
 
-      {declared === true && (
+      {hasActive === true && (
         <>
           <div className="rounded-lg border border-slate-200 p-4 space-y-3">
             <p className="text-sm font-medium text-slate-800">Add an existing loan</p>

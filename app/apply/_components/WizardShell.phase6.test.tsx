@@ -106,7 +106,7 @@ function requirementsResponse(
   return {
     application_id: "10000000-0000-4000-8000-000000000001",
     lock_version: 6,
-    credit_declaration: { has_active_credit_facilities: null, declared_cibil_score: null },
+    credit_declaration: { has_active_credit_facilities: false, declared_cibil_score: 750 },
     facilities: [],
     requirements: [],
     ...overrides,

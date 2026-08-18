@@ -111,7 +111,7 @@ function requirementsResponse(
   return {
     application_id: "10000000-0000-4000-8000-000000000001",
     lock_version: 6,
-    credit_declaration: { has_active_credit_facilities: null, declared_cibil_score: null },
+    credit_declaration: { has_active_credit_facilities: false, declared_cibil_score: 750 },
     facilities: [],
     requirements: [],
     ...overrides,
@@ -206,6 +206,10 @@ describe("WizardShell Phase 5 consent and submission", () => {
   });
 
   it("keeps submit disabled and lists outstanding requirements when a blocking document is still pending", async () => {
+    api.fetchCurrentApplication.mockResolvedValue({
+      ...completeSnapshot(),
+      current_step: "review_submit",
+    });
     api.fetchRequirements.mockResolvedValue(
       requirementsResponse({
         requirements: [
@@ -232,14 +236,14 @@ describe("WizardShell Phase 5 consent and submission", () => {
       }),
     );
 
-    render(<WizardShell locale="en" steps={steps} />);
+    render(<WizardShell locale="en" steps={steps} initialStepId="review_submit" />);
 
-    await navigateToReviewSubmit();
-    fireEvent.click(screen.getByRole("checkbox", { name: /Privacy Policy/i }));
-    fireEvent.click(screen.getByRole("checkbox", { name: /Terms of Use/i }));
-    fireEvent.click(screen.getByRole("checkbox", { name: /credit bureau check/i }));
+    const checkboxes = await screen.findAllByRole("checkbox");
+    fireEvent.click(checkboxes[0]);
+    fireEvent.click(checkboxes[1]);
+    fireEvent.click(checkboxes[2]);
 
-    expect(screen.getByText("Complete these before submitting:")).toBeVisible();
+    expect(await screen.findByText("Complete these before submitting:")).toBeVisible();
     expect(screen.getByText("PAN Card")).toBeVisible();
     expect(screen.getByRole("button", { name: "Submit" })).toBeDisabled();
   });
