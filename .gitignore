@@ -33,6 +33,11 @@ venv/
 .ruff_cache/
 .coverage
 htmlcov/
+dsa_portal/backend/tests/
+database/tests/
+tests/
+**/*.test.ts
+**/*.test.tsx
 
 # Next.js
 .next/
@@ -61,6 +66,7 @@ dsa_portal/**/.firebase/
 
 # Local agent and code-graph artifacts
 AGENTS.md
+CLAUDE.md
 .codex/
 graphify-out/
 .code-review-graph/
@@ -75,3 +81,5 @@ data-model-reference.erd.json
 navdhan_collection_only_detailed_plan_v2.md
 HANDOFF.md
 PHASE4_COMPLETION_GATE.md
+gcp.md
+gcp.md.bak

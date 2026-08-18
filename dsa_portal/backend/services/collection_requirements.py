@@ -34,16 +34,18 @@ from services.collection_application import (
     _application_for_write,
 )
 from services.collection_snapshot import serialize_requirements
-from storage.local_documents import (
+from storage.documents import (
     DocumentEmptyError,
     DocumentInvalidPdfError,
     DocumentTooLargeError,
-    LocalDocumentStorage,
     validate_pdf_bytes,
 )
+from storage.gcs import GCSStorage
 
 
-_STORAGE = LocalDocumentStorage()
+# The GCS client inside is created lazily, so constructing this at import time
+# does not require credentials.
+_STORAGE = GCSStorage()
 _TERMINAL_STATUSES = ("waived", "not_applicable")
 _LOGGER = logging.getLogger(__name__)
 
@@ -284,6 +286,7 @@ async def upload_document(
             ),
             gcs_bucket=stored.bucket,
             gcs_object=stored.object_key,
+            gcs_generation=stored.generation,
             sha256=stored.sha256,
             mime_type=mime_type,
             size_bytes=stored.size_bytes,

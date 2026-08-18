@@ -22,8 +22,12 @@ COPY . .
 RUN useradd --create-home --shell /usr/sbin/nologin app && chown -R app:app /app
 USER app
 
+# Informational only -- the runtime port comes from $PORT (Cloud Run injects
+# it, typically 8080), falling back to 8000 for local `docker run`.
 EXPOSE 8000
 
 # Single-process uvicorn. Cloud Run handles concurrency at the platform
 # level (multiple containers); workers within a container offers no win.
-CMD ["uvicorn", "collection_app:app", "--host", "0.0.0.0", "--port", "8000"]
+# Shell form so $HOST/$PORT expand; exec so uvicorn keeps PID 1 and receives
+# the platform's shutdown signals.
+CMD ["sh", "-c", "exec uvicorn collection_app:app --host \"${HOST:-0.0.0.0}\" --port \"${PORT:-8000}\""]

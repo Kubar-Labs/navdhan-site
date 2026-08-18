@@ -12,6 +12,7 @@ from decimal import Decimal
 from typing import Any
 
 from sqlalchemy import (
+    BigInteger,
     Boolean,
     CHAR,
     Date,
@@ -1008,7 +1009,9 @@ class Document(CollectionBase):
     facility_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
     gcs_bucket: Mapped[str] = mapped_column(Text, nullable=False)
     gcs_object: Mapped[str] = mapped_column(Text, nullable=False)
-    gcs_generation: Mapped[int | None] = mapped_column(Integer)
+    # bigint in the schema (001_collection_schema.up.sql:590). GCS object
+    # generations are microsecond timestamps, far past the int32 ceiling.
+    gcs_generation: Mapped[int | None] = mapped_column(BigInteger)
     sha256: Mapped[bytes | None] = mapped_column(LargeBinary)
     mime_type: Mapped[str] = mapped_column(Text, nullable=False)
     size_bytes: Mapped[int] = mapped_column(Integer, nullable=False)

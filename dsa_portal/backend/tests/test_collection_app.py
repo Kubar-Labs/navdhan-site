@@ -11,7 +11,7 @@ from unittest.mock import AsyncMock, patch
 
 from fastapi.testclient import TestClient
 
-from collection_app import LOCAL_COLLECTION_DATABASE_URL, build_collection_app
+from collection_app import build_collection_app
 
 
 def _valid_key() -> str:
@@ -46,10 +46,13 @@ class CollectionAppTests(unittest.TestCase):
         dockerfile = Path(__file__).resolve().parents[1] / "Dockerfile"
         contents = dockerfile.read_text(encoding="utf-8")
 
-        self.assertIn('"uvicorn", "collection_app:app"', contents)
-        self.assertIn('"--port", "8000"', contents)
-        self.assertIn("EXPOSE 8000", contents)
-        self.assertNotIn('"main:app"', contents)
+        self.assertIn("uvicorn collection_app:app", contents)
+        # The port must come from the environment: Cloud Run injects $PORT and
+        # a container pinned to 8000 never passes its health check.
+        self.assertIn("${PORT:-8000}", contents)
+        self.assertIn("${HOST:-0.0.0.0}", contents)
+        self.assertNotIn('"--port", "8000"', contents)
+        self.assertNotIn("main:app", contents)
 
     def test_main_module_is_a_thin_collection_runtime_alias(self) -> None:
         main_module = Path(__file__).resolve().parents[1] / "main.py"
@@ -98,8 +101,11 @@ class CollectionAppTests(unittest.TestCase):
 
         close_engine.assert_awaited_once_with()
 
-    def test_default_collection_app_uses_its_isolated_local_database(self) -> None:
+    def test_default_collection_app_uses_the_environment_database_url(self) -> None:
+        configured = "postgresql+asyncpg://postgres@127.0.0.1:55432/navdhan_env_probe"
+
         with (
+            patch.dict(os.environ, {"DATABASE_URL": configured}),
             patch("db.session.init_engine") as init_engine,
             patch("db.session.check_connection", new_callable=AsyncMock),
             patch("db.session.close_engine", new_callable=AsyncMock),
@@ -108,7 +114,26 @@ class CollectionAppTests(unittest.TestCase):
             with TestClient(app):
                 pass
 
-        init_engine.assert_called_once_with(LOCAL_COLLECTION_DATABASE_URL)
+        init_engine.assert_called_once_with(configured)
+
+    def test_startup_fails_fast_when_database_url_is_unset(self) -> None:
+        """No hard-coded fallback: a deployed container must not silently dial
+        its own loopback when DATABASE_URL is missing."""
+        with (
+            patch.dict(os.environ),
+            patch("db.session.init_engine") as init_engine,
+            patch("db.session.check_connection", new_callable=AsyncMock),
+            patch("db.session.close_engine", new_callable=AsyncMock),
+        ):
+            for name in ("DATABASE_URL", "DB_HOST", "DB_USER", "DB_NAME"):
+                os.environ.pop(name, None)
+            app = build_collection_app(validate_crypto=False)
+
+            with self.assertRaisesRegex(RuntimeError, "DATABASE_URL is not set"):
+                with TestClient(app):
+                    pass
+
+        init_engine.assert_not_called()
 
 
 class CollectionAppCryptoStartupTests(unittest.TestCase):

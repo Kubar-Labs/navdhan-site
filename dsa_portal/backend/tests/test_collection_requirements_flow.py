@@ -7,7 +7,6 @@ import secrets
 import unittest
 import uuid
 from datetime import date, timedelta
-from pathlib import Path
 from unittest import mock
 
 import asyncpg
@@ -15,6 +14,8 @@ from fastapi.testclient import TestClient
 
 from collection_app import build_collection_app
 from services import collection_requirements
+from storage.gcs import GCSStorage
+from tests.gcs_test_support import FakeGCSClient
 from tests.db_test_support import (
     TEST_DATABASE_URL,
     TEST_PG_DSN as PG_DSN,
@@ -24,6 +25,7 @@ from tests.db_test_support import (
 
 
 SESSION_HEADER = "x-navdhan-session-digest"
+TEST_BUCKET = "navdhan-documents-test"
 MINIMAL_PDF = b"%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF"
 
 
@@ -76,16 +78,19 @@ class CollectionRequirementsFlowTests(unittest.TestCase):
     def setUpClass(cls) -> None:
         cls._previous_encryption_key = os.environ.get("ENCRYPTION_KEY")
         cls._previous_lookup_key = os.environ.get("LOOKUP_HMAC_KEY")
-        cls._previous_storage_root = os.environ.get("LOCAL_DOCUMENT_STORAGE_ROOT")
         os.environ["ENCRYPTION_KEY"] = base64.b64encode(secrets.token_bytes(32)).decode()
         os.environ["LOOKUP_HMAC_KEY"] = base64.b64encode(secrets.token_bytes(32)).decode()
         from security import crypto
 
         crypto._cached_key = None
-        import tempfile
 
-        cls._storage_dir = tempfile.mkdtemp(prefix="navdhan-doc-tests-")
-        os.environ["LOCAL_DOCUMENT_STORAGE_ROOT"] = cls._storage_dir
+        # Documents go to GCS now, so point the service's storage at an
+        # in-memory bucket instead of real credentials and a real bucket.
+        cls.gcs_client = FakeGCSClient()
+        cls._previous_storage = collection_requirements._STORAGE
+        collection_requirements._STORAGE = GCSStorage(
+            bucket_name=TEST_BUCKET, client=cls.gcs_client
+        )
         asyncio.run(ensure_test_schema())
         asyncio.run(_clear_transaction_rows())
         cls.app = build_collection_app(database_url=TEST_DATABASE_URL)
@@ -99,12 +104,12 @@ class CollectionRequirementsFlowTests(unittest.TestCase):
         for name, prior in (
             ("ENCRYPTION_KEY", cls._previous_encryption_key),
             ("LOOKUP_HMAC_KEY", cls._previous_lookup_key),
-            ("LOCAL_DOCUMENT_STORAGE_ROOT", cls._previous_storage_root),
         ):
             if prior is None:
                 os.environ.pop(name, None)
             else:
                 os.environ[name] = prior
+        collection_requirements._STORAGE = cls._previous_storage
         from security import crypto
 
         crypto._cached_key = None
@@ -615,15 +620,15 @@ class CollectionRequirementsFlowTests(unittest.TestCase):
 
     # -- P4-H01: physical deletion must not diverge from the DB commit -------
 
-    def _stored_path(self, application_id: str, document_id: str) -> Path:
+    def _stored_objects(self) -> dict[str, bytes]:
+        return self.gcs_client.bucket(TEST_BUCKET).objects
+
+    def _stored_key(self, application_id: str, document_id: str) -> str:
         return (
-            Path(self._storage_dir)
-            / "10000000-0000-0000-0000-000000000001"
-            / application_id
-            / f"{document_id}.pdf"
+            f"10000000-0000-0000-0000-000000000001/{application_id}/{document_id}.pdf"
         )
 
-    def _upload_one_pan_document(self, digest: str) -> tuple[dict, str, Path]:
+    def _upload_one_pan_document(self, digest: str) -> tuple[dict, str, str]:
         started = self._start_application(digest)
         requirements = self._requirements(digest)
         pan_requirement = self._find_requirement(requirements, "pan_card", attaches_to="person")
@@ -635,13 +640,15 @@ class CollectionRequirementsFlowTests(unittest.TestCase):
         document_id = self._find_requirement(uploaded, "pan_card", attaches_to="person")[
             "documents"
         ][0]["document_id"]
-        path = self._stored_path(uploaded["application_id"], document_id)
-        self.assertTrue(path.exists(), "uploaded file should exist before deletion")
-        return uploaded, document_id, path
+        object_key = self._stored_key(uploaded["application_id"], document_id)
+        self.assertIn(
+            object_key, self._stored_objects(), "uploaded object should exist before deletion"
+        )
+        return uploaded, document_id, object_key
 
     def test_committed_delete_removes_the_physical_file(self) -> None:
         digest = self._create_session()
-        uploaded, document_id, path = self._upload_one_pan_document(digest)
+        uploaded, document_id, object_key = self._upload_one_pan_document(digest)
 
         response = self.client.request(
             "DELETE",
@@ -651,7 +658,9 @@ class CollectionRequirementsFlowTests(unittest.TestCase):
         )
 
         self.assertEqual(200, response.status_code, response.text)
-        self.assertFalse(path.exists(), "committed delete should remove the file")
+        self.assertNotIn(
+            object_key, self._stored_objects(), "committed delete should remove the object"
+        )
         rows = asyncio.run(
             _fetch("SELECT status FROM documents WHERE document_id = $1", uuid.UUID(document_id))
         )
@@ -659,11 +668,11 @@ class CollectionRequirementsFlowTests(unittest.TestCase):
 
     def test_rolled_back_delete_leaves_the_file_and_the_document_row_intact(self) -> None:
         digest = self._create_session()
-        uploaded, document_id, path = self._upload_one_pan_document(digest)
+        uploaded, document_id, object_key = self._upload_one_pan_document(digest)
 
         # Fail the transaction after the delete bookkeeping has run but before
-        # it commits. The file must survive, or the surviving 'uploaded' row
-        # would point at a file that no longer exists.
+        # it commits. The object must survive, or the surviving 'uploaded' row
+        # would point at an object that no longer exists.
         with mock.patch(
             "services.collection_requirements.serialize_requirements",
             side_effect=RuntimeError("forced rollback"),
@@ -676,7 +685,9 @@ class CollectionRequirementsFlowTests(unittest.TestCase):
                     params={"expected_lock_version": uploaded["lock_version"]},
                 )
 
-        self.assertTrue(path.exists(), "rolled-back delete must not remove the file")
+        self.assertIn(
+            object_key, self._stored_objects(), "rolled-back delete must not remove the object"
+        )
         rows = asyncio.run(
             _fetch("SELECT status FROM documents WHERE document_id = $1", uuid.UUID(document_id))
         )
@@ -738,8 +749,8 @@ class CollectionRequirementsFlowTests(unittest.TestCase):
         document_id = self._find_requirement(uploaded, "sanction_letter", attaches_to="facility")[
             "documents"
         ][0]["document_id"]
-        path = self._stored_path(uploaded["application_id"], document_id)
-        self.assertTrue(path.exists())
+        object_key = self._stored_key(uploaded["application_id"], document_id)
+        self.assertIn(object_key, self._stored_objects())
 
         # Reverting the declaration clears facilities and their documents.
         with mock.patch(
@@ -756,7 +767,9 @@ class CollectionRequirementsFlowTests(unittest.TestCase):
                         "expected_lock_version": uploaded["lock_version"],
                     },
                 )
-        self.assertTrue(path.exists(), "rolled-back facility clear must keep the file")
+        self.assertIn(
+            object_key, self._stored_objects(), "rolled-back facility clear must keep the object"
+        )
 
         response = self.client.put(
             "/api/apply/applications/current/credit-declaration",
@@ -769,7 +782,9 @@ class CollectionRequirementsFlowTests(unittest.TestCase):
         )
         self.assertEqual(200, response.status_code, response.text)
         self.assertEqual(0, len(response.json()["facilities"]))
-        self.assertFalse(path.exists(), "committed facility clear should remove the file")
+        self.assertNotIn(
+            object_key, self._stored_objects(), "committed facility clear should remove the object"
+        )
 
     def test_delete_unknown_document_is_not_found(self) -> None:
         digest = self._create_session()

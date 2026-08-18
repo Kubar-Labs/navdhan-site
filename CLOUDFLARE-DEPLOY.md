@@ -49,6 +49,19 @@ to `main` (needs the `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` GitHub
 secrets, and GitHub Actions billing in good standing). The backend stays on
 **Google Cloud Run**; only the frontend is on Cloudflare Workers.
 
+## Server-side env vars (apply flow)
+
+The `/apply` route handlers proxy to the collection backend, whose base URL is
+configuration, not a constant. Set it before deploying or every apply request
+returns `BACKEND_UNAVAILABLE`:
+
+```bash
+npx wrangler secret put APPLY_BACKEND_BASE_URL
+# or, since it is not secret, add it to wrangler.jsonc under "vars"
+```
+
+Locally, put it in `.env.local` instead — see `.env.example`.
+
 ## Server-side env vars (Postgres/Drizzle)
 This app now has server-side API routes (`app/api/*`) using Drizzle + `pg`. Set
 any required DB connection secrets as Worker secrets before deploying:

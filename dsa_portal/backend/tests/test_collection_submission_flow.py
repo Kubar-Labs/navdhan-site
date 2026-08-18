@@ -91,16 +91,24 @@ class CollectionSubmissionFlowTests(unittest.TestCase):
     def setUpClass(cls) -> None:
         cls._previous_encryption_key = os.environ.get("ENCRYPTION_KEY")
         cls._previous_lookup_key = os.environ.get("LOOKUP_HMAC_KEY")
-        cls._previous_storage_root = os.environ.get("LOCAL_DOCUMENT_STORAGE_ROOT")
         os.environ["ENCRYPTION_KEY"] = base64.b64encode(secrets.token_bytes(32)).decode()
         os.environ["LOOKUP_HMAC_KEY"] = base64.b64encode(secrets.token_bytes(32)).decode()
         from security import crypto
 
         crypto._cached_key = None
-        import tempfile
 
-        cls._storage_dir = tempfile.mkdtemp(prefix="navdhan-submit-tests-")
-        os.environ["LOCAL_DOCUMENT_STORAGE_ROOT"] = cls._storage_dir
+        # Documents go to GCS now, so point the service's storage at an
+        # in-memory bucket instead of real credentials and a real bucket.
+        from services import collection_requirements
+        from storage.gcs import GCSStorage
+        from tests.gcs_test_support import FakeGCSClient
+
+        cls._collection_requirements = collection_requirements
+        cls.gcs_client = FakeGCSClient()
+        cls._previous_storage = collection_requirements._STORAGE
+        collection_requirements._STORAGE = GCSStorage(
+            bucket_name="navdhan-documents-test", client=cls.gcs_client
+        )
         asyncio.run(ensure_test_schema())
         asyncio.run(_clear_transaction_rows())
         cls.app = build_collection_app(database_url=TEST_DATABASE_URL)
@@ -114,12 +122,12 @@ class CollectionSubmissionFlowTests(unittest.TestCase):
         for name, prior in (
             ("ENCRYPTION_KEY", cls._previous_encryption_key),
             ("LOOKUP_HMAC_KEY", cls._previous_lookup_key),
-            ("LOCAL_DOCUMENT_STORAGE_ROOT", cls._previous_storage_root),
         ):
             if prior is None:
                 os.environ.pop(name, None)
             else:
                 os.environ[name] = prior
+        cls._collection_requirements._STORAGE = cls._previous_storage
         from security import crypto
 
         crypto._cached_key = None

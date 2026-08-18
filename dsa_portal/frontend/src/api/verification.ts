@@ -1,8 +1,17 @@
 import axios from 'axios'
 
-const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL ?? '/api/v1/verify',
-})
+// Vite inlines this at build time; there is no default, so a build without it
+// fails loudly here instead of quietly issuing requests against a path that
+// does not exist in the deployed environment.
+const baseURL = import.meta.env.VITE_API_BASE_URL
+if (!baseURL) {
+  throw new Error(
+    'VITE_API_BASE_URL is not set. It must be present in the environment when ' +
+      'the bundle is built. See .env.example.',
+  )
+}
+
+const api = axios.create({ baseURL })
 
 export const startCase = (data: {
   borrower_name: string

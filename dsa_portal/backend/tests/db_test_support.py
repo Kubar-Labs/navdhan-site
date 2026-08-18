@@ -2,8 +2,7 @@
 
 Backend tests that need a real PostgreSQL connection must run against a
 dedicated test database on the same local cluster, never against the
-development database (`postgres`, the `LOCAL_COLLECTION_DATABASE_URL`
-target). This module owns that configuration, the fail-fast guards that
+development database (the `DATABASE_URL` target, `postgres` locally). This module owns that configuration, the fail-fast guards that
 refuse destructive cleanup outside the test database, and idempotent
 schema/seed bootstrap so `python -m unittest discover -s tests` works with
 no separate manual setup step.
@@ -19,13 +18,16 @@ from pathlib import Path
 from urllib.parse import urlsplit
 
 import asyncpg
-
-from collection_app import LOCAL_COLLECTION_DATABASE_URL
+from dotenv import load_dotenv
 
 BACKEND_DIR = Path(__file__).resolve().parents[1]
 REPO_ROOT = BACKEND_DIR.parents[1]
 MIGRATIONS_DIR = REPO_ROOT / "database" / "migrations"
 SEED_PATH = REPO_ROOT / "database" / "seeds" / "001_collection_flow.sql"
+
+# The development DSN is environment-supplied now that collection_app carries
+# no hard-coded default, so .env must be loaded before it can be read below.
+load_dotenv(BACKEND_DIR / ".env")
 
 _SAFE_DBNAME_RE = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
 
@@ -39,8 +41,10 @@ def _dbname_from_url(url: str) -> str:
     return urlsplit(normalized).path.lstrip("/")
 
 
-DEV_DATABASE_URL = LOCAL_COLLECTION_DATABASE_URL
-DEV_DATABASE_NAME = _dbname_from_url(DEV_DATABASE_URL)
+# Same source the application reads, so the guard below compares the test
+# database against whatever database this machine actually develops against.
+DEV_DATABASE_URL = os.getenv("DATABASE_URL", "")
+DEV_DATABASE_NAME = _dbname_from_url(DEV_DATABASE_URL) if DEV_DATABASE_URL else ""
 
 # Same local trust-auth cluster as the dev database (127.0.0.1:55432), but a
 # distinct database name so destructive test cleanup can never reach dev rows.
@@ -71,7 +75,7 @@ def guard_test_database_name() -> str:
             f"Refusing to run destructive test cleanup: configured test "
             f"database name '{name}' is not a plain identifier."
         )
-    if name == DEV_DATABASE_NAME:
+    if DEV_DATABASE_NAME and name == DEV_DATABASE_NAME:
         raise UnsafeTestDatabaseError(
             f"Refusing to run destructive test cleanup: configured test "
             f"database '{name}' is the development database "
