@@ -25,7 +25,27 @@ vi.mock("@/app/apply/lib/api", () => ({
 
 import { DocumentChecklist, useRequirements } from "./DocumentChecklist";
 import { ApplyApiError } from "@/app/apply/lib/api";
-import type { RequirementRow, RequirementsResponse } from "@/app/apply/lib/types";
+import type {
+  RequirementDocument,
+  RequirementRow,
+  RequirementsResponse,
+} from "@/app/apply/lib/types";
+
+function requirementDocument(
+  overrides: Partial<RequirementDocument> = {},
+): RequirementDocument {
+  return {
+    document_id: "doc-1",
+    mime_type: "application/pdf",
+    size_bytes: 1000,
+    uploaded_at: null,
+    coverage_from: null,
+    coverage_to: null,
+    status: "uploaded",
+    scan_result: "clean",
+    ...overrides,
+  };
+}
 
 function row(overrides: Partial<RequirementRow> = {}): RequirementRow {
   return {
@@ -66,7 +86,10 @@ function pdfFile(name = "doc.pdf"): File {
 
 describe("DocumentChecklist", () => {
   beforeEach(() => vi.clearAllMocks());
-  afterEach(() => cleanup());
+  afterEach(() => {
+    cleanup();
+    vi.useRealTimers();
+  });
 
   it("renders the backend-driven checklist for whatever requirement rows it is given", () => {
     const data = response([
@@ -89,7 +112,7 @@ describe("DocumentChecklist", () => {
   it("defaults an upload to adding a new document rather than replacing the existing one", async () => {
     const existing = row({
       documents: [
-        { document_id: "doc-1", mime_type: "application/pdf", size_bytes: 1000, uploaded_at: null, coverage_from: null, coverage_to: null },
+        requirementDocument(),
       ],
     });
     const data = response([existing]);
@@ -113,8 +136,8 @@ describe("DocumentChecklist", () => {
   it("replaces only the specifically selected document when the borrower chooses Replace", async () => {
     const existing = row({
       documents: [
-        { document_id: "doc-1", mime_type: "application/pdf", size_bytes: 1000, uploaded_at: null, coverage_from: null, coverage_to: null },
-        { document_id: "doc-2", mime_type: "application/pdf", size_bytes: 2000, uploaded_at: null, coverage_from: null, coverage_to: null },
+        requirementDocument(),
+        requirementDocument({ document_id: "doc-2", size_bytes: 2000 }),
       ],
     });
     const data = response([existing]);
@@ -139,8 +162,16 @@ describe("DocumentChecklist", () => {
       row({
         min_count: 2,
         documents: [
-          { document_id: "doc-1", mime_type: "application/pdf", size_bytes: 1000, uploaded_at: null, coverage_from: "2023-04-01", coverage_to: "2024-03-31" },
-          { document_id: "doc-2", mime_type: "application/pdf", size_bytes: 2000, uploaded_at: null, coverage_from: "2024-04-01", coverage_to: "2025-03-31" },
+          requirementDocument({
+            coverage_from: "2023-04-01",
+            coverage_to: "2024-03-31",
+          }),
+          requirementDocument({
+            document_id: "doc-2",
+            size_bytes: 2000,
+            coverage_from: "2024-04-01",
+            coverage_to: "2025-03-31",
+          }),
         ],
       }),
     ]);
@@ -203,10 +234,37 @@ describe("DocumentChecklist", () => {
     expect(await screen.findByText("Application was updated; refresh and retry")).toBeVisible();
     expect(onChange).not.toHaveBeenCalled();
   });
+
+  it("shows scan state and never offers quarantined or failed files as replacement targets", () => {
+    const data = response([
+      row({
+        documents: [
+          requirementDocument({
+            document_id: "pending",
+            status: "quarantined",
+            scan_result: "pending",
+          }),
+          requirementDocument({
+            document_id: "infected",
+            status: "scan_failed",
+            scan_result: "infected",
+          }),
+        ],
+      }),
+    ]);
+
+    render(<DocumentChecklist requirements={data} onChange={vi.fn()} />);
+
+    expect(screen.getByText("Scanning for malware…")).toBeVisible();
+    expect(screen.getByText(/Unsafe file detected/)).toBeVisible();
+    expect(screen.queryByLabelText("Action")).toBeNull();
+  });
 });
 
 describe("useRequirements", () => {
   beforeEach(() => vi.clearAllMocks());
+
+  afterEach(() => vi.useRealTimers());
 
   it("preserves the last successfully loaded snapshot when a later reload fails", async () => {
     const first = response([row()]);
@@ -222,5 +280,33 @@ describe("useRequirements", () => {
 
     expect(result.current.error).toBe("Could not load the document checklist.");
     expect(result.current.requirements).toEqual(first);
+  });
+
+  it("polls until a quarantined document receives a terminal scan result", async () => {
+    vi.useFakeTimers();
+    const pending = response([
+      row({
+        documents: [
+          requirementDocument({ status: "quarantined", scan_result: "pending" }),
+        ],
+      }),
+    ]);
+    const clean = response([
+      row({ status: "collected", documents: [requirementDocument()] }),
+    ]);
+    api.fetchRequirements.mockResolvedValueOnce(pending).mockResolvedValueOnce(clean);
+
+    const { result } = renderHook(() => useRequirements(true));
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(result.current.requirements).toEqual(pending);
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(3_000);
+    });
+
+    expect(api.fetchRequirements).toHaveBeenCalledTimes(2);
+    expect(result.current.requirements).toEqual(clean);
   });
 });

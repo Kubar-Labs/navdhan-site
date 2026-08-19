@@ -325,15 +325,20 @@ describe("WizardShell Phase 3 browser integration", () => {
 
     await screen.findByRole("heading", { name: "Aadhaar verification" });
     changeField(`aadhaar_number_${resumed.parties[0].party_id}`, "123412341234");
+    changeField(`confirm_aadhaar_number_${resumed.parties[0].party_id}`, "123412341234");
     changeField(`aadhaar_number_${resumed.parties[1].party_id}`, "567856785678");
+    changeField(`confirm_aadhaar_number_${resumed.parties[1].party_id}`, "567856785678");
     fireEvent.click(screen.getByRole("checkbox", { name: "Aadhaar consent" }));
     fireEvent.click(screen.getByRole("button", { name: /continue/i }));
     await waitFor(() => expect(api.saveAadhaarIdentity).toHaveBeenCalledTimes(2));
     await screen.findByRole("heading", { name: "PAN verification" });
 
     changeField(`pan_number_${resumed.parties[0].party_id}`, "ABCDE1234F");
+    changeField(`confirm_pan_number_${resumed.parties[0].party_id}`, "ABCDE1234F");
     changeField(`pan_number_${resumed.parties[1].party_id}`, "FGHIJ5678K");
+    changeField(`confirm_pan_number_${resumed.parties[1].party_id}`, "FGHIJ5678K");
     changeField("entity_pan", "LMNOP9012Q");
+    changeField("confirm_entity_pan", "LMNOP9012Q");
     fireEvent.click(screen.getByRole("checkbox", { name: "PAN consent" }));
     fireEvent.click(screen.getByRole("button", { name: /continue/i }));
 
@@ -382,6 +387,8 @@ describe("WizardShell Phase 3 browser integration", () => {
 
     await screen.findByRole("heading", { name: "GST verification" });
     changeField("gstin", "27ABCDE1234F1Z5");
+    changeField("confirm_gstin", "27ABCDE1234F1Z5");
+    fireEvent.click(screen.getByRole("checkbox", { name: "GST consent" }));
     fireEvent.click(screen.getByRole("button", { name: /continue/i }));
 
     await waitFor(() => expect(api.saveGstRegistration).toHaveBeenCalledOnce());
@@ -390,6 +397,7 @@ describe("WizardShell Phase 3 browser integration", () => {
     );
     expect(api.saveGstRegistration).toHaveBeenCalledWith({
       gst_registered: true,
+      gst_consent: true,
       gstin: "27ABCDE1234F1Z5",
       state_code: "27",
       expected_lock_version: 10,
@@ -497,7 +505,9 @@ describe("WizardShell Phase 3 browser integration", () => {
 
     await screen.findByRole("heading", { name: "Aadhaar verification" });
     changeField(`aadhaar_number_${primary.party_id}`, "123412341234");
+    changeField(`confirm_aadhaar_number_${primary.party_id}`, "123412341234");
     changeField(`aadhaar_number_${director.party_id}`, "567856785678");
+    changeField(`confirm_aadhaar_number_${director.party_id}`, "567856785678");
     fireEvent.click(screen.getByRole("checkbox", { name: "Aadhaar consent" }));
     fireEvent.click(screen.getByRole("button", { name: /continue/i }));
     await waitFor(() => expect(api.saveAadhaarIdentity).toHaveBeenCalledTimes(2));
@@ -508,8 +518,11 @@ describe("WizardShell Phase 3 browser integration", () => {
     ]);
     await screen.findByRole("heading", { name: "PAN verification" });
     changeField(`pan_number_${primary.party_id}`, "ABCDE1234F");
+    changeField(`confirm_pan_number_${primary.party_id}`, "ABCDE1234F");
     changeField(`pan_number_${director.party_id}`, "FGHIJ5678K");
+    changeField(`confirm_pan_number_${director.party_id}`, "FGHIJ5678K");
     changeField("entity_pan", "LMNOP9012Q");
+    changeField("confirm_entity_pan", "LMNOP9012Q");
     fireEvent.click(screen.getByRole("checkbox", { name: "PAN consent" }));
     fireEvent.click(screen.getByRole("button", { name: /continue/i }));
 
@@ -575,7 +588,7 @@ describe("WizardShell Phase 3 browser integration", () => {
     expect(api.saveEntityPan).not.toHaveBeenCalled();
   });
 
-  it("validates that confirmation fields match Aadhaar, PAN, and GSTIN before proceeding", async () => {
+  it("requires a nonblank Aadhaar confirmation and rejects a mismatch", async () => {
     const primary = snapshot().parties[0];
     const resumed = snapshot({
       lock_version: 9,
@@ -595,11 +608,90 @@ describe("WizardShell Phase 3 browser integration", () => {
 
     await screen.findByRole("heading", { name: "Aadhaar verification" });
     changeField(`aadhaar_number_${primary.party_id}`, "123412341234");
-    changeField(`confirm_aadhaar_number_${primary.party_id}`, "123412341235");
     fireEvent.click(screen.getByRole("checkbox", { name: "Aadhaar consent" }));
     fireEvent.click(screen.getByRole("button", { name: /continue/i }));
 
+    expect(await screen.findByText("Confirm the Aadhaar number")).toBeVisible();
+    changeField(`confirm_aadhaar_number_${primary.party_id}`, "123412341235");
+    fireEvent.click(screen.getByRole("button", { name: /continue/i }));
     expect(await screen.findByText("Aadhaar numbers do not match")).toBeVisible();
     expect(api.saveAadhaarIdentity).not.toHaveBeenCalled();
+  });
+
+  it("requires nonblank personal and business PAN confirmations", async () => {
+    const primary = snapshot().parties[0];
+    const coApplicant = {
+      ...primary,
+      party_id: "30000000-0000-4000-8000-000000000002",
+      role: "co_applicant",
+      is_primary: false,
+      full_name: "Ravi Shah",
+      type_of_residence: "rented" as const,
+      employment_status_code: "self_employed" as const,
+      identifiers: { pan_masked: "FGHIJ***8K", aadhaar_masked: "XXXX XXXX 5678" },
+    };
+    api.fetchCurrentApplication.mockResolvedValue(
+      snapshot({
+        lock_version: 9,
+        values: {
+          constitution: "partnership",
+          requested_amount: 500_000,
+          requested_tenure_months: 6,
+          purpose: "working_capital",
+          referral_code: null,
+        },
+        business_profile: completeProfile,
+        parties: [
+          {
+            ...primary,
+            full_name: "Anita Rao",
+            type_of_residence: "owned",
+            employment_status_code: "self_employed",
+            identifiers: { pan_masked: null, aadhaar_masked: "XXXX XXXX 1234" },
+          },
+          coApplicant,
+        ],
+      }),
+    );
+    render(<WizardShell locale="en" steps={steps} />);
+
+    await screen.findByRole("heading", { name: "PAN verification" });
+    changeField(`pan_number_${primary.party_id}`, "ABCDE1234F");
+    changeField("entity_pan", "LMNOP9012Q");
+    fireEvent.click(screen.getByRole("checkbox", { name: "PAN consent" }));
+    fireEvent.click(screen.getByRole("button", { name: /continue/i }));
+
+    expect(await screen.findByText("Confirm the PAN number")).toBeVisible();
+    expect(screen.getByText("Confirm the Business PAN")).toBeVisible();
+    expect(api.savePanIdentity).not.toHaveBeenCalled();
+    expect(api.saveEntityPan).not.toHaveBeenCalled();
+  });
+
+  it("requires a matching GSTIN confirmation and explicit GST consent", async () => {
+    const primary = snapshot().parties[0];
+    api.fetchCurrentApplication.mockResolvedValue(
+      snapshot({
+        lock_version: 9,
+        business_profile: { ...completeProfile, gst_registered: true },
+        parties: [
+          {
+            ...primary,
+            full_name: "Anita Rao",
+            type_of_residence: "owned",
+            employment_status_code: "self_employed",
+            identifiers: { pan_masked: "ABCDE***4F", aadhaar_masked: "XXXX XXXX 1234" },
+          },
+        ],
+      }),
+    );
+    render(<WizardShell locale="en" steps={steps} />);
+
+    await screen.findByRole("heading", { name: "GST verification" });
+    changeField("gstin", "27ABCDE1234F1Z5");
+    fireEvent.click(screen.getByRole("button", { name: /continue/i }));
+
+    expect(await screen.findByText("Confirm the GSTIN")).toBeVisible();
+    expect(screen.getByText("Please accept the GST consent")).toBeVisible();
+    expect(api.saveGstRegistration).not.toHaveBeenCalled();
   });
 });

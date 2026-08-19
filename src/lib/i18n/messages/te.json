@@ -1,13 +1,4 @@
 {
-  "home": {
-    "meta": {
-      "title": "NavDhan : భారతదేశ MSMEల కోసం వ్యాపార రుణాలు",
-      "description": "విశ్వసనీర ఋణదాతల నుండి ₹5 లక్షల నుండి ₹1 కోటి వరకు వ్యాపార రుణాలను పొందండి. ఒక దరఖాస్తు, అనేక ఆఫర్లు, జీరో ప్లాట్‌ఫారమ్ ఫీజు."
-    },
-    "hero": {
-      "headline": "బ్యాంకుల వెనుక తిరగకుండా సరైన వ్యాపార రుణాన్ని పొందండి."
-    }
-  },
   "team": {
     "meta": {
       "title": "మా బృందం : NavDhan"
@@ -27,8 +18,7 @@
       "companyHeading": "Company",
       "legalHeading": "Legal",
       "tagline": "మీ అన్ని working capital అవసరాలకు one-stop పరిష్కారం.",
-      "address": "156, తారావకేర, బీటీఎం లేఅవుట్ మొదటి దశ, బెంగళూరు, కర్ణాటక",
-      "badges": "RBI అనుగుణంగా · FACE నమోదు · Kubar ద్వారా నడుస్తోంది"
+      "address": "156, తారావకేర, బీటీఎం లేఅవుట్ మొదటి దశ, బెంగళూరు, కర్ణాటక"
     },
     "contact": {
       "loan": "loan@kubar.tech",
@@ -42,7 +32,6 @@
       "loanProducts": "లోన్ ఉత్పత్తులు",
       "whyNavDhan": "NavDhan ఎందుకు",
       "emiCalculator": "EMI కాలిక్యులేటర్",
-      "customerStories": "కస్టమర్ కథలు",
       "team": "జట్టు"
     }
   }

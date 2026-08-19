@@ -46,7 +46,7 @@ describe("GET /api/apply/applications/current", () => {
     expect(await response.json()).toEqual(backendBody);
   });
 
-  it("preserves backend error status and body", async () => {
+  it("preserves backend error status but drops raw detail", async () => {
     const backendBody = { detail: "Invalid or expired session" };
     vi.stubGlobal(
       "fetch",
@@ -60,7 +60,9 @@ describe("GET /api/apply/applications/current", () => {
     );
 
     expect(response.status).toBe(401);
-    expect(await response.json()).toEqual(backendBody);
+    expect(await response.json()).toEqual({
+      message: "Invalid or expired session",
+    });
   });
 
   it("returns a generic gateway error when the backend cannot be reached", async () => {

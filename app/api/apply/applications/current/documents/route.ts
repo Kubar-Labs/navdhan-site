@@ -12,8 +12,14 @@ import {
 } from "@/src/lib/apply/server/errors";
 import { extractSessionId, hashSessionId } from "@/src/lib/apply/server/session";
 import { isSafePartyId } from "@/src/lib/apply/server/collection-proxy";
+import { enforceUploadRateLimit } from "@/src/lib/apply/server/rate-limit";
 
 const MAX_UPLOAD_BYTES = 12 * 1024 * 1024;
+// Multipart boundaries and field metadata add a small amount beyond the PDF
+// itself. Bound the complete request too so a missing/forged Content-Length
+// cannot make `formData()` buffer an arbitrarily large body in the Worker.
+const MAX_MULTIPART_OVERHEAD_BYTES = 64 * 1024;
+const MAX_UPLOAD_REQUEST_BYTES = MAX_UPLOAD_BYTES + MAX_MULTIPART_OVERHEAD_BYTES;
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 function isUuid(value: FormDataEntryValue | null): value is string {
@@ -25,23 +31,60 @@ function isValidDateField(value: FormDataEntryValue | null): value is string | n
   return typeof value === "string" && DATE_RE.test(value);
 }
 
+async function readBoundedFormData(request: Request): Promise<FormData | null> {
+  if (!request.body) throw new Error("Missing form body");
+
+  const reader = request.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let byteCount = 0;
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    byteCount += value.byteLength;
+    if (byteCount > MAX_UPLOAD_REQUEST_BYTES) {
+      await reader.cancel();
+      return null;
+    }
+    chunks.push(value);
+  }
+
+  const body = new Uint8Array(byteCount);
+  let offset = 0;
+  for (const chunk of chunks) {
+    body.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+
+  const contentType = request.headers.get("content-type");
+  if (!contentType) throw new Error("Missing content type");
+  return new Response(body, { headers: { "content-type": contentType } }).formData();
+}
+
 export async function POST(request: Request): Promise<Response> {
   if (!isValidCsrfHeader(request)) return csrfInvalidResponse();
 
   const sessionId = extractSessionId(request.headers.get("cookie"));
   if (!sessionId) return sessionInvalidResponse();
 
+  const rateLimitResponse = await enforceUploadRateLimit(request);
+  if (rateLimitResponse) return rateLimitResponse;
+
   const contentLength = request.headers.get("content-length");
   if (contentLength !== null) {
     const declared = Number(contentLength);
-    if (!Number.isFinite(declared) || declared < 0 || declared > MAX_UPLOAD_BYTES) {
+    if (!Number.isFinite(declared) || declared < 0 || declared > MAX_UPLOAD_REQUEST_BYTES) {
       return jsonResponse({ error: "PAYLOAD_TOO_LARGE" }, 413);
     }
   }
 
   let incoming: FormData;
   try {
-    incoming = await request.formData();
+    const formData = await readBoundedFormData(request);
+    if (formData === null) {
+      return jsonResponse({ error: "PAYLOAD_TOO_LARGE" }, 413);
+    }
+    incoming = formData;
   } catch {
     return jsonResponse({ error: "BAD_REQUEST", message: "Invalid form body" }, 400);
   }

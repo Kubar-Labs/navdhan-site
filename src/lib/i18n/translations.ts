@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { getMessages, type Messages } from "@/src/lib/i18n/messages";
+import { getMessages } from "@/src/lib/i18n/messages";
 import { isValidLocale } from "@/src/lib/i18n/config";
 
 export type Translator = (key: string, variables?: Record<string, string | number>) => string;

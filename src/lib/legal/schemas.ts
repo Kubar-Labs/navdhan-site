@@ -11,7 +11,6 @@ export const legalCompanySchema = z.object({
   cin: z.string().min(1),
   address: z.string().min(1),
   email: z.string().email(),
-  phone: z.string().min(1),
   website: z.string().url(),
 });
 

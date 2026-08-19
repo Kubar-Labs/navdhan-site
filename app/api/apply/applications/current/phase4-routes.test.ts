@@ -174,6 +174,28 @@ describe("Phase 4 collection routes", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
+  it("rejects an oversized upload body even without Content-Length", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    const oversizedBody = new Uint8Array(12 * 1024 * 1024 + 64 * 1024 + 1);
+
+    const response = await postDocument(
+      new Request("http://localhost/api/apply/applications/current/documents", {
+        method: "POST",
+        headers: {
+          cookie: COOKIE,
+          "content-type": "multipart/form-data; boundary=synthetic",
+          "x-navdhan-requested-with": "apply",
+        },
+        body: oversizedBody,
+      }),
+    );
+
+    expect(response.status).toBe(413);
+    expect(await response.json()).toEqual({ error: "PAYLOAD_TOO_LARGE" });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it("forwards a document delete with the lock version as a query parameter", async () => {
     const fetchMock = vi.fn().mockResolvedValue(Response.json({ requirements: [] }));
     vi.stubGlobal("fetch", fetchMock);

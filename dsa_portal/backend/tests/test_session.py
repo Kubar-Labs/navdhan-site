@@ -25,7 +25,9 @@ class DatabaseSessionTests(unittest.IsolatedAsyncioTestCase):
         session_factory = MagicMock()
 
         with (
-            patch("db.session.create_async_engine", return_value=engine) as create_engine,
+            patch(
+                "db.session.create_async_engine", return_value=engine
+            ) as create_engine,
             patch("db.session.async_sessionmaker", return_value=session_factory),
         ):
             session.init_engine("postgresql+asyncpg://local/test")

@@ -1,9 +1,10 @@
 {
   "global": {
     "announcement": {
-      "message": "🎉 Launch Special: Apply now and get zero processing fee on your first loan!",
-      "ctaLabel": "Claim Offer",
-      "href": "/apply"
+      "message": "Apply online to share your business details and documents for lender assessment.",
+      "ctaLabel": "Start application",
+      "href": "/apply",
+      "dismissLabel": "Dismiss announcement"
     },
     "alt": {
       "navdhanLogo": "NavDhan",
@@ -16,10 +17,10 @@
       "rbi": "RBI Aligned"
     },
     "nav": {
+      "ariaLabel": "Primary navigation",
       "loanProducts": "Loan Products",
       "whyNavDhan": "Why NavDhan",
       "emiCalculator": "EMI Calculator",
-      "customerStories": "Customer Stories",
       "team": "Team"
     },
     "cta": {
@@ -39,6 +40,7 @@
       "close": "Close menu",
       "ariaLabel": "Mobile navigation"
     },
+    "skipToContent": "Skip to main content",
     "contact": {
       "loan": "loan@kubar.tech",
       "partnership": "partnerships@kubar.tech",
@@ -125,58 +127,21 @@
           "href": "/legal/consent-policy"
         }
       ],
-      "badges": ["RBI Aligned", "FACE Registered", "Powered by Kubar"],
+      "badges": ["Consent-led application", "Encrypted data", "Independent lender decisions"],
       "emptyBadges": []
     }
   },
   "home": {
     "meta": {
-      "title": "NavDhan: Business Loans for India's MSMEs",
-      "description": "Get \u20b95L to \u20b91Cr business loans. One application, multiple offers, zero platform fee."
+      "title": "NavDhan: Business Financing Applications for India's MSMEs",
+      "description": "Submit a digital business-financing application for lender assessment. Eligibility, pricing, and approval remain subject to lender terms."
     },
     "hero": {
-      "eyebrow": "Fast business loans for India's MSMEs",
+      "eyebrow": "Digital business-financing applications for India's MSMEs",
       "headline": "One stop-solution for all your working capital needs",
-      "body": "Aap business badhayein, hum funding sambhalte hain. Fast, transparent, and digital loans designed for MSMEs.",
-      "primaryCta": "Check Eligibility",
-      "secondaryCta": "View Products",
-      "approvalCard": {
-        "label": "Funding Approved",
-        "value": "\u20b915,00,000"
-      },
-      "stats": [
-        {
-          "value": "24Hr",
-          "label": "Disbursal"
-        },
-        {
-          "value": "100%",
-          "label": "Digital"
-        },
-        {
-          "value": "500+",
-          "label": "SMEs Served"
-        }
-      ]
-    },
-    "associationBadges": {
-      "eyebrow": "Recognised By",
-      "FinVision": {
-        "title": "FinVision",
-        "description": "FinVision 2026 Award Winner at NIBM, Pune (RBI think-tank)"
-      },
-      "FACE": {
-        "title": "FACE Registered",
-        "description": "Member of Fintech Association for Consumer Empowerment"
-      },
-      "Startup Mahakumbh": {
-        "title": "Startup Mahakumbh",
-        "description": "Popular Choice Award winner"
-      },
-      "STPI FinGlobe": {
-        "title": "STPI FinGlobe",
-        "description": "Incubated at STPI FinGlobe"
-      }
+      "body": "Share your business details and documents through one digital application. Available options, eligibility, and terms depend on lender assessment.",
+      "primaryCta": "Start Application",
+      "secondaryCta": "View Products"
     },
     "ecosystemTicker": {
       "eyebrow": "Technology Partnerships"
@@ -184,140 +149,84 @@
     "loanProducts": {
       "eyebrow": "Loan products",
       "heading": "Tailored Business Financing",
-      "body": "Simple, transparent term loans designed to give your enterprise the runway it needs to scale.",
+      "body": "Submit one structured application for lender assessment. Products, amounts, rates, and tenures are determined by the lender.",
       "cta": "Compare Loan Options",
       "productCta": "Learn more",
       "featured": {
-        "tag": "Most Popular",
-        "title": "Term Loans",
-        "description": "Flexible capital infusion for expansion, equipment purchase, or managing seasonal cash flow variations.",
+        "tag": "Business financing",
+        "title": "Business Loan Application",
+        "description": "Apply for financing for expansion, equipment, inventory, or working-capital needs. Products and terms are determined by the lender.",
         "imageAlt": "Term loan visualisation",
-        "cta": "Apply for Term Loan",
+        "cta": "Start Application",
         "specs": [
           {
             "label": "Amount",
-            "value": "\u20b95L - \u20b91Cr"
+            "value": "Set by the lender"
           },
           {
             "label": "Interest Rate",
-            "value": "12% - 24% p.a."
+            "value": "Disclosed in the offer"
           },
           {
             "label": "Tenure",
-            "value": "3 - 12 Months"
+            "value": "Subject to eligibility"
           },
           {
             "label": "Processing",
-            "value": "Zero Hidden Fees"
+            "value": "Shown before acceptance"
           }
         ]
-      },
-      "products": [
-        {
-          "id": "collateral-free",
-          "titleKey": "Collateral-Free Business Loan",
-          "descriptionKey": "Unsecured funding up to \u20b91 Crore based on your business cash flow. No property or asset needed.",
-          "iconName": "ShieldCheck",
-          "ctaKey": "Learn more"
-        },
-        {
-          "id": "working-capital",
-          "titleKey": "Working Capital Loan",
-          "descriptionKey": "Cover salaries, stock, supplier payments, or everyday gaps with flexible repayment.",
-          "iconName": "Briefcase",
-          "ctaKey": "Learn more"
-        },
-        {
-          "id": "machinery",
-          "titleKey": "Asset / Machinery Finance",
-          "descriptionKey": "Buy equipment, vehicles, or tools with EMIs that match your cash cycle.",
-          "iconName": "Factory",
-          "ctaKey": "Learn more"
-        },
-        {
-          "id": "growth",
-          "titleKey": "Business Growth Loan",
-          "descriptionKey": "Larger-ticket capital to expand to a new city, add capacity, or take on bigger orders.",
-          "iconName": "TrendingUp",
-          "ctaKey": "Learn more"
-        }
-      ]
+      }
     },
     "whyNavDhan": {
       "eyebrow": "Why NavDhan",
       "heading": "Why Choose NavDhan?",
-      "body": "Built on trust, designed for speed. We remove the friction from business financing.",
+      "body": "A structured application flow that keeps lender decisions and final terms explicit.",
       "cta": "Apply Now",
-      "trustBadges": ["RBI Aligned", "FACE Registered", "Powered by Kubar"],
+      "trustBadges": ["Consent-led application", "Encrypted data", "Independent lender decisions"],
       "reasons": [
         {
           "id": "instant-sanction",
-          "titleKey": "Fast Disbursal",
-          "bodyKey": "Disbursement takes around 24-72 hours depending on the lender's timeline.",
+          "titleKey": "Structured Application",
+          "bodyKey": "Complete the required business, applicant, and loan details in a guided flow.",
           "iconName": "Zap"
         },
         {
           "id": "secure",
-          "titleKey": "100% Secure",
-          "bodyKey": "Bank-grade encryption ensures your business data remains completely private and protected.",
+          "titleKey": "Data Protection",
+          "bodyKey": "Application data is encrypted in transit and sensitive fields are encrypted at rest.",
           "iconName": "Shield"
         },
         {
           "id": "fair-pricing",
-          "titleKey": "Fair Pricing",
-          "bodyKey": "Transparent interest rates with absolutely zero hidden charges or surprise fees.",
+          "titleKey": "Clear Lender Terms",
+          "bodyKey": "Review the lender's rate, fees, tenure, and repayment terms before accepting an offer.",
           "iconName": "Scale"
         },
         {
           "id": "minimal-paperwork",
-          "titleKey": "Minimal Paperwork",
-          "bodyKey": "A completely digital journey. Upload basic documents and let our systems do the rest.",
+          "titleKey": "Document Checklist",
+          "bodyKey": "Upload the documents required for your business constitution and application stage.",
           "iconName": "FileText"
         },
         {
           "id": "support",
-          "titleKey": "24/7 Support",
-          "bodyKey": "Dedicated relationship managers available round the clock to assist your queries.",
+          "titleKey": "Email Support",
+          "bodyKey": "Contact the support team by email if you need help with the application.",
           "iconName": "PhoneCall"
         },
         {
           "id": "flexible-tenure",
-          "titleKey": "Flexible Tenure",
-          "bodyKey": "Choose repayment schedules that align perfectly with your business cash flows.",
+          "titleKey": "Lender-Determined Tenure",
+          "bodyKey": "Available repayment schedules depend on lender assessment and the final offer.",
           "iconName": "Calendar"
         }
       ]
     },
-    "recognition": {
-      "eyebrow": "Recognition",
-      "heading": "Built to earn your trust. Recognised along the way."
-    },
-    "customerStories": {
-      "eyebrow": "Customer stories",
-      "heading": "Real businesses. Real outcomes.",
-      "cta": "Read more stories",
-      "items": {
-        "rajiv": {
-          "role": "Garment Shop Owner",
-          "question": "I wanted to stock up for the wedding season, but I did not have collateral. Could I still get a loan?",
-          "outcome": "Rajiv qualified for a collateral-free ₹25 Lakh business loan."
-        },
-        "sunita": {
-          "role": "Handicraft Artisan, Varanasi",
-          "question": "Our loom needed upgrading, but cash flow was tight. Could we get a loan for equipment?",
-          "outcome": "Sunita secured a ₹15 Lakh machinery loan at a competitive rate."
-        },
-        "amit": {
-          "role": "E-commerce Logistics, Gurugram",
-          "question": "We needed working capital to hire more staff and take on bigger orders. What was the simplest way?",
-          "outcome": "Amit received an ₹18 Lakh working capital loan in days."
-        }
-      }
-    },
     "emiCalculator": {
       "eyebrow": "EMI Calculator",
       "heading": "Plan Your Finances",
-      "intro": "Use our interactive calculator to estimate your monthly commitments. Adjust the sliders to find a plan that works for your cash flow.",
+      "intro": "Use this illustrative calculator to explore repayment scenarios. Actual amounts, rates, tenures, fees, eligibility, and approval are set by the lender and may differ.",
       "amount": "Loan Amount",
       "rate": "Interest Rate",
       "tenure": "Tenure",
@@ -329,7 +238,7 @@
     },
     "finalCta": {
       "heading": "Ready to grow your business?",
-      "subtext": "Join 500+ successful enterprises scaling with NavDhan's working capital solutions.",
+      "subtext": "Start a digital application and review any available lender terms before making a decision.",
       "primaryCta": "Start Application Now",
       "secondaryCta": "Talk to Us"
     }
@@ -337,7 +246,7 @@
   "team": {
     "meta": {
       "title": "Our Team: NavDhan",
-      "description": "Meet the people building fair, fast business loans for India's MSMEs."
+      "description": "Meet the people building NavDhan's digital business-financing application experience."
     },
     "hero": {
       "heading": "Built by people who believe in small business.",
@@ -361,7 +270,7 @@
         {
           "id": "transparency",
           "title": "Transparency",
-          "body": "No hidden fees, no jargon. Plain terms you can verify.",
+          "body": "Clear communication, no jargon. Review the terms and charges disclosed in any lender offer.",
           "iconName": "Eye"
         },
         {
@@ -401,11 +310,11 @@
   "apply": {
     "meta": {
       "title": "Apply: NavDhan",
-      "description": "Check your business loan eligibility in under 5 minutes."
+      "description": "Submit a business-financing application and the documents required for lender assessment."
     },
     "eyebrow": "Business loan application",
-    "heading": "Get the right business loan, without chasing banks.",
-    "description": "Fill a few details to check your eligibility. It takes less than 5 minutes.",
+    "heading": "Submit your business-financing application online.",
+    "description": "Provide your business, applicant, and loan details, then review them before submission.",
     "loanDetailsTitle": "Loan details",
     "amountLabel": "Loan amount",
     "tenureLabel": "Tenure (months)",
@@ -427,9 +336,9 @@
     "pinCodePlaceholder": "6-digit PIN",
     "referralCodeLabel": "Referral code (optional)",
     "aadhaarLabel": "Aadhaar number",
-    "aadhaarConsentLabel": "I consent to sharing my Aadhaar details for identity verification",
+    "aadhaarConsentLabel": "I consent to the collection and storage of my Aadhaar details for this application",
     "panLabel": "PAN number",
-    "panConsentLabel": "I consent to sharing my PAN details for KYC",
+    "panConsentLabel": "I consent to the collection and storage of my PAN details for this application",
     "gstRegisteredLabel": "Are you GST registered?",
     "gstRegisteredYes": "Registered under GST",
     "gstRegisteredNo": "Not registered",
@@ -456,11 +365,11 @@
     "consentAnd": "and",
     "consentPolicy": "Consent Policy",
     "privacyPolicy": "Privacy Policy",
-    "consentLender": "I consent to sharing my details so NavDhan can find a loan offer for my business.",
+    "consentLender": "I consent to NavDhan sharing my application details with participating lenders for assessment.",
     "submit": "Submit Application",
     "submitting": "Submitting...",
     "successHeading": "Thank you",
-    "successBody": "We have received your application. A NavDhan advisor will reach out within 24 hours.",
+    "successBody": "We have received your application. Keep your reference number for future correspondence.",
     "successCta": "Back to home",
     "errorHeading": "Something went wrong",
     "errorBody": "Please check your details and try again.",
@@ -506,7 +415,7 @@
       "submissionSuccessHeading": "Application submitted",
       "submissionSuccessBody": "Thank you! Your application has been submitted successfully.",
       "referenceLabel": "Reference number",
-      "viewDashboardLabel": "View dashboard"
+      "viewDashboardLabel": "Back to home"
     }
   },
   "legal": {

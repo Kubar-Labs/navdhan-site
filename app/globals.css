@@ -3,16 +3,18 @@
 @theme {
   --color-nt-white: #ffffff;
   --color-nt-cream: #fafaf8;
-  --color-nt-orange-500: #f97316;
-  --color-nt-orange-600: #ea580c;
-  --color-nt-orange-700: #c2410c;
+  /* Brand oranges are intentionally darker than Tailwind's defaults so
+     normal-size orange text and white text on orange controls meet WCAG AA. */
+  --color-nt-orange-500: #c2410c;
+  --color-nt-orange-600: #b53a0b;
+  --color-nt-orange-700: #9a3412;
   --color-nt-green-500: #22c55e;
   --color-nt-slate-900: #0f172a;
   --color-nt-slate-600: #475569;
   --color-nt-slate-200: #e2e8f0;
   --color-nt-slate-100: #f1f5f9;
   --color-nt-black: #0a0a0a;
-  --color-nt-red-500: #ef4444;
+  --color-nt-red-500: #b91c1c;
   --color-nt-amber-500: #f59e0b;
 
   --font-sans: var(--font-inter), "Noto Sans Devanagari", system-ui, sans-serif;

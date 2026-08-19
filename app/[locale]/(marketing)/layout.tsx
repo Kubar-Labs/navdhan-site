@@ -12,12 +12,12 @@ export default async function MarketingLayout({ children, params }: MarketingLay
   const { locale } = await params;
   const tNav = await getTranslator(locale, "global.nav");
   const tGlobal = await getTranslator(locale, "global");
+  const announcementHref = tGlobal("announcement.href");
 
   const navLinks = [
     { label: tNav("loanProducts"), href: `/${locale}/#products` },
     { label: tNav("whyNavDhan"), href: `/${locale}/#why` },
     { label: tNav("emiCalculator"), href: `/${locale}/#emi` },
-    { label: tNav("customerStories"), href: `/${locale}/#stories` },
     { label: tNav("team"), href: `/${locale}/team` },
   ];
 
@@ -26,14 +26,27 @@ export default async function MarketingLayout({ children, params }: MarketingLay
       <AnnouncementBar
         message={tGlobal("announcement.message")}
         ctaLabel={tGlobal("announcement.ctaLabel")}
-        href={tGlobal("announcement.href")}
+        href={announcementHref === "/apply" ? `/${locale}/apply` : announcementHref}
+        dismissLabel={tGlobal("announcement.dismissLabel")}
       />
       <Header
         navLinks={navLinks}
-        cta={{ label: tGlobal("cta.apply.label"), href: "/apply", variant: "primary" }}
+        cta={{
+          label: tGlobal("cta.apply.label"),
+          href: `/${locale}/apply`,
+          variant: "primary",
+        }}
         currentLocale={locale}
+        skipToContentLabel={tGlobal("skipToContent")}
+        primaryNavigationLabel={tGlobal("nav.ariaLabel")}
+        languageSelectorLabel={tGlobal("localeSelector.label")}
+        mobileMenuOpenLabel={tGlobal("mobileMenu.open")}
+        mobileMenuCloseLabel={tGlobal("mobileMenu.close")}
+        mobileNavigationLabel={tGlobal("mobileMenu.ariaLabel")}
       />
-      <main id="main-content">{children}</main>
+      <main id="main-content" tabIndex={-1}>
+        {children}
+      </main>
       <Footer locale={locale} />
     </>
   );

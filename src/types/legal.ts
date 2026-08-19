@@ -9,7 +9,6 @@ export interface LegalCompany {
   cin: string;
   address: string;
   email: string;
-  phone: string;
   website: string;
 }
 

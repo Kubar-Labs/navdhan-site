@@ -28,7 +28,9 @@ SessionDigest = Annotated[DigestHex | None, Header(alias="x-navdhan-session-dige
 
 
 def _unauthorized() -> HTTPException:
-    return HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired session")
+    return HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired session"
+    )
 
 
 def _not_found(detail: str) -> HTTPException:
@@ -36,7 +38,9 @@ def _not_found(detail: str) -> HTTPException:
 
 
 def _locked() -> HTTPException:
-    return HTTPException(status_code=409, detail="This application has already been submitted.")
+    return HTTPException(
+        status_code=409, detail="This application has already been submitted."
+    )
 
 
 def _stale(error: StaleApplicationError) -> HTTPException:
@@ -60,7 +64,9 @@ def _incomplete(error: SubmissionIncompleteError) -> HTTPException:
 
 
 @router.get("/applications/current/consent")
-async def get_application_consent(session_digest: SessionDigest = None) -> dict[str, object]:
+async def get_application_consent(
+    session_digest: SessionDigest = None,
+) -> dict[str, object]:
     if session_digest is None:
         raise _unauthorized()
     try:

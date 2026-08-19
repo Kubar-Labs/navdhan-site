@@ -9,6 +9,7 @@ interface AnnouncementBarProps {
   ctaLabel?: string;
   href?: string;
   dismissible?: boolean;
+  dismissLabel?: string;
 }
 
 export function AnnouncementBar({
@@ -16,6 +17,7 @@ export function AnnouncementBar({
   ctaLabel,
   href = "#",
   dismissible = true,
+  dismissLabel = "Dismiss announcement",
 }: AnnouncementBarProps) {
   const [dismissed, setDismissed] = useState(false);
   if (dismissed) return null;
@@ -36,8 +38,8 @@ export function AnnouncementBar({
           <button
             type="button"
             onClick={() => setDismissed(true)}
-            aria-label="Dismiss announcement"
-            className="ml-2 inline-flex rounded p-0.5 hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-nt-orange-600"
+            aria-label={dismissLabel}
+            className="ml-2 inline-flex rounded p-0.5 hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
           >
             <X className="h-4 w-4" />
           </button>

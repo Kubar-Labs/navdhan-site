@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Upload, FileText } from "lucide-react";
 import { cn } from "@/src/lib/utils/cn";
 import {
@@ -50,6 +50,37 @@ const STATUS_STYLES: Record<string, string> = {
   missing: "bg-red-100 text-red-800",
 };
 
+const SCAN_POLL_INTERVAL_MS = 3_000;
+const SCAN_POLL_MAX_ATTEMPTS = 40;
+
+function pendingScanKey(requirements: RequirementsResponse | null): string {
+  if (!requirements) return "";
+  return requirements.requirements
+    .flatMap((requirement) =>
+      requirement.documents
+        .filter(
+          (document) =>
+            document.status === "quarantined" || document.scan_result === "pending",
+        )
+        .map((document) => document.document_id),
+    )
+    .sort()
+    .join(",");
+}
+
+function documentScanLabel(document: RequirementRow["documents"][number]): string | null {
+  if (document.status === "quarantined" || document.scan_result === "pending") {
+    return "Scanning for malware…";
+  }
+  if (document.scan_result === "infected") {
+    return "Unsafe file detected — remove it and upload a different PDF.";
+  }
+  if (document.status === "scan_failed" || document.scan_result === "unreadable") {
+    return "Scan failed — remove it and upload a readable PDF.";
+  }
+  return null;
+}
+
 function needsCoverageDates(row: RequirementRow): boolean {
   return row.coverage_mode === "month_range" || row.coverage_mode === "fiscal_year";
 }
@@ -69,6 +100,12 @@ const DocumentRow: React.FC<{
   const [error, setError] = useState<string | null>(null);
 
   const disabled = row.status === "not_applicable" || row.status === "waived";
+  const replaceableDocuments = row.documents
+    .map((document, index) => ({ document, index }))
+    .filter(
+      ({ document }) =>
+        document.status === "uploaded" && document.scan_result === "clean",
+    );
 
   const handleUpload = useCallback(async () => {
     if (!file) {
@@ -177,11 +214,26 @@ const DocumentRow: React.FC<{
               key={document.document_id}
               className="flex items-center justify-between text-xs text-slate-600 bg-slate-50 rounded px-2 py-1"
             >
-              <span>
-                Document {index + 1} · {(document.size_bytes / 1024).toFixed(0)} KB
-                {document.coverage_from && document.coverage_to
-                  ? ` · ${document.coverage_from} to ${document.coverage_to}`
-                  : ""}
+              <span className="min-w-0">
+                <span>
+                  Document {index + 1} · {(document.size_bytes / 1024).toFixed(0)} KB
+                  {document.coverage_from && document.coverage_to
+                    ? ` · ${document.coverage_from} to ${document.coverage_to}`
+                    : ""}
+                </span>
+                {documentScanLabel(document) && (
+                  <span
+                    className={cn(
+                      "mt-0.5 block font-medium",
+                      document.scan_result === "pending"
+                        ? "text-amber-700"
+                        : "text-red-700",
+                    )}
+                    role={document.scan_result === "pending" ? "status" : "alert"}
+                  >
+                    {documentScanLabel(document)}
+                  </span>
+                )}
               </span>
               {!disabled && (
                 <button
@@ -222,7 +274,7 @@ const DocumentRow: React.FC<{
               </label>
             </>
           )}
-          {row.documents.length > 0 && (
+          {replaceableDocuments.length > 0 && (
             <label className="text-xs text-slate-600">
               Action
               <select
@@ -231,7 +283,7 @@ const DocumentRow: React.FC<{
                 className="block rounded border border-slate-300 px-2 py-1 text-sm"
               >
                 <option value="">Add a new document</option>
-                {row.documents.map((document, index) => (
+                {replaceableDocuments.map(({ document, index }) => (
                   <option key={document.document_id} value={document.document_id}>
                     Replace document {index + 1}
                   </option>
@@ -364,6 +416,7 @@ export function useRequirements(enabled: boolean): {
   const [requirements, setRequirements] = useState<RequirementsResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const pendingKey = useMemo(() => pendingScanKey(requirements), [requirements]);
 
   const reload = useCallback(async () => {
     setLoading(true);
@@ -388,6 +441,45 @@ export function useRequirements(enabled: boolean): {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabled, reload]);
+
+  useEffect(() => {
+    if (!enabled || !pendingKey) return;
+
+    let active = true;
+    let timeout: ReturnType<typeof setTimeout> | undefined;
+    let attempts = 0;
+
+    const poll = async () => {
+      attempts += 1;
+      try {
+        const data = await fetchRequirements();
+        if (!active) return;
+        setRequirements(data);
+        setError(null);
+        // A changed key (including an empty one) starts a fresh effect or
+        // stops polling after React applies the new snapshot.
+        if (pendingScanKey(data) !== pendingKey) return;
+      } catch {
+        // Scanner completion is eventually consistent. Keep the last good
+        // snapshot and retry a transient read failure within the same bound.
+      }
+
+      if (!active) return;
+      if (attempts >= SCAN_POLL_MAX_ATTEMPTS) {
+        setError(
+          "Document scanning is taking longer than expected. Please retry in a few minutes.",
+        );
+        return;
+      }
+      timeout = setTimeout(() => void poll(), SCAN_POLL_INTERVAL_MS);
+    };
+
+    timeout = setTimeout(() => void poll(), SCAN_POLL_INTERVAL_MS);
+    return () => {
+      active = false;
+      if (timeout) clearTimeout(timeout);
+    };
+  }, [enabled, pendingKey]);
 
   return { requirements, loading, error, reload, setRequirements };
 }

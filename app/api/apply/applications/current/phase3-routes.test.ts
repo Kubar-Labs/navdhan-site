@@ -69,6 +69,7 @@ describe("Phase 3 collection routes", () => {
       "/api/apply/applications/current/gst-registration",
       {
         gst_registered: true,
+        gst_consent: true,
         state_code: "27",
         gstin: "27ABCDE1234F1Z5",
         expected_lock_version: 4,

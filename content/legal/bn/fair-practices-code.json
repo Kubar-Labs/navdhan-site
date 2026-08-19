@@ -10,7 +10,6 @@
     "cin": "U70200WB2024PTC274850",
     "address": "156, Tarvakere, BTM Layout 1st Stage, Bengaluru, Karnataka",
     "email": "support@kubar.tech",
-    "phone": "+91-80-XXXX-XXXX",
     "website": "https://navdhan.app"
   },
   "intro": {
@@ -28,13 +27,13 @@
       "id": "commitment",
       "title": "Our commitment",
       "content_type": "prose",
-      "body": "We believe that MSME borrowers deserve clarity, respect, and timely service. We do not charge any platform fee and we do not accept hidden commissions that influence lender recommendations."
+      "body": "We believe that MSME borrowers deserve clarity, respect, and timely service. Any NavDhan charge and all lender charges must be disclosed before acceptance, and lender recommendations must not be influenced by undisclosed commissions."
     },
     {
       "id": "no-fee",
-      "title": "No platform fee",
+      "title": "Fee transparency",
       "content_type": "prose",
-      "body": "NavDhan does not charge borrowers any fee for applying, comparing offers, or using the platform. All charges from lenders are disclosed in the loan sanction letter."
+      "body": "Any fee charged by NavDhan, and all lender fees, must be disclosed before acceptance. Loan pricing and charges are determined by the lender and shown in the applicable offer documents."
     },
     {
       "id": "disclosure",

@@ -101,13 +101,24 @@ class CollectionSeedContractTests(unittest.TestCase):
             "terms_of_use",
             "credit_bureau_check",
             "communications",
+            "gst_verification",
         ):
             with self.subTest(purpose=purpose):
                 self.assertIn(f"'{purpose}'", self.normalized)
         self.assertRegex(
             self.normalized,
-            r"\('communications'\s*,.*?\strue\s*,\s*\d+\s*,",
+            r"\('communications'\s*,.*?\sfalse\s*,\s*\d+\s*,",
         )
+        self.assertRegex(
+            self.normalized,
+            r"\('gst_verification'\s*,.*?i consent to sharing my gst registration details.*?\sfalse\s*,\s*\d+\s*,",
+        )
+        for mandatory in ("privacy_policy", "terms_of_use", "credit_bureau_check"):
+            with self.subTest(mandatory=mandatory):
+                self.assertRegex(
+                    self.normalized,
+                    rf"\('{mandatory}'\s*,.*?\strue\s*,\s*\d+\s*,",
+                )
 
     def test_a_consent_grant_destination_is_seeded(self) -> None:
         self.assertIn("insert into destinations", self.normalized)

@@ -47,11 +47,15 @@ SessionDigest = Annotated[DigestHex | None, Header(alias="x-navdhan-session-dige
 
 
 def _unauthorized() -> HTTPException:
-    return HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired session")
+    return HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired session"
+    )
 
 
 def _locked() -> HTTPException:
-    return HTTPException(status_code=409, detail="This application has already been submitted.")
+    return HTTPException(
+        status_code=409, detail="This application has already been submitted."
+    )
 
 
 async def _write(
@@ -65,9 +69,13 @@ async def _write(
     except InvalidSessionError as error:
         raise _unauthorized() from error
     except ApplicationNotStartedError as error:
-        raise HTTPException(status_code=404, detail="Application not started") from error
+        raise HTTPException(
+            status_code=404, detail="Application not started"
+        ) from error
     except PartyNotFoundError as error:
-        raise HTTPException(status_code=404, detail="Application party not found") from error
+        raise HTTPException(
+            status_code=404, detail="Application party not found"
+        ) from error
     except ApplicationLockedError as error:
         raise _locked() from error
     except StaleApplicationError as error:
@@ -88,7 +96,10 @@ async def post_session(payload: SessionCreate) -> dict[str, str]:
         browser_session = await create_session(bytes.fromhex(payload.token_digest))
     except InvalidSessionError as error:
         raise _unauthorized() from error
-    return {"session_id": str(browser_session.session_id), "expires_at": browser_session.expires_at.isoformat()}
+    return {
+        "session_id": str(browser_session.session_id),
+        "expires_at": browser_session.expires_at.isoformat(),
+    }
 
 
 @router.get("/applications/current")
@@ -100,7 +111,9 @@ async def get_application(session_digest: SessionDigest = None) -> dict[str, obj
     except InvalidSessionError as error:
         raise _unauthorized() from error
     except ApplicationNotStartedError as error:
-        raise HTTPException(status_code=404, detail="Application not started") from error
+        raise HTTPException(
+            status_code=404, detail="Application not started"
+        ) from error
 
 
 @router.put("/applications/current/loan-intent")

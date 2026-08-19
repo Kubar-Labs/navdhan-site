@@ -1,4 +1,4 @@
-import { ShieldCheck, Lock, BadgeCheck } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
 import { cn } from "@/src/lib/utils/cn";
 
 export interface TrustBadgeItem {
@@ -12,12 +12,6 @@ export interface TrustBadgeBarProps {
   layout?: "inline" | "stacked";
   variant?: "light" | "dark";
 }
-
-const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
-  "RBI Aligned": BadgeCheck,
-  "Bank-grade encryption": Lock,
-  "FACE Registered": ShieldCheck,
-};
 
 export function TrustBadgeBar({
   badges,
@@ -35,7 +29,7 @@ export function TrustBadgeBar({
       aria-label="Trust badges"
     >
       {badges.map((badge) => {
-        const Icon = iconMap[badge.name] ?? ShieldCheck;
+        const Icon = ShieldCheck;
         return (
           <div
             key={badge.name}

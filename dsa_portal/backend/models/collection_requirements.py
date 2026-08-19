@@ -10,7 +10,26 @@ from pydantic import ConfigDict, Field, StringConstraints
 from models.collection_application import CollectionRequest, VersionedCollectionRequest
 
 
-LenderName = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=150)]
+LenderName = Annotated[
+    str, StringConstraints(strip_whitespace=True, min_length=1, max_length=150)
+]
+Sha256Hex = Annotated[
+    str,
+    StringConstraints(
+        strip_whitespace=True,
+        to_lower=True,
+        pattern=r"^[0-9a-f]{64}$",
+    ),
+]
+ScannerJobId = Annotated[
+    str,
+    StringConstraints(
+        strip_whitespace=True,
+        min_length=1,
+        max_length=200,
+        pattern=r"^[A-Za-z0-9._:-]+$",
+    ),
+]
 
 
 class CreditDeclaration(VersionedCollectionRequest):
@@ -28,7 +47,15 @@ class CreditFacility(VersionedCollectionRequest):
     """
 
     facility_type: Literal[
-        "home", "personal", "car", "education", "vehicle", "business", "gold", "credit", "other"
+        "home",
+        "personal",
+        "car",
+        "education",
+        "vehicle",
+        "business",
+        "gold",
+        "credit",
+        "other",
     ]
     lender_name: LenderName
     original_loan_amount: Annotated[int, Field(ge=0)]
@@ -55,3 +82,12 @@ class DocumentUploadMetadata(CollectionRequest):
     coverage_from: date | None = None
     coverage_to: date | None = None
     supersedes_document_id: str | None = None
+
+
+class DocumentScanResult(CollectionRequest):
+    """Authenticated scanner verdict bound to one immutable GCS generation."""
+
+    scan_result: Literal["clean", "infected", "unreadable"]
+    gcs_generation: Annotated[int, Field(gt=0)]
+    sha256: Sha256Hex
+    scanner_job_id: ScannerJobId

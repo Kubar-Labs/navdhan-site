@@ -992,6 +992,15 @@ class Document(CollectionBase):
             ["marketplace_id", "supersedes_document_id"],
             ["documents.marketplace_id", "documents.document_id"],
         ),
+        ForeignKeyConstraint(
+            ["marketplace_id", "application_id", "uploaded_for_requirement_id"],
+            [
+                "application_requirements.marketplace_id",
+                "application_requirements.application_id",
+                "application_requirements.application_requirement_id",
+            ],
+            name="documents_uploaded_for_requirement_fk",
+        ),
     )
 
     document_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -1021,7 +1030,16 @@ class Document(CollectionBase):
     coverage_to: Mapped[date | None] = mapped_column(Date)
     fiscal_year_start: Mapped[date | None] = mapped_column(Date)
     status: Mapped[str] = mapped_column(
-        ENUM("uploading", "uploaded", "scan_failed", "superseded", "purged", name="document_status", create_type=False),
+        ENUM(
+            "uploading",
+            "quarantined",
+            "uploaded",
+            "scan_failed",
+            "superseded",
+            "purged",
+            name="document_status",
+            create_type=False,
+        ),
         nullable=False,
         server_default="uploading",
     )
@@ -1036,7 +1054,10 @@ class Document(CollectionBase):
         server_default="not_attempted",
     )
     extracted_data: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
+    uploaded_for_requirement_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
     supersedes_document_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
+    scan_job_id: Mapped[str | None] = mapped_column(Text)
+    scan_completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     idempotency_key: Mapped[str] = mapped_column(Text, nullable=False)
     uploaded_by_type: Mapped[str] = mapped_column(
         ENUM("borrower", "marketplace", "ops", "system", "lender", name="actor_type", create_type=False),

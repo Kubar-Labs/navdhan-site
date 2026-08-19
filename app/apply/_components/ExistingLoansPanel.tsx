@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useCallback, useState } from "react";
+import React, {
+  forwardRef,
+  type ForwardedRef,
+  useCallback,
+  useImperativeHandle,
+  useState,
+} from "react";
 import { cn } from "@/src/lib/utils/cn";
 import { addCreditFacility, ApplyApiError, saveCreditDeclaration } from "@/app/apply/lib/api";
 import type { FacilityType, RequirementsResponse } from "@/app/apply/lib/types";
@@ -10,6 +16,10 @@ export interface ExistingLoansPanelProps {
   requirements: RequirementsResponse;
   onChange: (requirements: RequirementsResponse) => void;
   className?: string;
+}
+
+export interface ExistingLoansPanelHandle {
+  persistDeclarationForContinue: () => Promise<boolean>;
 }
 
 const FACILITY_TYPE_OPTIONS: { value: FacilityType; label: string }[] = [
@@ -24,11 +34,10 @@ const FACILITY_TYPE_OPTIONS: { value: FacilityType; label: string }[] = [
   { value: "other", label: "Other" },
 ];
 
-export const ExistingLoansPanel: React.FC<ExistingLoansPanelProps> = ({
-  requirements,
-  onChange,
-  className,
-}) => {
+function ExistingLoansPanelImpl(
+  { requirements, onChange, className }: ExistingLoansPanelProps,
+  ref: ForwardedRef<ExistingLoansPanelHandle>,
+) {
   const declared = requirements.credit_declaration.has_active_credit_facilities;
   const [hasActive, setHasActive] = useState<boolean | null>(declared);
   const [cibilScore, setCibilScore] = useState(
@@ -50,33 +59,73 @@ export const ExistingLoansPanel: React.FC<ExistingLoansPanelProps> = ({
   const [facilityError, setFacilityError] = useState<string | null>(null);
   const [addingFacility, setAddingFacility] = useState(false);
 
-  const submitDeclaration = useCallback(async () => {
-    const score = Number(cibilScore);
-    if (hasActive === null) {
-      setDeclarationError("Select whether you have active loans");
-      return;
-    }
-    if (!Number.isInteger(score) || score < 300 || score > 900) {
-      setDeclarationError("Enter a CIBIL score between 300 and 900");
-      return;
-    }
-    setDeclaring(true);
-    setDeclarationError(null);
-    try {
-      const updated = await saveCreditDeclaration({
-        has_active_credit_facilities: hasActive,
-        declared_cibil_score: score,
-        expected_lock_version: requirements.lock_version,
-      });
-      onChange(updated);
-    } catch (error) {
-      setDeclarationError(
-        error instanceof ApplyApiError ? error.message : "Could not save. Please try again.",
-      );
-    } finally {
-      setDeclaring(false);
-    }
-  }, [hasActive, cibilScore, requirements.lock_version, onChange]);
+  const submitDeclaration = useCallback(
+    async (requireCompleteFacilities = false) => {
+      const score = Number(cibilScore);
+      if (hasActive === null) {
+        setDeclarationError("Select whether you have active loans");
+        return false;
+      }
+      if (!Number.isInteger(score) || score < 300 || score > 900) {
+        setDeclarationError("Enter a CIBIL score between 300 and 900");
+        return false;
+      }
+      if (!hasActive && requirements.facilities.length > 0) {
+        setDeclarationError("Remove active loans before declaring that you have none");
+        return false;
+      }
+      if (
+        hasActive === declared &&
+        score === requirements.credit_declaration.declared_cibil_score
+      ) {
+        if (hasActive && requireCompleteFacilities && requirements.facilities.length === 0) {
+          setDeclarationError("Add at least one active loan before continuing");
+          return false;
+        }
+        setDeclarationError(null);
+        return true;
+      }
+      setDeclaring(true);
+      setDeclarationError(null);
+      try {
+        const updated = await saveCreditDeclaration({
+          has_active_credit_facilities: hasActive,
+          declared_cibil_score: score,
+          expected_lock_version: requirements.lock_version,
+        });
+        onChange(updated);
+        if (hasActive && requireCompleteFacilities && updated.facilities.length === 0) {
+          setDeclarationError("Add at least one active loan before continuing");
+          return false;
+        }
+        return true;
+      } catch (error) {
+        setDeclarationError(
+          error instanceof ApplyApiError ? error.message : "Could not save. Please try again.",
+        );
+        return false;
+      } finally {
+        setDeclaring(false);
+      }
+    },
+    [
+      cibilScore,
+      declared,
+      hasActive,
+      onChange,
+      requirements.credit_declaration.declared_cibil_score,
+      requirements.facilities.length,
+      requirements.lock_version,
+    ],
+  );
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      persistDeclarationForContinue: () => submitDeclaration(true),
+    }),
+    [submitDeclaration],
+  );
 
   const submitFacility = useCallback(async () => {
     const originalLoan = Number(originalLoanAmount);
@@ -151,7 +200,9 @@ export const ExistingLoansPanel: React.FC<ExistingLoansPanelProps> = ({
       setEmisPaidCount("");
     } catch (error) {
       setFacilityError(
-        error instanceof ApplyApiError ? error.message : "Could not add this loan. Please try again.",
+        error instanceof ApplyApiError
+          ? error.message
+          : "Could not add this loan. Please try again.",
       );
     } finally {
       setAddingFacility(false);
@@ -173,42 +224,45 @@ export const ExistingLoansPanel: React.FC<ExistingLoansPanelProps> = ({
 
   return (
     <div className={cn("space-y-6", className)}>
-      <div className="rounded-lg border border-slate-200 p-4 space-y-3">
-        <p className="text-sm font-medium text-slate-800">
-          Do you have any active/existing loans or credit facilities?
-        </p>
-        <div className="flex gap-3">
-          <button
-            type="button"
-            onClick={() => setHasActive(true)}
-            className={cn(
-              "rounded border px-4 py-1.5 text-sm",
-              hasActive === true
-                ? "border-orange-600 bg-orange-50 text-orange-700"
-                : "border-slate-300 text-slate-700",
-            )}
-          >
-            Yes
-          </button>
-          <button
-            type="button"
-            onClick={() => setHasActive(false)}
-            className={cn(
-              "rounded border px-4 py-1.5 text-sm",
-              hasActive === false
-                ? "border-orange-600 bg-orange-50 text-orange-700"
-                : "border-slate-300 text-slate-700",
-            )}
-          >
-            No
-          </button>
-        </div>
+      <div className="space-y-3 rounded-lg border border-slate-200 p-4">
+        <fieldset>
+          <legend className="text-sm font-medium text-slate-800">
+            Do you have any active/existing loans or credit facilities?
+          </legend>
+          <div className="mt-3 flex gap-3">
+            {[
+              { label: "Yes", value: true },
+              { label: "No", value: false },
+            ].map((option) => (
+              <label
+                key={option.label}
+                className={cn(
+                  "cursor-pointer rounded border px-4 py-1.5 text-sm focus-within:ring-2 focus-within:ring-orange-600 focus-within:ring-offset-2",
+                  hasActive === option.value
+                    ? "border-orange-600 bg-orange-50 text-orange-700"
+                    : "border-slate-300 text-slate-700",
+                )}
+              >
+                <input
+                  type="radio"
+                  name="has_active_credit_facilities"
+                  value={option.label.toLowerCase()}
+                  checked={hasActive === option.value}
+                  onChange={() => setHasActive(option.value)}
+                  className="sr-only"
+                />
+                {option.label}
+              </label>
+            ))}
+          </div>
+        </fieldset>
         <label className="block text-sm text-slate-700">
           Your CIBIL score
           <input
             type="number"
             min={300}
             max={900}
+            required
             value={cibilScore}
             onChange={(event) => setCibilScore(event.target.value)}
             className="mt-1 block w-40 rounded border border-slate-300 px-2 py-1.5 text-sm"
@@ -216,7 +270,7 @@ export const ExistingLoansPanel: React.FC<ExistingLoansPanelProps> = ({
         </label>
         <button
           type="button"
-          onClick={submitDeclaration}
+          onClick={() => void submitDeclaration()}
           disabled={declaring}
           className="rounded bg-orange-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-orange-700 disabled:opacity-50"
         >
@@ -364,8 +418,8 @@ export const ExistingLoansPanel: React.FC<ExistingLoansPanelProps> = ({
                 <p className="text-xs text-slate-500">
                   Loan amount ₹{facility.original_loan_amount ?? "—"} · Outstanding ₹
                   {facility.outstanding_amount ?? "—"} · EMI ₹{facility.emi_amount ?? "—"} · ROI{" "}
-                  {facility.interest_rate_percent ?? "—"}% · Tenure {facility.tenure_months ?? "—"}
-                  {" "}months
+                  {facility.interest_rate_percent ?? "—"}% · Tenure {facility.tenure_months ?? "—"}{" "}
+                  months
                 </p>
                 <p className="text-xs text-slate-500">
                   {facility.start_date ?? "—"} to {facility.end_date ?? "—"} · Paid EMIs{" "}
@@ -383,4 +437,10 @@ export const ExistingLoansPanel: React.FC<ExistingLoansPanelProps> = ({
       )}
     </div>
   );
-};
+}
+
+export const ExistingLoansPanel = forwardRef<ExistingLoansPanelHandle, ExistingLoansPanelProps>(
+  ExistingLoansPanelImpl,
+);
+
+ExistingLoansPanel.displayName = "ExistingLoansPanel";

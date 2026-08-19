@@ -162,7 +162,7 @@ describe("PUT /api/apply/applications/current/loan-intent", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it("preserves backend validation status and body", async () => {
+  it("preserves backend validation status but drops raw validation detail", async () => {
     const backendBody = { detail: [{ loc: ["body", "constitution"], msg: "invalid" }] };
     vi.stubGlobal(
       "fetch",
@@ -180,7 +180,7 @@ describe("PUT /api/apply/applications/current/loan-intent", () => {
     );
 
     expect(response.status).toBe(422);
-    expect(await response.json()).toEqual(backendBody);
+    expect(await response.json()).toEqual({ message: "invalid" });
   });
 
   it("rejects malformed JSON before proxying", async () => {
@@ -205,7 +205,7 @@ describe("PUT /api/apply/applications/current/loan-intent", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it("preserves a stale-write 409 response and current lock version", async () => {
+  it("preserves a stale-write message without exposing backend metadata", async () => {
     const backendBody = {
       detail: {
         message: "Application was updated; refresh and retry",
@@ -228,7 +228,9 @@ describe("PUT /api/apply/applications/current/loan-intent", () => {
     );
 
     expect(response.status).toBe(409);
-    expect(await response.json()).toEqual(backendBody);
+    expect(await response.json()).toEqual({
+      message: "Application was updated; refresh and retry",
+    });
   });
 
   it("does not expose a backend 5xx body", async () => {

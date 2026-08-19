@@ -1,73 +1,76 @@
-# NavDhan local PostgreSQL 18 database
+# NavDhan PostgreSQL 18 database
 
-This directory contains the collection-flow schema, reversible migrations,
-and the minimum local seed data. The schema implements the activated tables in
-`data-model-reference.md`, permits encrypted Aadhaar values, stores only browser
-session token digests, and forces row-level security on tenant data.
+This directory is the authoritative collection-flow schema. It is not an
+upgrade path for the legacy DSA schema: the two define incompatible tables.
+Staging must be rebuilt from this directory, and production must begin with the
+fresh PostgreSQL 18 `navdhan` database.
 
-For this collection-only iteration, checklist versions are deliberately scoped
-to a specific marketplace. Global checklist rows are not enabled; this keeps
-application-to-checklist product, constitution, and tenant consistency enforced
-entirely through composite database foreign keys.
+## Release rules
 
-The commands below use the isolated local PostgreSQL 18 cluster on port `55432`.
-They do not use the legacy database service.
+- PostgreSQL **18** is mandatory.
+- Apply only `migrations/*.up.sql`, in filename order, followed by
+  `seeds/*.sql`, in filename order.
+- Never edit or delete a migration or seed after it has been released. Add the
+  next numbered file instead.
+- Never run `*.down.sql` against staging or production. Application rollback
+  and database recovery are separate operations; see `DEPLOYMENT.md`.
+- Run migrations as the same administrative database role each time. The
+  service connects only as `navdhan_app`, which must remain a non-superuser
+  without `BYPASSRLS`, `CREATEDB`, or `CREATEROLE`.
 
-## Start the isolated cluster
+`scripts/release.sh` enforces these rules. It:
 
-Initialize a dedicated cluster once:
+- verifies the guarded environment, database name, PostgreSQL major version,
+  writable primary, and runtime role;
+- refuses to baseline any non-empty database, preventing an accidental install
+  over the legacy schema;
+- holds a PostgreSQL advisory lock for the whole release;
+- records filename checksums and refuses drift or missing historical files;
+- leaves interrupted work in a fail-closed `applying` state instead of guessing
+  whether partially completed DDL is safe to repeat;
+- applies the required seed exactly once as an immutable release input;
+- refreshes table, sequence, and default privileges for `navdhan_app`; and
+- verifies the audited seed shape while explicitly setting the RLS tenant.
 
-```powershell
-& 'C:\Program Files\PostgreSQL\18\bin\initdb.exe' -D 'database\.local\data' -U postgres --auth=trust
-```
+The seed is application configuration, not sample data. It creates the NavDhan
+marketplace, product, five consent purposes, document catalogue, and the three
+active checklists (36 requirement rows). A changed seed must be expressed as a
+new numbered seed or migration; mutating an applied seed is rejected.
 
-Start it for local development:
+Privacy policy, terms of use, and credit-bureau consent are globally mandatory.
+Marketing communications and GST-detail sharing are optional at the catalogue
+level; application logic conditionally requires GST consent only when GST
+details are supplied. Marketing consent never gates submission.
 
-```powershell
-& 'C:\Program Files\PostgreSQL\18\bin\pg_ctl.exe' -D 'database\.local\data' -l 'database\.local\postgres.log' -o '-p 55432 -h 127.0.0.1' start
-```
+## Staging and production
 
-The `.local` directory is ignored by Git.
+Use the Cloud SQL Auth Proxy and follow the exact commands and preflight gates
+in `DEPLOYMENT.md`. Both scripts require the proxy's instance-named Unix
+socket, rather than an unbound localhost TCP port, so the declared connection
+name and the PostgreSQL endpoint cannot accidentally refer to different Cloud
+SQL instances. The release runner intentionally supports only:
 
-## Apply the schema and seed
+- `kubardevops:asia-south1:navdhan-staging` / `navdhan`;
+- a disposable `navdhan_rehearsal_*` database on that staging instance; and
+- `kubardevops:asia-south1:navdhan-prod` / `navdhan`, with an additional
+  production acknowledgement after backup/PITR preflight.
 
-```powershell
-& 'C:\Program Files\PostgreSQL\18\bin\psql.exe' --no-password -h 127.0.0.1 -p 55432 -U postgres -d postgres -v ON_ERROR_STOP=1 -f 'database\migrations\001_collection_schema.up.sql'
-& 'C:\Program Files\PostgreSQL\18\bin\psql.exe' --no-password -h 127.0.0.1 -p 55432 -U postgres -d postgres -v ON_ERROR_STOP=1 -f 'database\migrations\002_application_requirement_coverage_snapshot.up.sql'
-& 'C:\Program Files\PostgreSQL\18\bin\psql.exe' --no-password -h 127.0.0.1 -p 55432 -U postgres -d postgres -v ON_ERROR_STOP=1 -f 'database\migrations\003_person_email_lookup_hash.up.sql'
-& 'C:\Program Files\PostgreSQL\18\bin\psql.exe' --no-password -h 127.0.0.1 -p 55432 -U postgres -d postgres -v ON_ERROR_STOP=1 -f 'database\seeds\001_collection_flow.sql'
-```
+After release, reconnect directly as `navdhan_app` and run
+`scripts/verify-runtime.sh`. Its SQL transaction is read-only and sets
+`app.current_marketplace_id` before reading tenant tables, so RLS is tested
+rather than accidentally bypassed.
 
-Migrations `002` and `003` are safe for both freshly created and already
-provisioned local schemas. The seed is transactional and idempotent, so it is
-safe to apply again.
+## Local development
 
-## Roll back
+The existing Windows development cluster is project-local at
+`database/.local/data`, port `55432`; it is not the Windows PostgreSQL service.
+The historical `*.down.sql` files remain useful for disposable local databases,
+but the safer reset is to drop and recreate the disposable database and apply
+all current upward files. Do not copy a local reset procedure into a cloud
+release.
 
-```powershell
-& 'C:\Program Files\PostgreSQL\18\bin\psql.exe' --no-password -h 127.0.0.1 -p 55432 -U postgres -d postgres -v ON_ERROR_STOP=1 -f 'database\migrations\003_person_email_lookup_hash.down.sql'
-& 'C:\Program Files\PostgreSQL\18\bin\psql.exe' --no-password -h 127.0.0.1 -p 55432 -U postgres -d postgres -v ON_ERROR_STOP=1 -f 'database\migrations\002_application_requirement_coverage_snapshot.down.sql'
-& 'C:\Program Files\PostgreSQL\18\bin\psql.exe' --no-password -h 127.0.0.1 -p 55432 -U postgres -d postgres -v ON_ERROR_STOP=1 -f 'database\migrations\001_collection_schema.down.sql'
-```
+Run static database contract tests from the repository root:
 
-The down migration removes project tables, indexes, policies, triggers,
-functions, and enum types. It intentionally leaves the shared `citext` and
-`pgcrypto` extensions installed.
-
-## Tenant context
-
-Before application access to tenant rows, set the current marketplace inside
-the transaction:
-
-```sql
-SET LOCAL app.current_marketplace_id = '00000000-0000-0000-0000-000000000000';
-```
-
-Use the real marketplace UUID. Application roles must not be superusers and
-must not have row-security bypass privileges.
-
-## Tests
-
-```powershell
-python -m unittest discover -s database\tests -v
+```bash
+python -m unittest discover -s database/tests -v
 ```

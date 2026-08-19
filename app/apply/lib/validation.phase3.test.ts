@@ -221,6 +221,7 @@ describe("Phase 3 collection validators", () => {
     expect(
       validateGstRegistration({
         gst_registered: true,
+        gst_consent: true,
         state_code: "29",
         gstin: "27ABCDE1234F1Z5",
         expected_lock_version: 0,
@@ -229,6 +230,7 @@ describe("Phase 3 collection validators", () => {
     expect(
       validateGstRegistration({
         gst_registered: true,
+        gst_consent: true,
         state_code: "99",
         gstin: "27ABCDE1234F1Z5",
         expected_lock_version: 0,
@@ -237,13 +239,42 @@ describe("Phase 3 collection validators", () => {
     expect(
       validateGstRegistration({
         gst_registered: false,
+        gst_consent: false,
         state_code: null,
         gstin: null,
         expected_lock_version: 1,
       }),
     ).toEqual({
-      value: { gst_registered: false, expected_lock_version: 1 },
+      value: { gst_registered: false, gst_consent: false, expected_lock_version: 1 },
       errors: [],
     });
+
+    expect(
+      validateGstRegistration({
+        gst_registered: true,
+        gst_consent: false,
+        state_code: "27",
+        gstin: "27ABCDE1234F1Z5",
+        expected_lock_version: 0,
+      }).errors,
+    ).toContainEqual(expect.objectContaining({ field: "gst_consent" }));
+
+    expect(
+      validateGstRegistration({
+        gst_registered: true,
+        gst_consent: true,
+        state_code: "27",
+        gstin: "",
+        expected_lock_version: 0,
+      }).value,
+    ).toBeUndefined();
+
+    expect(
+      validateGstRegistration({
+        gst_registered: false,
+        gst_consent: true,
+        expected_lock_version: 0,
+      }).value,
+    ).toBeUndefined();
   });
 });

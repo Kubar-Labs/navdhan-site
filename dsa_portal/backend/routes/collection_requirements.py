@@ -9,7 +9,11 @@ import uuid
 from fastapi import APIRouter, Form, Header, HTTPException, UploadFile, status
 
 from models.collection_application import DigestHex
-from models.collection_requirements import CreditDeclaration, CreditFacility
+from models.collection_requirements import (
+    CreditDeclaration,
+    CreditFacility,
+    DocumentScanResult,
+)
 from services.collection_application import (
     ApplicationLockedError,
     ApplicationNotStartedError,
@@ -19,24 +23,51 @@ from services.collection_application import (
 )
 from services.collection_requirements import (
     DocumentNotFoundError,
+    DocumentScanIntegrityError,
+    DocumentScanStorageError,
+    DocumentScanTransitionError,
     DocumentValidationError,
     RequirementNotFoundError,
     create_credit_facility,
     delete_document,
     get_requirements,
+    record_document_scan_result,
     save_credit_declaration,
     upload_document,
 )
 
 
 router = APIRouter(prefix="/api/apply")
+internal_router = APIRouter(prefix="/internal")
 SessionDigest = Annotated[DigestHex | None, Header(alias="x-navdhan-session-digest")]
 
 MAX_UPLOAD_BYTES = 20 * 1024 * 1024
 
 
+@internal_router.post("/document-scans/{document_id}/result")
+async def post_document_scan_result(
+    document_id: uuid.UUID,
+    payload: DocumentScanResult,
+) -> dict[str, object]:
+    """Apply a scanner verdict after middleware authenticates the callback."""
+    try:
+        return await record_document_scan_result(document_id, payload)
+    except DocumentNotFoundError as error:
+        raise _not_found("Document not found") from error
+    except DocumentScanIntegrityError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+    except DocumentScanTransitionError as error:
+        raise HTTPException(status_code=409, detail=str(error)) from error
+    except DocumentScanStorageError as error:
+        raise HTTPException(
+            status_code=503, detail="Document promotion failed"
+        ) from error
+
+
 def _unauthorized() -> HTTPException:
-    return HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired session")
+    return HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired session"
+    )
 
 
 def _not_found(detail: str) -> HTTPException:
@@ -44,7 +75,9 @@ def _not_found(detail: str) -> HTTPException:
 
 
 def _locked() -> HTTPException:
-    return HTTPException(status_code=409, detail="This application has already been submitted.")
+    return HTTPException(
+        status_code=409, detail="This application has already been submitted."
+    )
 
 
 def _stale(error: StaleApplicationError) -> HTTPException:
@@ -58,7 +91,9 @@ def _stale(error: StaleApplicationError) -> HTTPException:
 
 
 @router.get("/applications/current/requirements")
-async def get_application_requirements(session_digest: SessionDigest = None) -> dict[str, object]:
+async def get_application_requirements(
+    session_digest: SessionDigest = None,
+) -> dict[str, object]:
     if session_digest is None:
         raise _unauthorized()
     try:
@@ -90,7 +125,9 @@ async def put_credit_declaration(
 
 
 @router.get("/applications/current/credit-facilities")
-async def get_credit_facilities(session_digest: SessionDigest = None) -> dict[str, object]:
+async def get_credit_facilities(
+    session_digest: SessionDigest = None,
+) -> dict[str, object]:
     if session_digest is None:
         raise _unauthorized()
     try:
@@ -101,7 +138,9 @@ async def get_credit_facilities(session_digest: SessionDigest = None) -> dict[st
         raise _not_found("Application not started") from error
 
 
-@router.post("/applications/current/credit-facilities", status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/applications/current/credit-facilities", status_code=status.HTTP_201_CREATED
+)
 async def post_credit_facility(
     payload: CreditFacility, session_digest: SessionDigest = None
 ) -> dict[str, object]:
@@ -156,7 +195,9 @@ async def post_document(
     if len(data) > MAX_UPLOAD_BYTES:
         raise HTTPException(status_code=413, detail="File is too large")
 
-    requirement_id = _parse_uuid(application_requirement_id, "application_requirement_id")
+    requirement_id = _parse_uuid(
+        application_requirement_id, "application_requirement_id"
+    )
     supersedes_uuid = (
         _parse_uuid(supersedes_document_id, "supersedes_document_id")
         if supersedes_document_id
@@ -188,7 +229,9 @@ async def post_document(
     except StaleApplicationError as error:
         raise _stale(error) from error
     except DocumentValidationError as error:
-        raise HTTPException(status_code=422, detail=str(error) or "Invalid document") from error
+        raise HTTPException(
+            status_code=422, detail=str(error) or "Invalid document"
+        ) from error
     except InvalidApplicationOperationError as error:
         raise HTTPException(status_code=422, detail=str(error)) from error
 

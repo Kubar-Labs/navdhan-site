@@ -22,8 +22,13 @@ DEFAULT_PORT = 8000
 DEFAULT_DB_PORT = 5432
 DEFAULT_DB_POOL_SIZE = 10
 DEFAULT_DB_MAX_OVERFLOW = 10
-DEFAULT_LOG_LEVEL = "DEBUG"
+DEFAULT_LOG_LEVEL = "INFO"
 DEFAULT_APP_ENV = "dev"
+MIN_SERVICE_TOKEN_BYTES = 32
+DEPLOYED_APP_ENVS = frozenset({"stage", "staging", "prod", "production"})
+VALID_APP_ENVS = frozenset(
+    {"dev", "development", "test", "testing", *DEPLOYED_APP_ENVS}
+)
 
 
 class ConfigurationError(RuntimeError):
@@ -46,7 +51,9 @@ def _compose_database_url() -> str | None:
     if host.startswith("/"):
         # Cloud SQL unix socket. asyncpg takes the socket directory as a query
         # parameter rather than a netloc host.
-        return f"postgresql+asyncpg://{credentials}@/{name}?host={quote(host, safe='/')}"
+        return (
+            f"postgresql+asyncpg://{credentials}@/{name}?host={quote(host, safe='/')}"
+        )
 
     port = os.getenv("DB_PORT", str(DEFAULT_DB_PORT))
     return f"postgresql+asyncpg://{credentials}@{host}:{port}/{name}"
@@ -76,11 +83,52 @@ def resolve_database_url() -> str:
     )
 
 
-def _parse_allowed_origins(raw: str | None) -> list[str]:
+def _parse_allowed_origins(raw: str | None, *, deployed: bool) -> list[str]:
     if raw is None:
-        return ["*"]
+        return [] if deployed else ["*"]
     origins = [origin.strip() for origin in raw.split(",") if origin.strip()]
-    return origins or ["*"]
+    if deployed and "*" in origins:
+        raise ConfigurationError(
+            "ALLOWED_ORIGINS cannot contain a wildcard in a deployed environment"
+        )
+    return origins or ([] if deployed else ["*"])
+
+
+def _resolve_service_token(*, deployed: bool) -> str | None:
+    token = os.getenv("APPLY_SERVICE_TOKEN")
+    if not token:
+        if deployed:
+            raise ConfigurationError(
+                "APPLY_SERVICE_TOKEN is required in deployed environments and must be at "
+                f"least {MIN_SERVICE_TOKEN_BYTES} bytes"
+            )
+        return None
+    if len(token.encode("utf-8")) < MIN_SERVICE_TOKEN_BYTES:
+        raise ConfigurationError(
+            f"APPLY_SERVICE_TOKEN must be at least {MIN_SERVICE_TOKEN_BYTES} bytes"
+        )
+    return token
+
+
+def _resolve_optional_service_token(name: str) -> str | None:
+    token = os.getenv(name)
+    if not token:
+        return None
+    if len(token.encode("utf-8")) < MIN_SERVICE_TOKEN_BYTES:
+        raise ConfigurationError(
+            f"{name} must be at least {MIN_SERVICE_TOKEN_BYTES} bytes"
+        )
+    return token
+
+
+def _resolve_scan_callback_token(*, deployed: bool) -> str | None:
+    token = _resolve_optional_service_token("DOCUMENT_SCAN_CALLBACK_TOKEN")
+    if token is None and deployed:
+        raise ConfigurationError(
+            "DOCUMENT_SCAN_CALLBACK_TOKEN is required in deployed environments and must be at "
+            f"least {MIN_SERVICE_TOKEN_BYTES} bytes"
+        )
+    return token
 
 
 @dataclass(frozen=True)
@@ -90,6 +138,8 @@ class Settings:
     host: str
     port: int
     allowed_origins: list[str]
+    service_token: str | None
+    document_scan_callback_token: str | None
     gcs_bucket: str | None
     google_cloud_project: str | None
     # Per-process connection pool. The database's max_connections must cover
@@ -100,6 +150,10 @@ class Settings:
     @property
     def allows_any_origin(self) -> bool:
         return "*" in self.allowed_origins
+
+    @property
+    def is_deployed(self) -> bool:
+        return self.app_env in DEPLOYED_APP_ENVS
 
 
 def _resolve_int(raw: str | None, *, default: int, name: str, minimum: int = 0) -> int:
@@ -117,15 +171,49 @@ def _resolve_int(raw: str | None, *, default: int, name: str, minimum: int = 0) 
 def load_settings() -> Settings:
     # APP_ENV and ENV are the same setting under two names (the legacy
     # architecture docs used ENV, ci/cloudbuild-backend.yaml uses APP_ENV).
-    app_env = os.getenv("APP_ENV") or os.getenv("ENV") or DEFAULT_APP_ENV
+    app_env = (
+        (os.getenv("APP_ENV") or os.getenv("ENV") or DEFAULT_APP_ENV).strip().lower()
+    )
+    if app_env not in VALID_APP_ENVS:
+        allowed = ", ".join(sorted(VALID_APP_ENVS))
+        raise ConfigurationError(
+            f"APP_ENV must be one of: {allowed}; got an unrecognised value"
+        )
+    deployed = app_env in DEPLOYED_APP_ENVS
+    service_token = _resolve_service_token(deployed=deployed)
+    document_scan_callback_token = _resolve_scan_callback_token(deployed=deployed)
+    if (
+        service_token is not None
+        and document_scan_callback_token is not None
+        and service_token == document_scan_callback_token
+    ):
+        raise ConfigurationError(
+            "DOCUMENT_SCAN_CALLBACK_TOKEN must be distinct from APPLY_SERVICE_TOKEN"
+        )
+    gcs_bucket = (os.getenv("GCS_BUCKET") or "").strip() or None
+    google_cloud_project = (
+        (os.getenv("GOOGLE_CLOUD_PROJECT") or "").strip() or None
+    )
+    if deployed and not gcs_bucket:
+        raise ConfigurationError("GCS_BUCKET is required in deployed environments")
+    if deployed and not google_cloud_project:
+        raise ConfigurationError(
+            "GOOGLE_CLOUD_PROJECT is required in deployed environments"
+        )
     return Settings(
         app_env=app_env,
         log_level=(os.getenv("LOG_LEVEL") or DEFAULT_LOG_LEVEL).upper(),
         host=os.getenv("HOST") or DEFAULT_HOST,
-        port=_resolve_int(os.getenv("PORT"), default=DEFAULT_PORT, name="PORT", minimum=1),
-        allowed_origins=_parse_allowed_origins(os.getenv("ALLOWED_ORIGINS")),
-        gcs_bucket=os.getenv("GCS_BUCKET"),
-        google_cloud_project=os.getenv("GOOGLE_CLOUD_PROJECT"),
+        port=_resolve_int(
+            os.getenv("PORT"), default=DEFAULT_PORT, name="PORT", minimum=1
+        ),
+        allowed_origins=_parse_allowed_origins(
+            os.getenv("ALLOWED_ORIGINS"), deployed=deployed
+        ),
+        service_token=service_token,
+        document_scan_callback_token=document_scan_callback_token,
+        gcs_bucket=gcs_bucket,
+        google_cloud_project=google_cloud_project,
         db_pool_size=_resolve_int(
             os.getenv("DB_POOL_SIZE"),
             default=DEFAULT_DB_POOL_SIZE,

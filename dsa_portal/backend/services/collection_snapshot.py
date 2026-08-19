@@ -6,7 +6,7 @@ import base64
 import uuid
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 
 from db.collection_models import (
     ApplicationCreditDeclaration,
@@ -33,7 +33,11 @@ def _decrypt_bytes(value: bytes | None) -> str | None:
 
 
 def _mask_mobile(value: str | None) -> str | None:
-    return None if value is None else f"{value[:2]}{'X' * max(0, len(value) - 6)}{value[-4:]}"
+    return (
+        None
+        if value is None
+        else f"{value[:2]}{'X' * max(0, len(value) - 6)}{value[-4:]}"
+    )
 
 
 def _mask_email(value: str | None) -> str | None:
@@ -85,9 +89,9 @@ async def serialize_application(
         for person_id in person_ids
     }
     for identifier in identifier_rows:
-        identifiers_by_person[identifier.person_id][
-            f"{identifier.id_type}_masked"
-        ] = identifier.masked_value
+        identifiers_by_person[identifier.person_id][f"{identifier.id_type}_masked"] = (
+            identifier.masked_value
+        )
     registration_rows = (
         await database.scalars(
             select(BorrowerRegistration).where(
@@ -97,7 +101,9 @@ async def serialize_application(
             )
         )
     ).all()
-    registrations = {registration.kind: registration for registration in registration_rows}
+    registrations = {
+        registration.kind: registration for registration in registration_rows
+    }
     entity_pan = (
         registrations.get("entity_pan")
         if application.constitution in {"partnership", "private_limited"}
@@ -125,9 +131,13 @@ async def serialize_application(
             "referral_code": (application.attributes or {}).get("referral_code"),
         },
         "business_profile": {
-            "business_legal_name": borrower.legal_name if borrower is not None else None,
+            "business_legal_name": borrower.legal_name
+            if borrower is not None
+            else None,
             "trade_name": borrower.trade_name if borrower is not None else None,
-            "business_type_code": borrower.business_type_code if borrower is not None else None,
+            "business_type_code": borrower.business_type_code
+            if borrower is not None
+            else None,
             "income_type_code": application.income_type_code,
             "type_of_office": borrower.type_of_office if borrower is not None else None,
             "location_tier": borrower.location_tier if borrower is not None else None,
@@ -145,7 +155,9 @@ async def serialize_application(
                 "role": party.role,
                 "is_primary": party.is_primary,
                 "ownership_pct": (
-                    float(party.ownership_pct) if party.ownership_pct is not None else None
+                    float(party.ownership_pct)
+                    if party.ownership_pct is not None
+                    else None
                 ),
                 "full_name": person.full_name,
                 "mobile_masked": _mask_mobile(_decrypt_bytes(person.mobile_enc)),
@@ -157,7 +169,9 @@ async def serialize_application(
             for party, person in party_rows
         ],
         "registrations": {
-            "entity_pan_masked": entity_pan.masked_value if entity_pan is not None else None,
+            "entity_pan_masked": entity_pan.masked_value
+            if entity_pan is not None
+            else None,
             "gstin_masked": gstin.masked_value if gstin is not None else None,
             "gst_state_code": gstin.state_code if gstin is not None else None,
         },
@@ -177,8 +191,14 @@ async def serialize_requirements(
             select(ApplicationRequirement)
             .join(
                 DocumentRequirement,
-                (DocumentRequirement.marketplace_id == ApplicationRequirement.marketplace_id)
-                & (DocumentRequirement.requirement_id == ApplicationRequirement.requirement_id),
+                (
+                    DocumentRequirement.marketplace_id
+                    == ApplicationRequirement.marketplace_id
+                )
+                & (
+                    DocumentRequirement.requirement_id
+                    == ApplicationRequirement.requirement_id
+                ),
             )
             .where(
                 ApplicationRequirement.marketplace_id == marketplace_id,
@@ -235,37 +255,79 @@ async def serialize_requirements(
     documents_by_requirement: dict[uuid.UUID, list[dict[str, Any]]] = {
         requirement_id: [] for requirement_id in requirement_ids
     }
+
+    def serialized_document(document: Document) -> dict[str, Any]:
+        return {
+            "document_id": str(document.document_id),
+            "mime_type": document.mime_type,
+            "size_bytes": document.size_bytes,
+            "uploaded_at": (
+                document.uploaded_at.isoformat() if document.uploaded_at else None
+            ),
+            "coverage_from": (
+                document.coverage_from.isoformat() if document.coverage_from else None
+            ),
+            "coverage_to": (
+                document.coverage_to.isoformat() if document.coverage_to else None
+            ),
+            "status": document.status,
+            "scan_result": document.scan_result,
+        }
+
     if requirement_ids:
+        # Only clean, promoted objects are linked as satisfactions. Keep both
+        # predicates here as defense in depth so a malformed legacy link never
+        # appears usable in a borrower snapshot.
         linked_rows = (
             await database.execute(
                 select(DocumentRequirementSatisfaction, Document)
-                .join(Document, Document.document_id == DocumentRequirementSatisfaction.document_id)
+                .join(
+                    Document,
+                    Document.document_id == DocumentRequirementSatisfaction.document_id,
+                )
                 .where(
                     DocumentRequirementSatisfaction.marketplace_id == marketplace_id,
-                    DocumentRequirementSatisfaction.application_requirement_id.in_(requirement_ids),
+                    DocumentRequirementSatisfaction.application_requirement_id.in_(
+                        requirement_ids
+                    ),
                     DocumentRequirementSatisfaction.unlinked_at.is_(None),
                     Document.status == "uploaded",
+                    Document.scan_result == "clean",
                 )
                 .order_by(Document.uploaded_at)
             )
         ).all()
         for satisfaction, document in linked_rows:
             documents_by_requirement[satisfaction.application_requirement_id].append(
-                {
-                    "document_id": str(document.document_id),
-                    "mime_type": document.mime_type,
-                    "size_bytes": document.size_bytes,
-                    "uploaded_at": (
-                        document.uploaded_at.isoformat() if document.uploaded_at else None
-                    ),
-                    "coverage_from": (
-                        document.coverage_from.isoformat() if document.coverage_from else None
-                    ),
-                    "coverage_to": (
-                        document.coverage_to.isoformat() if document.coverage_to else None
-                    ),
-                }
+                serialized_document(document)
             )
+
+        # Quarantined and failed documents intentionally have no satisfaction
+        # link. Show them only beneath the requirement the borrower uploaded
+        # them for, so the UI can report pending/failed scanning honestly
+        # without treating them as collected.
+        unclean_documents = (
+            await database.scalars(
+                select(Document)
+                .where(
+                    Document.marketplace_id == marketplace_id,
+                    Document.application_id == application.application_id,
+                    Document.uploaded_for_requirement_id.in_(requirement_ids),
+                    Document.status.not_in(("superseded", "purged")),
+                    or_(
+                        Document.status != "uploaded",
+                        Document.scan_result != "clean",
+                    ),
+                )
+                .order_by(Document.uploaded_at)
+            )
+        ).all()
+        for document in unclean_documents:
+            intended_requirement_id = document.uploaded_for_requirement_id
+            if intended_requirement_id in documents_by_requirement:
+                documents_by_requirement[intended_requirement_id].append(
+                    serialized_document(document)
+                )
 
     declaration = await database.scalar(
         select(ApplicationCreditDeclaration).where(
@@ -279,7 +341,8 @@ async def serialize_requirements(
             select(ApplicationExistingCreditFacility)
             .where(
                 ApplicationExistingCreditFacility.marketplace_id == marketplace_id,
-                ApplicationExistingCreditFacility.application_id == application.application_id,
+                ApplicationExistingCreditFacility.application_id
+                == application.application_id,
             )
             .order_by(ApplicationExistingCreditFacility.created_at)
         )
@@ -290,7 +353,9 @@ async def serialize_requirements(
         "lock_version": application.lock_version,
         "credit_declaration": {
             "has_active_credit_facilities": (
-                declaration.has_active_credit_facilities if declaration is not None else None
+                declaration.has_active_credit_facilities
+                if declaration is not None
+                else None
             ),
             "declared_cibil_score": (
                 declaration.declared_cibil_score if declaration is not None else None
@@ -312,7 +377,9 @@ async def serialize_requirements(
                     else None
                 ),
                 "emi_amount": (
-                    float(facility.emi_amount) if facility.emi_amount is not None else None
+                    float(facility.emi_amount)
+                    if facility.emi_amount is not None
+                    else None
                 ),
                 "interest_rate_percent": (
                     float(facility.interest_rate_percent)
@@ -320,8 +387,12 @@ async def serialize_requirements(
                     else None
                 ),
                 "tenure_months": facility.tenure_months,
-                "start_date": facility.start_date.isoformat() if facility.start_date else None,
-                "end_date": facility.end_date.isoformat() if facility.end_date else None,
+                "start_date": facility.start_date.isoformat()
+                if facility.start_date
+                else None,
+                "end_date": facility.end_date.isoformat()
+                if facility.end_date
+                else None,
                 "emis_paid_count": facility.emis_paid_count,
                 "is_closed": facility.is_closed,
             }
@@ -345,8 +416,12 @@ async def serialize_requirements(
                 "application_party_id": (
                     str(row.application_party_id) if row.application_party_id else None
                 ),
-                "party_role": party_labels.get(row.application_party_id, {}).get("party_role"),
-                "party_name": party_labels.get(row.application_party_id, {}).get("party_name"),
+                "party_role": party_labels.get(row.application_party_id, {}).get(
+                    "party_role"
+                ),
+                "party_name": party_labels.get(row.application_party_id, {}).get(
+                    "party_name"
+                ),
                 "party_is_primary": party_labels.get(row.application_party_id, {}).get(
                     "party_is_primary"
                 ),
@@ -357,16 +432,22 @@ async def serialize_requirements(
                 "coverage_mode": row.coverage_mode,
                 "min_count": row.min_count,
                 "required_period_from": (
-                    row.required_period_from.isoformat() if row.required_period_from else None
+                    row.required_period_from.isoformat()
+                    if row.required_period_from
+                    else None
                 ),
                 "required_period_to": (
-                    row.required_period_to.isoformat() if row.required_period_to else None
+                    row.required_period_to.isoformat()
+                    if row.required_period_to
+                    else None
                 ),
                 "fiscal_year_start": (
                     row.fiscal_year_start.isoformat() if row.fiscal_year_start else None
                 ),
                 "status": row.status,
-                "documents": documents_by_requirement.get(row.application_requirement_id, []),
+                "documents": documents_by_requirement.get(
+                    row.application_requirement_id, []
+                ),
             }
             for row in requirement_rows
         ],

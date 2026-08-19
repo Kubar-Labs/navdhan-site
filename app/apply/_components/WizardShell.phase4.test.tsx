@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 
 import "@testing-library/jest-dom/vitest";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const api = vi.hoisted(() => ({
@@ -46,6 +46,7 @@ const steps = [
   { id: "pan_verification" as const, title: "PAN verification" },
   { id: "gst_verification" as const, title: "GST verification" },
   { id: "itr_upload" as const, title: "Documents" },
+  { id: "bank_statements" as const, title: "Existing loans" },
 ];
 
 // Resumes straight to the itr_upload step: business profile, primary
@@ -214,5 +215,65 @@ describe("WizardShell Phase 4 requirements loading", () => {
     await screen.findByRole("heading", { name: "Documents" });
     expect(await screen.findByText("Aadhaar KYC")).toBeVisible();
     expect(api.fetchRequirements).toHaveBeenCalledTimes(2);
+  });
+
+  it("persists the credit declaration when the wizard Continue button is clicked", async () => {
+    const requirements = requirementsResponse();
+    api.fetchRequirements.mockResolvedValue(requirements);
+    api.saveCreditDeclaration.mockResolvedValue({
+      ...requirements,
+      lock_version: 7,
+      credit_declaration: {
+        has_active_credit_facilities: false,
+        declared_cibil_score: 760,
+      },
+    });
+
+    render(<WizardShell locale="en" steps={steps} />);
+
+    await screen.findByRole("heading", { name: "Documents" });
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    await screen.findByRole("heading", { name: "Existing loans" });
+    fireEvent.click(screen.getByRole("radio", { name: "No" }));
+    fireEvent.change(screen.getByLabelText("Your CIBIL score"), { target: { value: "760" } });
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+
+    await waitFor(() =>
+      expect(api.saveCreditDeclaration).toHaveBeenCalledWith({
+        has_active_credit_facilities: false,
+        declared_cibil_score: 760,
+        expected_lock_version: 6,
+      }),
+    );
+  });
+
+  it("does not continue when active credit is declared without a facility", async () => {
+    const requirements = requirementsResponse();
+    api.fetchRequirements.mockResolvedValue(requirements);
+    api.saveCreditDeclaration.mockResolvedValue({
+      ...requirements,
+      lock_version: 7,
+      credit_declaration: {
+        has_active_credit_facilities: true,
+        declared_cibil_score: 760,
+      },
+    });
+
+    render(<WizardShell locale="en" steps={steps} />);
+
+    await screen.findByRole("heading", { name: "Documents" });
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    await screen.findByRole("heading", { name: "Existing loans" });
+    fireEvent.click(screen.getByRole("radio", { name: "Yes" }));
+    fireEvent.change(screen.getByLabelText("Your CIBIL score"), { target: { value: "760" } });
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+
+    expect(await screen.findByText("Add at least one active loan before continuing")).toBeVisible();
+    expect(api.saveCreditDeclaration).toHaveBeenCalledWith({
+      has_active_credit_facilities: true,
+      declared_cibil_score: 760,
+      expected_lock_version: 6,
+    });
+    expect(screen.getByText("Add an existing loan")).toBeVisible();
   });
 });

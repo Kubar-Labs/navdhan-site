@@ -1,13 +1,4 @@
 {
-  "home": {
-    "meta": {
-      "title": "NavDhan : ভারতের MSME-দের জন্য ব্যবসায়িক ঋণ",
-      "description": "বিশ্বস্ত ঋণদাতাদের কাছ থেকে ₹5 লাখ থেকে ₹1 কোটি পর্যন্ত ব্যবসায়িক ঋণ পান। একটি আবেদন, একাধিক প্রস্তাব, কোনো প্ল্যাটফর্ম ফি নেই।"
-    },
-    "hero": {
-      "headline": "ব্যাঙ্কের পেছনে না ছুটে সঠিক ব্যবসায়িক ঋণ পান।"
-    }
-  },
   "team": {
     "meta": {
       "title": "আমাদের দল : NavDhan"
@@ -27,8 +18,7 @@
       "companyHeading": "Company",
       "legalHeading": "Legal",
       "tagline": "আপনার সমস্ত working capital প্রয়োজনের জন্য one-stop সমাধান।",
-      "address": "156, তারাভেকারে, বিটিএম লেআউট প্রথম পর্যায়, বেঙ্গালুরু, কর্ণাটক",
-      "badges": "RBI সমন্বিত · FACE নিবন্ধিত · Kubar দ্বারা পরিচালিত"
+      "address": "156, তারাভেকারে, বিটিএম লেআউট প্রথম পর্যায়, বেঙ্গালুরু, কর্ণাটক"
     },
     "contact": {
       "loan": "loan@kubar.tech",
@@ -42,7 +32,6 @@
       "loanProducts": "লোন পণ্য",
       "whyNavDhan": "NavDhan কেন",
       "emiCalculator": "EMI ক্যালকুলেটর",
-      "customerStories": "গ্রাহকদের গল্প",
       "team": "দল"
     }
   }

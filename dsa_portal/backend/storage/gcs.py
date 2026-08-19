@@ -41,6 +41,8 @@ _UNSAFE_SEGMENTS = {"", ".", ".."}
 # a GoogleAPIError, so it needs catching explicitly or it escapes unwrapped.
 _BACKEND_ERRORS = (gcs_exceptions.GoogleAPIError, auth_exceptions.GoogleAuthError)
 _SAFE_SEGMENT_RE = re.compile(r"^[A-Za-z0-9._-]+$")
+_QUARANTINE_PREFIX = "quarantine/"
+_CLEAN_PREFIX = "clean/"
 
 
 def _require_bucket_name(configured: str | None) -> str:
@@ -100,10 +102,18 @@ class GCSStorage:
         data: bytes,
     ) -> StoredDocument:
         bucket = self._bucket()
-        object_key = f"{marketplace_id}/{application_id}/{document_id}.pdf"
+        object_key = (
+            f"{_QUARANTINE_PREFIX}{marketplace_id}/{application_id}/{document_id}.pdf"
+        )
         blob = bucket.blob(object_key)
         try:
-            blob.upload_from_string(data, content_type=_CONTENT_TYPE)
+            blob.upload_from_string(
+                data,
+                content_type=_CONTENT_TYPE,
+                if_generation_match=0,
+                timeout=60,
+                checksum="auto",
+            )
         except _BACKEND_ERRORS as error:
             raise DocumentStorageError(
                 f"Could not upload document object {object_key}"
@@ -116,11 +126,50 @@ class GCSStorage:
             generation=getattr(blob, "generation", None),
         )
 
-    def delete(self, *, object_key: str) -> None:
+    def promote(
+        self,
+        *,
+        object_key: str,
+        generation: int,
+        size_bytes: int,
+        sha256: bytes,
+    ) -> StoredDocument:
+        object_key = _validate_object_key(object_key)
+        if not object_key.startswith(_QUARANTINE_PREFIX):
+            raise DocumentStorageError("Only quarantined objects can be promoted")
+        clean_key = f"{_CLEAN_PREFIX}{object_key.removeprefix(_QUARANTINE_PREFIX)}"
+        bucket = self._bucket()
+        try:
+            promoted = bucket.copy_blob(
+                bucket.blob(object_key),
+                bucket,
+                clean_key,
+                if_generation_match=0,
+                if_source_generation_match=generation,
+            )
+        except _BACKEND_ERRORS as error:
+            raise DocumentStorageError(
+                "Could not promote the quarantined document object"
+            ) from error
+        promoted_generation = getattr(promoted, "generation", None)
+        if promoted_generation is None:
+            raise DocumentStorageError("Promoted document has no object generation")
+        return StoredDocument(
+            bucket=bucket.name,
+            object_key=clean_key,
+            size_bytes=size_bytes,
+            sha256=sha256,
+            generation=int(promoted_generation),
+        )
+
+    def delete(self, *, object_key: str, generation: int | None = None) -> None:
         _validate_object_key(object_key)
         bucket = self._bucket()
         try:
-            bucket.blob(object_key).delete()
+            kwargs = (
+                {"if_generation_match": generation} if generation is not None else {}
+            )
+            bucket.blob(object_key).delete(**kwargs)
         except gcs_exceptions.NotFound:
             # Idempotent: the object is already gone, which is the desired
             # end state. Matches the filesystem backend's missing_ok delete.

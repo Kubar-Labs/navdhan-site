@@ -1,6 +1,6 @@
 {
   "minAmount": 500000,
-  "maxAmount": 100000000,
+  "maxAmount": 10000000,
   "defaultAmount": 5000000,
   "minRate": 12,
   "maxRate": 24,

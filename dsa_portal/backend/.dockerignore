@@ -4,6 +4,10 @@
 .env
 .env.*
 !.env.example
+*.pem
+*.key
+credentials*.json
+*service-account*.json
 
 # Python cache
 __pycache__/
@@ -17,6 +21,10 @@ __pycache__/
 .venv/
 venv/
 env/
+
+# Local borrower documents and test-only source must never enter production
+.local_documents/
+tests/
 
 # Local-dev tools
 cloud-sql-proxy

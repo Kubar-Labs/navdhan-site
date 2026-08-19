@@ -5,8 +5,12 @@
 export function jsonResponse(
   body: unknown,
   status = 200,
+  headers?: HeadersInit,
 ): Response {
-  return Response.json(body, { status });
+  const responseHeaders = new Headers(headers);
+  responseHeaders.set("cache-control", "no-store");
+  responseHeaders.set("pragma", "no-cache");
+  return Response.json(body, { status, headers: responseHeaders });
 }
 
 export function sessionInvalidResponse(): Response {
@@ -27,6 +31,7 @@ export function rateLimitedResponse(retryAfterSeconds = 60): Response {
   return jsonResponse(
     { error: "RATE_LIMITED", retry_after_seconds: retryAfterSeconds },
     429,
+    { "retry-after": String(retryAfterSeconds) },
   );
 }
 

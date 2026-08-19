@@ -1,11 +1,15 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { Check } from "lucide-react";
 import { cn } from "@/src/lib/utils/cn";
 import { InlineFieldFeedback } from "@/src/components/apply/InlineFieldFeedback";
 import { DocumentChecklist, useRequirements } from "@/app/apply/_components/DocumentChecklist";
-import { ExistingLoansPanel } from "@/app/apply/_components/ExistingLoansPanel";
+import {
+  ExistingLoansPanel,
+  type ExistingLoansPanelHandle,
+} from "@/app/apply/_components/ExistingLoansPanel";
 import {
   ApplyFormValues,
   CollectionWriteResponse,
@@ -198,16 +202,18 @@ const defaultMessages: WizardMessages = {
   emailLabel: "Email",
   pinCodeLabel: "Business PIN code",
   aadhaarLabel: "Aadhaar number",
-  aadhaarConsentLabel: "I consent to sharing my Aadhaar details for identity verification",
+  aadhaarConsentLabel:
+    "I consent to the collection and storage of my Aadhaar details for this application",
   aadhaarConsentTitle: "Aadhaar consent",
-  aadhaarConsentSummary: "Your Aadhaar number is collected to verify your identity.",
+  aadhaarConsentSummary: "Your Aadhaar number is collected as part of your application.",
   aadhaarConsentDetails:
-    "Your Aadhaar number is used only for KYC and is masked after it is saved.",
+    "Your Aadhaar number is encrypted when stored and masked when displayed.",
   panLabel: "PAN number",
-  panConsentLabel: "I consent to sharing my PAN details for KYC",
+  panConsentLabel:
+    "I consent to the collection and storage of my PAN details for this application",
   panConsentTitle: "PAN consent",
-  panConsentSummary: "Your PAN is collected to confirm identity and tax compliance.",
-  panConsentDetails: "Your PAN is stored securely and used only for this application.",
+  panConsentSummary: "Your PAN is collected as part of your application.",
+  panConsentDetails: "Your PAN is encrypted when stored and masked when displayed.",
   gstRegisteredLabel: "Are you GST registered?",
   gstRegisteredYes: "Registered under GST",
   gstRegisteredNo: "Not registered",
@@ -215,7 +221,8 @@ const defaultMessages: WizardMessages = {
   gstConsentLabel: "I consent to sharing my GST registration details",
   gstConsentTitle: "GST consent",
   gstConsentSummary: "Your GST registration number is collected as part of your application.",
-  gstConsentDetails: "This helps us understand your business turnover and repayment capacity.",
+  gstConsentDetails:
+    "Your GST registration details are stored with your application and handled as described in the Consent Policy.",
   itrUploadLabel: "Documents",
   linkBankLabel: "Existing loans",
   privacyConsentLabel: "I agree to the Privacy Policy",
@@ -226,7 +233,7 @@ const defaultMessages: WizardMessages = {
   submissionSuccessHeading: "Application submitted",
   submissionSuccessBody: "Thank you! Your application has been submitted successfully.",
   referenceLabel: "Reference number",
-  viewDashboardLabel: "View dashboard",
+  viewDashboardLabel: "Back to home",
   purposeLabels: {
     working_capital: "Working capital",
     machinery: "Machinery / Equipment",
@@ -255,7 +262,7 @@ const defaultMessages: WizardMessages = {
   invalidPan: "Invalid PAN number.",
   invalidGstin: "Invalid GSTIN.",
   invalidItr: "Invalid ITR.",
-  trustBadges: ["RBI Aligned", "Bank-grade encryption", "FACE Registered"],
+  trustBadges: ["Consent-led application", "Encrypted data", "Independent lender decisions"],
 };
 
 interface WizardShellProps {
@@ -377,15 +384,17 @@ export function WizardShell({
     additional_party_type_of_residence: initialValues.additional_party_type_of_residence,
     additional_party_employment_status_code: initialValues.additional_party_employment_status_code,
     additional_party_ownership_pct: initialValues.additional_party_ownership_pct,
-    aadhaar_number: initialValues.aadhaar_number,
     party_aadhaar_numbers: initialValues.party_aadhaar_numbers ?? {},
+    confirm_party_aadhaar_numbers: initialValues.confirm_party_aadhaar_numbers ?? {},
     aadhaar_consent: initialValues.aadhaar_consent ?? false,
-    pan_number: initialValues.pan_number,
     party_pan_numbers: initialValues.party_pan_numbers ?? {},
+    confirm_party_pan_numbers: initialValues.confirm_party_pan_numbers ?? {},
     entity_pan: initialValues.entity_pan,
+    confirm_entity_pan: initialValues.confirm_entity_pan,
     pan_consent: initialValues.pan_consent ?? false,
     gst_registered: initialValues.gst_registered,
     gstin: initialValues.gstin,
+    confirm_gstin: initialValues.confirm_gstin,
     gst_consent: initialValues.gst_consent ?? false,
     annual_turnover: initialValues.annual_turnover,
   }));
@@ -414,9 +423,9 @@ export function WizardShell({
   } = useConsentStatus(application !== null);
 
   const [consentGrants, setConsentGrants] = useState<Record<string, boolean>>({});
-  const [submissionResultState, setSubmissionResultState] = useState<SubmitApplicationResponse | null>(
-    null,
-  );
+  const [submissionResultState, setSubmissionResultState] =
+    useState<SubmitApplicationResponse | null>(null);
+  const existingLoansPanelRef = useRef<ExistingLoansPanelHandle>(null);
 
   useEffect(() => {
     if (!consentStatus) return;
@@ -500,7 +509,9 @@ export function WizardShell({
             ? "director"
             : null;
       const additional = expectedAdditionalRole
-        ? snapshot.parties.find((party) => party.role === expectedAdditionalRole && !party.is_primary)
+        ? snapshot.parties.find(
+            (party) => party.role === expectedAdditionalRole && !party.is_primary,
+          )
         : undefined;
       setApplication(snapshot);
       setValues((previous) => ({
@@ -697,23 +708,18 @@ export function WizardShell({
         for (const party of application?.parties ?? []) {
           const field = `party_aadhaar_numbers_${party.party_id}`;
           const confirmField = `confirm_party_aadhaar_numbers_${party.party_id}`;
-          const suppliedValue =
-            values.party_aadhaar_numbers?.[party.party_id] ??
-            (party.is_primary ? values.aadhaar_number : undefined);
-          const confirmValue =
-            values.confirm_party_aadhaar_numbers?.[party.party_id] ??
-            (party.is_primary ? values.confirm_aadhaar_number : undefined);
+          const suppliedValue = values.party_aadhaar_numbers?.[party.party_id];
+          const confirmValue = values.confirm_party_aadhaar_numbers?.[party.party_id];
 
           if (!party.identifiers.aadhaar_masked && !validateAadhaarNumber(suppliedValue)) {
             next[field] = t.invalidAadhaar ?? "Invalid aadhaar";
           }
-          if (
-            !party.identifiers.aadhaar_masked &&
-            confirmValue !== undefined &&
-            confirmValue !== "" &&
-            confirmValue !== suppliedValue
-          ) {
-            next[confirmField] = "Aadhaar numbers do not match";
+          if (!party.identifiers.aadhaar_masked) {
+            if (typeof confirmValue !== "string" || confirmValue.trim() === "") {
+              next[confirmField] = "Confirm the Aadhaar number";
+            } else if (confirmValue !== suppliedValue) {
+              next[confirmField] = "Aadhaar numbers do not match";
+            }
           }
         }
         if (!values.aadhaar_consent) {
@@ -727,23 +733,18 @@ export function WizardShell({
         for (const party of application?.parties ?? []) {
           const field = `party_pan_numbers_${party.party_id}`;
           const confirmField = `confirm_party_pan_numbers_${party.party_id}`;
-          const suppliedValue =
-            values.party_pan_numbers?.[party.party_id] ??
-            (party.is_primary ? values.pan_number : undefined);
-          const confirmValue =
-            values.confirm_party_pan_numbers?.[party.party_id] ??
-            (party.is_primary ? values.confirm_pan_number : undefined);
+          const suppliedValue = values.party_pan_numbers?.[party.party_id];
+          const confirmValue = values.confirm_party_pan_numbers?.[party.party_id];
 
           if (!party.identifiers.pan_masked && !validatePanNumber(suppliedValue)) {
             next[field] = t.invalidPan ?? "Invalid pan";
           }
-          if (
-            !party.identifiers.pan_masked &&
-            confirmValue !== undefined &&
-            confirmValue !== "" &&
-            confirmValue.toUpperCase() !== (suppliedValue ?? "").toUpperCase()
-          ) {
-            next[confirmField] = "PAN numbers do not match";
+          if (!party.identifiers.pan_masked) {
+            if (typeof confirmValue !== "string" || confirmValue.trim() === "") {
+              next[confirmField] = "Confirm the PAN number";
+            } else if (confirmValue.toUpperCase() !== (suppliedValue ?? "").toUpperCase()) {
+              next[confirmField] = "PAN numbers do not match";
+            }
           }
           if (
             enteredEntityPan &&
@@ -767,12 +768,13 @@ export function WizardShell({
         }
         if (
           values.constitution !== "proprietorship" &&
-          !application?.registrations.entity_pan_masked &&
-          confirmEntityPan !== undefined &&
-          confirmEntityPan !== "" &&
-          confirmEntityPan !== enteredEntityPan
+          !application?.registrations.entity_pan_masked
         ) {
-          next.confirm_entity_pan = "Business PANs do not match";
+          if (!confirmEntityPan) {
+            next.confirm_entity_pan = "Confirm the Business PAN";
+          } else if (confirmEntityPan !== enteredEntityPan) {
+            next.confirm_entity_pan = "Business PANs do not match";
+          }
         }
         break;
       }
@@ -781,15 +783,19 @@ export function WizardShell({
           next.gst_registered = "Select your GST registration status";
         }
         if (values.gst_registered === true) {
-          if (!values.gstin || !validateGstin(values.gstin)) {
-            next.gstin = t.invalidGstin ?? "Invalid gstin";
+          if (!application?.registrations.gstin_masked) {
+            if (!values.gstin || !validateGstin(values.gstin)) {
+              next.gstin = t.invalidGstin ?? "Invalid gstin";
+            }
+            const confirmGstin = values.confirm_gstin?.trim().toUpperCase();
+            if (!confirmGstin) {
+              next.confirm_gstin = "Confirm the GSTIN";
+            } else if (confirmGstin !== values.gstin?.trim().toUpperCase()) {
+              next.confirm_gstin = "GSTINs do not match";
+            }
           }
-          if (
-            values.confirm_gstin !== undefined &&
-            values.confirm_gstin !== "" &&
-            values.confirm_gstin.trim().toUpperCase() !== values.gstin?.trim().toUpperCase()
-          ) {
-            next.confirm_gstin = "GSTINs do not match";
+          if (!values.gst_consent) {
+            next.gst_consent = "Please accept the GST consent";
           }
         }
         break;
@@ -831,8 +837,7 @@ export function WizardShell({
           (application?.parties ?? []).every(
             (party) =>
               !!party.identifiers.aadhaar_masked ||
-              !!values.party_aadhaar_numbers?.[party.party_id] ||
-              (party.is_primary && !!values.aadhaar_number),
+              !!values.party_aadhaar_numbers?.[party.party_id],
           )
         );
       }
@@ -855,12 +860,7 @@ export function WizardShell({
         const documentsSatisfied = (requirements?.requirements ?? []).every(
           (row) => !row.blocks_submission || SATISFIED_REQUIREMENT_STATUSES.has(row.status),
         );
-        return (
-          !!consentStatus &&
-          !!requirements &&
-          mandatoryConsentGranted &&
-          documentsSatisfied
-        );
+        return !!consentStatus && !!requirements && mandatoryConsentGranted && documentsSatisfied;
       }
       default:
         return true;
@@ -956,9 +956,7 @@ export function WizardShell({
         if (!application) throw new Error("Application is missing");
         let snapshot = application;
         for (const party of application.parties) {
-          const aadhaarNumber =
-            values.party_aadhaar_numbers?.[party.party_id] ??
-            (party.is_primary ? values.aadhaar_number : undefined);
+          const aadhaarNumber = values.party_aadhaar_numbers?.[party.party_id];
           if (!aadhaarNumber) continue;
           snapshot = await saveAadhaarIdentity(party.party_id, {
             aadhaar_number: aadhaarNumber,
@@ -971,9 +969,7 @@ export function WizardShell({
         if (!application) throw new Error("Application is missing");
         let snapshot = application;
         for (const party of application.parties) {
-          const panNumber =
-            values.party_pan_numbers?.[party.party_id] ??
-            (party.is_primary ? values.pan_number : undefined);
+          const panNumber = values.party_pan_numbers?.[party.party_id];
           if (!panNumber) continue;
           snapshot = await savePanIdentity(party.party_id, {
             pan_number: panNumber,
@@ -992,6 +988,7 @@ export function WizardShell({
         let snapshot = await saveBusinessProfile(businessProfilePayload(lockVersion));
         snapshot = await saveGstRegistration({
           gst_registered: values.gst_registered!,
+          gst_consent: values.gst_registered ? true : false,
           ...(values.gst_registered
             ? { gstin: values.gstin!, state_code: values.gstin!.slice(0, 2) }
             : {}),
@@ -1041,12 +1038,22 @@ export function WizardShell({
                 }
               : {}),
             ...(currentStepId === "aadhaar_verification"
-              ? { aadhaar_number: undefined, party_aadhaar_numbers: {} }
+              ? {
+                  party_aadhaar_numbers: {},
+                  confirm_party_aadhaar_numbers: {},
+                }
               : {}),
             ...(currentStepId === "pan_verification"
-              ? { pan_number: undefined, party_pan_numbers: {}, entity_pan: undefined }
+              ? {
+                  party_pan_numbers: {},
+                  confirm_party_pan_numbers: {},
+                  entity_pan: undefined,
+                  confirm_entity_pan: undefined,
+                }
               : {}),
-            ...(currentStepId === "gst_verification" ? { gstin: undefined } : {}),
+            ...(currentStepId === "gst_verification"
+              ? { gstin: undefined, confirm_gstin: undefined }
+              : {}),
           }));
         }
       } catch (error) {
@@ -1065,6 +1072,14 @@ export function WizardShell({
         return;
       }
       setIsSaving(false);
+    }
+
+    if (currentStepId === "bank_statements") {
+      setIsSaving(true);
+      const persisted =
+        (await existingLoansPanelRef.current?.persistDeclarationForContinue()) ?? false;
+      setIsSaving(false);
+      if (!persisted) return;
     }
 
     if (currentStepId === "review_submit") {
@@ -1509,9 +1524,15 @@ export function WizardShell({
         accepted={values.aadhaar_consent ?? false}
         onChange={(accepted) => updateValue("aadhaar_consent", accepted)}
         checkboxLabel={
-          t.aadhaarConsentLabel ?? "I consent to sharing my Aadhaar details for identity verification"
+          t.aadhaarConsentLabel ??
+          "I consent to sharing my Aadhaar details for identity verification"
         }
         ariaLabel="Aadhaar consent"
+      />
+      <InlineFieldFeedback
+        fieldId="aadhaar_consent"
+        state={touched.aadhaar_consent && errors.aadhaar_consent ? "error" : "idle"}
+        messageTemplate={touched.aadhaar_consent ? (errors.aadhaar_consent ?? "") : ""}
       />
     </div>
   );
@@ -1586,6 +1607,11 @@ export function WizardShell({
         checkboxLabel={t.panConsentLabel ?? "I consent to PAN verification"}
         ariaLabel="PAN consent"
       />
+      <InlineFieldFeedback
+        fieldId="pan_consent"
+        state={touched.pan_consent && errors.pan_consent ? "error" : "idle"}
+        messageTemplate={touched.pan_consent ? (errors.pan_consent ?? "") : ""}
+      />
     </div>
   );
 
@@ -1649,6 +1675,11 @@ export function WizardShell({
             onChange={(accepted) => updateValue("gst_consent", accepted)}
             checkboxLabel={t.gstConsentLabel ?? "I consent to GST verification"}
             ariaLabel="GST consent"
+          />
+          <InlineFieldFeedback
+            fieldId="gst_consent"
+            state={touched.gst_consent && errors.gst_consent ? "error" : "idle"}
+            messageTemplate={touched.gst_consent ? (errors.gst_consent ?? "") : ""}
           />
         </div>
       )}
@@ -1720,7 +1751,11 @@ export function WizardShell({
     return (
       <>
         {requirementsError && renderRequirementsErrorBanner()}
-        <ExistingLoansPanel requirements={requirements} onChange={setRequirements} />
+        <ExistingLoansPanel
+          ref={existingLoansPanelRef}
+          requirements={requirements}
+          onChange={setRequirements}
+        />
       </>
     );
   };
@@ -1881,9 +1916,7 @@ export function WizardShell({
                   className="mt-0.5 h-4 w-4 rounded border-nt-slate-300 text-nt-orange-600 focus:ring-nt-orange-600"
                 />
                 <span>
-                  <span>
-                    {purpose.display_name}
-                  </span>
+                  <span>{purpose.display_name}</span>
                   {purpose.notice_text !== purpose.display_name && (
                     <span className="block text-xs text-nt-slate-500">{purpose.notice_text}</span>
                   )}
@@ -1922,13 +1955,13 @@ export function WizardShell({
               "—"}
           </p>
         </div>
-        <button
-          type="button"
+        <Link
+          href={`/${locale}`}
           onClick={onComplete}
           className="inline-flex rounded-md bg-nt-orange-600 px-6 py-3 text-sm font-semibold text-white hover:bg-nt-orange-700"
         >
-          {t.viewDashboardLabel ?? "View dashboard"}
-        </button>
+          {t.viewDashboardLabel ?? "Back to home"}
+        </Link>
       </div>
     );
   };
@@ -1966,7 +1999,7 @@ export function WizardShell({
   }));
 
   return (
-    <div className="mx-auto max-w-3xl rounded-3xl border border-nt-slate-200/80 bg-white p-6 sm:p-10 shadow-xl shadow-slate-200/50 backdrop-blur-xs">
+    <div className="mx-auto max-w-3xl rounded-3xl border border-nt-slate-200/80 bg-white p-4 shadow-xl shadow-slate-200/50 backdrop-blur-xs sm:p-10">
       <Stepper steps={stepperSteps} currentStepId={currentStepId} completedSteps={completedSteps} />
 
       {currentStepDef && (
@@ -2049,6 +2082,9 @@ function TextField({
         name={id}
         type={type}
         inputMode={inputMode}
+        required={isRequired}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={error ? `${id}--feedback` : undefined}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className="mt-2 w-full rounded-xl border border-nt-slate-300/80 bg-white px-4 py-3 text-sm font-medium text-nt-slate-900 shadow-xs transition-all placeholder:text-nt-slate-400 hover:border-nt-slate-400 focus:border-nt-orange-600 focus:bg-white focus:outline-none focus:ring-2 focus:ring-nt-orange-600/20"
@@ -2094,6 +2130,9 @@ function SelectField({
       <select
         id={id}
         name={id}
+        required={isRequired}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={error ? `${id}--feedback` : undefined}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className="mt-2 w-full rounded-xl border border-nt-slate-300/80 bg-white px-4 py-3 text-sm font-medium text-nt-slate-900 shadow-xs transition-all hover:border-nt-slate-400 focus:border-nt-orange-600 focus:bg-white focus:outline-none focus:ring-2 focus:ring-nt-orange-600/20"

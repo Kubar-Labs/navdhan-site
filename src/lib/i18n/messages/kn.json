@@ -1,13 +1,4 @@
 {
-  "home": {
-    "meta": {
-      "title": "NavDhan : ಭಾರತದ MSMEಗಳಿಗಾಗಿ ವ್ಯಾಪಾರ ಸಾಲಗಳು",
-      "description": "ವಿಶ್ವಾಸಾರ್ಹ ಸಾಲದಾತರಿಂದ ₹5 ಲಕ್ಷದಿಂದ ₹1 ಕೋಟಿವರೆಗೆ ವ್ಯಾಪಾರ ಸಾಲಗಳನ್ನು ಪಡೆದುಕೊಳ್ಳಿ. ಒಂದು ಅರ್ಜಿ, ಅನೇಕ ಆಫರ್‌ಗಳು, ಶೂನ್ಯ ಪ್ಲಾಟ್‌ಫಾರ್ಮ್ ಶುಲ್ಕ."
-    },
-    "hero": {
-      "headline": "ಬ್ಯಾಂಕ್‌ಗಳ ಹಿಂದೆ ಓಡಾಡದೆ ಸರಿಯಾದ ವ್ಯಾಪಾರ ಸಾಲವನ್ನು ಪಡೆದುಕೊಳ್ಳಿ."
-    }
-  },
   "team": {
     "meta": {
       "title": "ನಮ್ಮ ತಂಡ : NavDhan"
@@ -27,8 +18,7 @@
       "companyHeading": "Company",
       "legalHeading": "Legal",
       "tagline": "ನಿಮ್ಮ ಎಲ್ಲಾ working capital ಅಗತ್ಯಗಳಿಗೆ one-stop ಪರಿಹಾರ.",
-      "address": "156, ತಾರವಕೇರೆ, ಬಿಟಿಎಂ ಲೇಔಟ್ ಮೊದಲ ಹಂತ, ಬೆಂಗಳೂರು, ಕರ್ನಾಟಕ",
-      "badges": "RBI ಅನುಸಂಧಾನ · FACE ನೋಂದಾಯಿತ · Kubar ರಿಂದ ಚಾಲಿತ"
+      "address": "156, ತಾರವಕೇರೆ, ಬಿಟಿಎಂ ಲೇಔಟ್ ಮೊದಲ ಹಂತ, ಬೆಂಗಳೂರು, ಕರ್ನಾಟಕ"
     },
     "contact": {
       "loan": "loan@kubar.tech",
@@ -42,7 +32,6 @@
       "loanProducts": "ಸಾಲ ಉತ್ಪನ್ನಗಳು",
       "whyNavDhan": "NavDhan ಏಕೆ",
       "emiCalculator": "EMI ಕ್ಯಾಲ್ಕುಲೇಟರ್",
-      "customerStories": "ಗ್ರಾಹಕರ ಕಥೆಗಳು",
       "team": "ತಂಡ"
     }
   }

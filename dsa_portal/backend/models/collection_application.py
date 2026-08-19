@@ -11,7 +11,9 @@ DigestHex = Annotated[str, StringConstraints(pattern=r"^[0-9a-f]{64}$")]
 ReferralCode = Annotated[
     str, StringConstraints(min_length=1, max_length=20, pattern=r"^[A-Za-z0-9_-]+$")
 ]
-Name = Annotated[str, StringConstraints(strip_whitespace=True, min_length=2, max_length=150)]
+Name = Annotated[
+    str, StringConstraints(strip_whitespace=True, min_length=2, max_length=150)
+]
 PersonName = Annotated[
     str,
     StringConstraints(
@@ -21,7 +23,9 @@ PersonName = Annotated[
         pattern=r"^[A-Za-z\s'.-]+$",
     ),
 ]
-OptionalName = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=150)]
+OptionalName = Annotated[
+    str, StringConstraints(strip_whitespace=True, min_length=1, max_length=150)
+]
 MobileNumber = Annotated[str, StringConstraints(pattern=r"^[6-9][0-9]{9}$")]
 EmailAddress = Annotated[
     str,
@@ -32,7 +36,9 @@ EmailAddress = Annotated[
         pattern=r"^[^\s@]+@[^\s@]+\.[A-Za-z]{2,}$",
     ),
 ]
-PanNumber = Annotated[str, StringConstraints(to_upper=True, pattern=r"^[A-Z]{5}[0-9]{4}[A-Z]$")]
+PanNumber = Annotated[
+    str, StringConstraints(to_upper=True, pattern=r"^[A-Z]{5}[0-9]{4}[A-Z]$")
+]
 AadhaarNumber = Annotated[str, StringConstraints(pattern=r"^[0-9]{12}$")]
 Gstin = Annotated[
     str,
@@ -54,7 +60,9 @@ class SessionCreate(CollectionRequest):
 class LoanIntent(CollectionRequest):
     expected_lock_version: Annotated[int, Field(ge=0)]
     constitution: Literal["proprietorship", "partnership", "private_limited"]
-    requested_amount: Annotated[int, Field(ge=500_000, le=10_000_000, multiple_of=10_000)]
+    requested_amount: Annotated[
+        int, Field(ge=500_000, le=10_000_000, multiple_of=10_000)
+    ]
     requested_tenure_months: Annotated[int, Field(ge=3, le=12)]
     purpose: Literal[
         "working_capital",
@@ -115,11 +123,23 @@ class EntityPan(VersionedCollectionRequest):
 
 class GstRegistration(VersionedCollectionRequest):
     gst_registered: bool
+    gst_consent: bool
     gstin: Gstin | None = None
-    state_code: Annotated[str, StringConstraints(pattern=r"^(0[1-9]|[1-2][0-9]|3[0-8])$")] | None = None
+    state_code: (
+        Annotated[str, StringConstraints(pattern=r"^(0[1-9]|[1-2][0-9]|3[0-8])$")]
+        | None
+    ) = None
 
     def model_post_init(self, __context: object) -> None:
-        if self.gst_registered != (self.gstin is not None and self.state_code is not None):
-            raise ValueError("gstin and state_code must be supplied exactly when GST registered")
+        if self.gst_registered != (
+            self.gstin is not None and self.state_code is not None
+        ):
+            raise ValueError(
+                "gstin and state_code must be supplied exactly when GST registered"
+            )
+        if self.gst_registered != self.gst_consent:
+            raise ValueError(
+                "GST consent must be granted exactly when GST details are supplied"
+            )
         if self.gstin is not None and self.gstin[:2] != self.state_code:
             raise ValueError("state_code must match the GSTIN prefix")

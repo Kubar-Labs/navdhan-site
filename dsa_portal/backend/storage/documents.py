@@ -58,11 +58,18 @@ class DocumentStorage(Protocol):
         application_id: uuid.UUID,
         document_id: uuid.UUID,
         data: bytes,
-    ) -> StoredDocument:
-        ...
+    ) -> StoredDocument: ...
 
-    def delete(self, *, object_key: str) -> None:
-        ...
+    def delete(self, *, object_key: str, generation: int | None = None) -> None: ...
+
+    def promote(
+        self,
+        *,
+        object_key: str,
+        generation: int,
+        size_bytes: int,
+        sha256: bytes,
+    ) -> StoredDocument: ...
 
 
 _TRAILER_SEARCH_WINDOW = 2048

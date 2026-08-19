@@ -11,6 +11,7 @@ import {
 } from "@/src/lib/apply/server/errors";
 import { extractSessionId, hashSessionId } from "@/src/lib/apply/server/session";
 import { isSafePartyId } from "@/src/lib/apply/server/collection-proxy";
+import { enforceWriteRateLimit } from "@/src/lib/apply/server/rate-limit";
 
 interface RouteContext {
   params: Promise<{ documentId: string }>;
@@ -21,6 +22,9 @@ export async function DELETE(request: Request, context: RouteContext): Promise<R
 
   const sessionId = extractSessionId(request.headers.get("cookie"));
   if (!sessionId) return sessionInvalidResponse();
+
+  const rateLimitResponse = await enforceWriteRateLimit(request);
+  if (rateLimitResponse) return rateLimitResponse;
 
   const { documentId } = await context.params;
   if (!isSafePartyId(documentId)) {

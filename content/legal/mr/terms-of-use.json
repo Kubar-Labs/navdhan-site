@@ -10,7 +10,6 @@
     "cin": "U70200WB2024PTC274850",
     "address": "156, Tarvakere, BTM Layout 1st Stage, Bengaluru, Karnataka",
     "email": "support@kubar.tech",
-    "phone": "+91-80-XXXX-XXXX",
     "website": "https://navdhan.app"
   },
   "intro": {
@@ -109,7 +108,7 @@
       "items": [
         {
           "heading": "Direct damages",
-          "body": "Liability is limited to fees actually paid to NavDhan, which are typically zero."
+          "body": "Liability is limited to fees actually paid to NavDhan, if any."
         },
         {
           "heading": "Excluded damages",

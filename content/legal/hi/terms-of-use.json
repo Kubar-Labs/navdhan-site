@@ -10,7 +10,6 @@
     "cin": "U70200WB2024PTC274850",
     "address": "156, Tarvakere, BTM Layout 1st Stage, Bengaluru, Karnataka",
     "email": "support@kubar.tech",
-    "phone": "+91-80-XXXX-XXXX",
     "website": "https://navdhan.app"
   },
   "intro": {
@@ -103,7 +102,7 @@
       "items": [
         {
           "heading": "प्रत्यक्ष क्षति",
-          "body": "देयता NavDhan को वास्तव में भुगतान की गई फीस तक सीमित है, जो आमतौर पर शून्य होती है।"
+          "body": "देयता NavDhan को वास्तव में भुगतान की गई फीस, यदि कोई हो, तक सीमित है।"
         },
         {
           "heading": "बाहर की क्षति",

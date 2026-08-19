@@ -1,56 +1,83 @@
-# Navdhan Site
+# NavDhan
 
-Marketing site for Navdhan, built with Next.js 15 (App Router), React 19, and Tailwind CSS 4.
+NavDhan's production application consists of:
 
-## Stack
+- a localized Next.js 15 / React 19 frontend deployed to Cloudflare Workers;
+- a collection-only FastAPI service deployed to Google Cloud Run;
+- the authoritative PostgreSQL 18 schema in `database/`; and
+- private PDF storage in Google Cloud Storage.
 
-- Next.js 15 (App Router, SSR)
-- next-intl (i18n, `app/[locale]`)
-- Tailwind CSS 4
-- Framer Motion
-- Drizzle ORM + Postgres (server-side, `app/api/*`)
+The former Perfios/Vite DSA portal and its database are retired reference
+material. They are not a migration source, compatibility target, or supported
+deployment path.
 
-## Getting started
+## Local frontend
 
-Install dependencies and start the dev server:
+Use Node.js 22 and install the committed lockfile exactly:
 
 ```bash
-npm install
+npm ci
+cp .env.example .env.local
 npm run dev
 ```
 
-## Scripts
+The root application is available at `http://localhost:3000`. Its server-side
+apply routes proxy to the FastAPI URL configured by
+`APPLY_BACKEND_BASE_URL`; `APPLY_BACKEND_SERVICE_TOKEN` must match the
+backend's `APPLY_SERVICE_TOKEN` and must never use a `NEXT_PUBLIC_` name.
 
-- `dev`: local development server
-- `build`: production build
-- `start`: run the production build locally
-- `lint`: run ESLint
-- `test` / `test:watch`: run Vitest
-- `sync:portal`: copy the built DSA portal (`dsa_portal/frontend`) into `public/apply/`
-- `db:generate` / `db:migrate` / `db:studio`: Drizzle ORM helpers
-- `cf:build` / `cf:preview` / `deploy:cf`: build & deploy to Cloudflare Workers via OpenNext
+Useful release checks:
 
-## Environment variables
+```bash
+npm run lint
+npm run typecheck
+npm test
+npm run cf:build
+```
 
-Server-only values are read from `process.env` inside server handlers, route
-handlers (`app/api/*`), or server components. See `CLOUDFLARE-DEPLOY.md` for
-setting secrets (e.g. `DATABASE_URL`) on the deployed Worker.
+## Local backend and database
 
-## Deployment (Cloudflare Workers)
+The canonical backend is `dsa_portal/backend/collection_app.py`. Copy
+`dsa_portal/backend/.env.example` to an ignored `.env`, configure the
+PostgreSQL 18 database and cryptographic keys, then run from that directory:
 
-See `CLOUDFLARE-DEPLOY.md`. In short: `npm run deploy:cf` builds with the
-OpenNext Cloudflare adapter and deploys the Worker `kubar-labs-navdhan-site`
-via `wrangler deploy`. `.github/workflows/deploy.yml` does this automatically
-on push to `main`.
+```bash
+python -m pip install --require-hashes -r requirements.lock
+python -m uvicorn collection_app:app --host 127.0.0.1 --port 8000
+```
 
-## Project structure
+The current upward migrations and required seed live in `database/`. Never
+apply them over the incompatible legacy DSA schema. Cloud releases must use
+`database/scripts/release.sh`, which accepts only an empty target or a database
+already carrying its checked release ledger.
 
-- `app/`: Next.js App Router routes, layouts, and API route handlers
-- `app/[locale]/(marketing)`: localized marketing pages
-- `app/apply`: application flow pages
-- `src/components`: shared React components
-- `src/db`: Drizzle schema/config
-- `src/lib`, `src/hooks`, `src/types`: utilities, hooks, and types
-- `content/`: structured content (company info, legal pages)
-- `public/apply/`: built DSA portal (embedded verification flow), synced via `npm run sync:portal` — do not edit by hand
-- `dsa_portal/`: separate DSA portal frontend/backend, untouched by this migration
+Run the database and backend suites against PostgreSQL 18 before a release:
+
+```bash
+python -m unittest discover -s database/tests -v
+cd dsa_portal/backend
+python -m unittest discover -s tests -v
+```
+
+## Repository map
+
+- `app/`, `src/`, `content/`: Next.js routes, UI, localization, and content
+- `database/`: authoritative PostgreSQL 18 migrations, seed, release tooling,
+  and database tests
+- `dsa_portal/backend/`: collection-only FastAPI service and tests
+- `dsa_portal/frontend/`, `dsa_portal/infra/`: retired legacy reference only
+- `.github/workflows/ci.yml`: frontend, backend, database, audit, and build gates
+- `DEPLOYMENT.md`: controlled staging and production release runbook
+- `CLOUDFLARE-DEPLOY.md`: Cloudflare Worker configuration and rollback
+
+## Deployment
+
+Do not deploy from a dirty worktree or bypass staging. The required order is
+documented in `DEPLOYMENT.md`: disposable PostgreSQL 18 rehearsal, rebuilt
+staging acceptance, production backup/preflight and schema bootstrap,
+zero-traffic Cloud Run candidate, backend promotion, then the Cloudflare
+Worker. Database down migrations are never an application rollback mechanism.
+
+## License
+
+Proprietary.

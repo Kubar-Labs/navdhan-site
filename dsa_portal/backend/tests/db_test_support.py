@@ -91,7 +91,9 @@ def guard_test_database_name() -> str:
     return name
 
 
-async def guard_live_connection_is_test_database(connection: asyncpg.Connection) -> None:
+async def guard_live_connection_is_test_database(
+    connection: asyncpg.Connection,
+) -> None:
     """Validate a *live* connection before any destructive statement runs.
 
     Defense in depth against the configured DSN and the actually-connected
@@ -152,12 +154,18 @@ def _run_psql_file(path: Path) -> None:
         [
             _psql_path(),
             "--no-password",
-            "-h", parsed.hostname or "127.0.0.1",
-            "-p", str(parsed.port or 5432),
-            "-U", parsed.username or "postgres",
-            "-d", dbname,
-            "-v", "ON_ERROR_STOP=1",
-            "-f", str(path),
+            "-h",
+            parsed.hostname or "127.0.0.1",
+            "-p",
+            str(parsed.port or 5432),
+            "-U",
+            parsed.username or "postgres",
+            "-d",
+            dbname,
+            "-v",
+            "ON_ERROR_STOP=1",
+            "-f",
+            str(path),
         ],
         check=True,
         capture_output=True,
@@ -180,15 +188,20 @@ async def ensure_test_schema() -> None:
     connection = await asyncpg.connect(TEST_PG_DSN)
     try:
         await guard_live_connection_is_test_database(connection)
-        has_schema = await connection.fetchval("SELECT to_regclass('public.marketplaces')")
+        has_schema = await connection.fetchval(
+            "SELECT to_regclass('public.marketplaces')"
+        )
     finally:
         await connection.close()
 
     try:
         if has_schema is None:
             _run_psql_file(MIGRATIONS_DIR / "001_collection_schema.up.sql")
-        _run_psql_file(MIGRATIONS_DIR / "002_application_requirement_coverage_snapshot.up.sql")
+        _run_psql_file(
+            MIGRATIONS_DIR / "002_application_requirement_coverage_snapshot.up.sql"
+        )
         _run_psql_file(MIGRATIONS_DIR / "003_person_email_lookup_hash.up.sql")
+        _run_psql_file(MIGRATIONS_DIR / "004_document_scan_quarantine.up.sql")
         _run_psql_file(SEED_PATH)
     except subprocess.CalledProcessError as error:
         raise RuntimeError(

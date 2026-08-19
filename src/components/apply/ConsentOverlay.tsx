@@ -27,37 +27,33 @@ export function ConsentOverlay({
         "mt-4 rounded-xl border p-5 sm:p-6 transition-all duration-200",
         accepted
           ? "border-nt-orange-600/40 bg-orange-50/20 shadow-xs"
-          : "border-nt-slate-200 bg-nt-cream/50 hover:border-nt-slate-300 hover:bg-nt-cream"
+          : "border-nt-slate-200 bg-nt-cream/50 hover:border-nt-slate-300 hover:bg-nt-cream",
       )}
     >
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h3 className="text-sm font-semibold text-nt-slate-900 tracking-tight">
-            {title}
-          </h3>
+          <h3 className="text-sm font-semibold text-nt-slate-900 tracking-tight">{title}</h3>
           <p className="mt-1 text-sm text-nt-slate-600 leading-relaxed">{summary}</p>
           {details && <p className="mt-1 text-xs text-nt-slate-500 leading-relaxed">{details}</p>}
         </div>
       </div>
 
-      <div className="mt-4 flex items-center gap-3 pt-3 border-t border-nt-slate-200/60 select-none">
+      <label className="mt-4 flex cursor-pointer items-center gap-3 border-t border-nt-slate-200/60 pt-3 select-none">
+        <input
+          type="checkbox"
+          checked={accepted}
+          onChange={(event) => onChange(event.target.checked)}
+          aria-label={ariaLabel ?? checkboxLabel}
+          required
+          className="peer sr-only"
+        />
         <span
-          role="checkbox"
-          aria-checked={accepted}
-          title={ariaLabel}
-          tabIndex={0}
-          onClick={() => onChange(!accepted)}
-          onKeyDown={(e) => {
-            if (e.key === " " || e.key === "Enter") {
-              e.preventDefault();
-              onChange(!accepted);
-            }
-          }}
+          aria-hidden="true"
           className={cn(
-            "flex h-5 w-5 shrink-0 items-center justify-center rounded-md border cursor-pointer transition-all focus:outline-none focus:ring-2 focus:ring-nt-orange-600 focus:ring-offset-1",
+            "flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition-all peer-focus-visible:ring-2 peer-focus-visible:ring-nt-orange-600 peer-focus-visible:ring-offset-2",
             accepted
               ? "bg-nt-orange-600 border-nt-orange-600 text-white shadow-xs scale-105"
-              : "border-nt-slate-300 bg-white hover:border-nt-orange-500"
+              : "border-nt-slate-300 bg-white hover:border-nt-orange-500",
           )}
         >
           {accepted && (
@@ -72,13 +68,10 @@ export function ConsentOverlay({
             </svg>
           )}
         </span>
-        <span
-          onClick={() => onChange(!accepted)}
-          className="cursor-pointer text-sm font-medium text-nt-slate-800 hover:text-nt-slate-900"
-        >
+        <span className="text-sm font-medium text-nt-slate-800 hover:text-nt-slate-900">
           {checkboxLabel}
         </span>
-      </div>
+      </label>
     </section>
   );
 }

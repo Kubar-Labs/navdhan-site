@@ -21,6 +21,7 @@ import {
   passBackendResponse,
   requestApplyBackend,
 } from "@/src/lib/apply/server/backend-proxy";
+import { enforceWriteRateLimit } from "@/src/lib/apply/server/rate-limit";
 
 const CONSTITUTIONS = ["proprietorship", "partnership", "private_limited"] as const;
 const MAX_LOAN_INTENT_BODY_BYTES = 16 * 1024;
@@ -166,6 +167,9 @@ export async function PUT(request: Request): Promise<Response> {
   if (!sessionId) {
     return sessionInvalidResponse();
   }
+
+  const rateLimitResponse = await enforceWriteRateLimit(request);
+  if (rateLimitResponse) return rateLimitResponse;
 
   let payload: Record<string, unknown>;
   try {

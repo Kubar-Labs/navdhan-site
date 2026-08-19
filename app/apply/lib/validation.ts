@@ -247,6 +247,8 @@ export function validatePerson(input: unknown): CollectionValidationResult<Perso
   const result = validateParty({ ...input, role: "co_applicant" });
   if (!result.value) return result;
   const { role: _role, ownership_pct: _ownershipPct, ...value } = result.value;
+  void _role;
+  void _ownershipPct;
   return { value, errors: [] };
 }
 
@@ -259,6 +261,7 @@ export function validatePartyUpdate(
   const result = validateParty({ ...input, role: "co_applicant" });
   if (!result.value) return result;
   const { role: _role, ...value } = result.value;
+  void _role;
   return { value, errors: [] };
 }
 
@@ -313,7 +316,15 @@ export function validateEntityPan(input: unknown): CollectionValidationResult<En
 }
 
 const FACILITY_TYPES = [
-  "home", "personal", "car", "education", "vehicle", "business", "gold", "credit", "other",
+  "home",
+  "personal",
+  "car",
+  "education",
+  "vehicle",
+  "business",
+  "gold",
+  "credit",
+  "other",
 ] as const;
 
 export function validateCreditDeclaration(
@@ -452,29 +463,40 @@ export function validateGstRegistration(
   }
   const errors: CollectionFieldError[] = [];
   if (typeof input.gst_registered !== "boolean") addError(errors, "gst_registered");
+  if (typeof input.gst_consent !== "boolean") addError(errors, "gst_consent");
   if (!validLockVersion(input.expected_lock_version)) addError(errors, "expected_lock_version");
   if (input.gst_registered === true) {
+    if (input.gst_consent === false) addError(errors, "gst_consent");
     if (
       typeof input.state_code !== "string" ||
       !/^(0[1-9]|[12][0-9]|3[0-8])$/.test(input.state_code)
     )
       addError(errors, "state_code");
-    if (typeof input.gstin !== "string" || !validateGstin(input.gstin)) addError(errors, "gstin");
+    if (
+      typeof input.gstin !== "string" ||
+      input.gstin.trim() === "" ||
+      !validateGstin(input.gstin)
+    )
+      addError(errors, "gstin");
     if (
       typeof input.state_code === "string" &&
       typeof input.gstin === "string" &&
       input.gstin.slice(0, 2) !== input.state_code
     )
       addError(errors, "state_code");
-  } else if (
-    (input.state_code !== undefined && input.state_code !== null) ||
-    (input.gstin !== undefined && input.gstin !== null)
-  ) {
-    addError(errors, "gst_registered");
+  } else if (input.gst_registered === false) {
+    if (input.gst_consent === true) addError(errors, "gst_consent");
+    if (
+      (input.state_code !== undefined && input.state_code !== null) ||
+      (input.gstin !== undefined && input.gstin !== null)
+    ) {
+      addError(errors, "gst_registered");
+    }
   }
   if (errors.length > 0) return { errors };
   const value: GstRegistrationPayload = {
     gst_registered: input.gst_registered as boolean,
+    gst_consent: input.gst_consent as boolean,
     expected_lock_version: input.expected_lock_version as number,
   };
   if (typeof input.state_code === "string") value.state_code = input.state_code;

@@ -20,6 +20,8 @@ from tests.db_test_support import (
 
 
 SESSION_HEADER = "x-navdhan-session-digest"
+SERVICE_HEADER = "x-navdhan-service-token"
+SERVICE_TOKEN = "test-backend-service-token-32-bytes-minimum"
 MINIMAL_PDF = b"%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF"
 
 
@@ -91,8 +93,14 @@ class CollectionSubmissionFlowTests(unittest.TestCase):
     def setUpClass(cls) -> None:
         cls._previous_encryption_key = os.environ.get("ENCRYPTION_KEY")
         cls._previous_lookup_key = os.environ.get("LOOKUP_HMAC_KEY")
-        os.environ["ENCRYPTION_KEY"] = base64.b64encode(secrets.token_bytes(32)).decode()
-        os.environ["LOOKUP_HMAC_KEY"] = base64.b64encode(secrets.token_bytes(32)).decode()
+        cls._previous_service_token = os.environ.get("APPLY_SERVICE_TOKEN")
+        os.environ["ENCRYPTION_KEY"] = base64.b64encode(
+            secrets.token_bytes(32)
+        ).decode()
+        os.environ["LOOKUP_HMAC_KEY"] = base64.b64encode(
+            secrets.token_bytes(32)
+        ).decode()
+        os.environ["APPLY_SERVICE_TOKEN"] = SERVICE_TOKEN
         from security import crypto
 
         crypto._cached_key = None
@@ -112,7 +120,10 @@ class CollectionSubmissionFlowTests(unittest.TestCase):
         asyncio.run(ensure_test_schema())
         asyncio.run(_clear_transaction_rows())
         cls.app = build_collection_app(database_url=TEST_DATABASE_URL)
-        cls.client_context = TestClient(cls.app)
+        cls.client_context = TestClient(
+            cls.app,
+            headers={SERVICE_HEADER: SERVICE_TOKEN},
+        )
         cls.client = cls.client_context.__enter__()
 
     @classmethod
@@ -122,6 +133,7 @@ class CollectionSubmissionFlowTests(unittest.TestCase):
         for name, prior in (
             ("ENCRYPTION_KEY", cls._previous_encryption_key),
             ("LOOKUP_HMAC_KEY", cls._previous_lookup_key),
+            ("APPLY_SERVICE_TOKEN", cls._previous_service_token),
         ):
             if prior is None:
                 os.environ.pop(name, None)
@@ -199,12 +211,17 @@ class CollectionSubmissionFlowTests(unittest.TestCase):
         return response.json()
 
     def _save_primary_identifiers(self, digest: str, application: dict) -> dict:
-        primary_party_id = next(p["party_id"] for p in application["parties"] if p["is_primary"])
+        primary_party_id = next(
+            p["party_id"] for p in application["parties"] if p["is_primary"]
+        )
 
         response = self.client.put(
             f"/api/apply/applications/current/parties/{primary_party_id}/identifiers/pan",
             headers={SESSION_HEADER: digest},
-            json={"pan_number": "ABCPD1234E", "expected_lock_version": application["lock_version"]},
+            json={
+                "pan_number": "ABCPD1234E",
+                "expected_lock_version": application["lock_version"],
+            },
         )
         self.assertEqual(200, response.status_code, response.text)
         application = response.json()
@@ -212,12 +229,17 @@ class CollectionSubmissionFlowTests(unittest.TestCase):
         response = self.client.put(
             f"/api/apply/applications/current/parties/{primary_party_id}/identifiers/aadhaar",
             headers={SESSION_HEADER: digest},
-            json={"aadhaar_number": "123412341234", "expected_lock_version": application["lock_version"]},
+            json={
+                "aadhaar_number": "123412341234",
+                "expected_lock_version": application["lock_version"],
+            },
         )
         self.assertEqual(200, response.status_code, response.text)
         return response.json()
 
-    def _consent_grants_payload(self, lock_version: int, *, grant_mandatory: bool) -> dict:
+    def _consent_grants_payload(
+        self, lock_version: int, *, grant_mandatory: bool
+    ) -> dict:
         return {
             "grants": {
                 "privacy_policy": grant_mandatory,
@@ -228,12 +250,36 @@ class CollectionSubmissionFlowTests(unittest.TestCase):
             "expected_lock_version": lock_version,
         }
 
-    def _complete_minimal_application(self, digest: str, *, with_identifiers: bool = True) -> dict:
+    def _complete_minimal_application(
+        self,
+        digest: str,
+        *,
+        with_identifiers: bool = True,
+        with_credit_declaration: bool = True,
+    ) -> dict:
         application = self._start_application(digest)
         application = self._save_business_profile_and_person(digest, application)
         if with_identifiers:
             application = self._save_primary_identifiers(digest, application)
-        asyncio.run(_waive_blocking_document_requirements(application["application_id"]))
+        asyncio.run(
+            _waive_blocking_document_requirements(application["application_id"])
+        )
+        if with_credit_declaration:
+            response = self.client.put(
+                "/api/apply/applications/current/credit-declaration",
+                headers={SESSION_HEADER: digest},
+                json={
+                    "has_active_credit_facilities": False,
+                    "declared_cibil_score": 750,
+                    "expected_lock_version": application["lock_version"],
+                },
+            )
+            self.assertEqual(200, response.status_code, response.text)
+            # Requirements-track responses intentionally return their own
+            # snapshot rather than the application-track fields. Preserve the
+            # already loaded application shape while adopting the shared lock
+            # version advanced by this write.
+            application = {**application, **response.json()}
         return application
 
     def _grant_mandatory_consent(self, digest: str, lock_version: int) -> dict:
@@ -258,13 +304,23 @@ class CollectionSubmissionFlowTests(unittest.TestCase):
         body = response.json()
         codes = {row["purpose_code"] for row in body["purposes"]}
         self.assertEqual(
-            {"privacy_policy", "terms_of_use", "credit_bureau_check", "communications"}, codes
+            {
+                "privacy_policy",
+                "terms_of_use",
+                "credit_bureau_check",
+                "communications",
+                "gst_verification",
+            },
+            codes,
         )
-        mandatory = {row["purpose_code"]: row["is_mandatory"] for row in body["purposes"]}
+        mandatory = {
+            row["purpose_code"]: row["is_mandatory"] for row in body["purposes"]
+        }
         self.assertTrue(mandatory["privacy_policy"])
         self.assertTrue(mandatory["terms_of_use"])
         self.assertTrue(mandatory["credit_bureau_check"])
-        self.assertTrue(mandatory["communications"])
+        self.assertFalse(mandatory["communications"])
+        self.assertFalse(mandatory["gst_verification"])
         self.assertTrue(all(row["granted"] is False for row in body["purposes"]))
 
     def test_save_consent_rejects_missing_mandatory_purpose(self) -> None:
@@ -330,6 +386,79 @@ class CollectionSubmissionFlowTests(unittest.TestCase):
         missing = response.json()["detail"]["missing"]
         self.assertTrue(any(item.startswith("requirement:") for item in missing))
 
+    def test_submit_recomputes_a_falsely_collected_requirement(self) -> None:
+        digest = self._create_session()
+        application = self._complete_minimal_application(digest)
+        requirement_id = asyncio.run(
+            _fetch(
+                """
+                UPDATE application_requirements
+                SET status = 'collected'
+                WHERE application_requirement_id = (
+                    SELECT application_requirement_id
+                    FROM application_requirements
+                    WHERE application_id = $1 AND blocks_submission = true
+                    ORDER BY application_requirement_id
+                    LIMIT 1
+                )
+                RETURNING application_requirement_id
+                """,
+                uuid.UUID(application["application_id"]),
+            )
+        )[0]["application_requirement_id"]
+        consent = self._grant_mandatory_consent(digest, application["lock_version"])
+
+        response = self.client.post(
+            "/api/apply/applications/current/submit",
+            headers={SESSION_HEADER: digest},
+            json={"expected_lock_version": consent["lock_version"]},
+        )
+
+        self.assertEqual(422, response.status_code, response.text)
+        self.assertIn(
+            f"requirement:{requirement_id}", response.json()["detail"]["missing"]
+        )
+
+    def test_submit_blocks_an_active_quarantined_document_even_if_requirement_is_waived(
+        self,
+    ) -> None:
+        digest = self._create_session()
+        application = self._complete_minimal_application(digest)
+        requirements = self.client.get(
+            "/api/apply/applications/current/requirements",
+            headers={SESSION_HEADER: digest},
+        ).json()
+        requirement = next(
+            row
+            for row in requirements["requirements"]
+            if row["coverage_mode"] == "none"
+        )
+        uploaded = self.client.post(
+            "/api/apply/applications/current/documents",
+            headers={SESSION_HEADER: digest},
+            data={
+                "application_requirement_id": requirement["application_requirement_id"],
+                "expected_lock_version": str(application["lock_version"]),
+            },
+            files={"file": ("pending.pdf", MINIMAL_PDF, "application/pdf")},
+        )
+        self.assertEqual(201, uploaded.status_code, uploaded.text)
+        consent = self._grant_mandatory_consent(digest, uploaded.json()["lock_version"])
+
+        response = self.client.post(
+            "/api/apply/applications/current/submit",
+            headers={SESSION_HEADER: digest},
+            json={"expected_lock_version": consent["lock_version"]},
+        )
+
+        self.assertEqual(422, response.status_code, response.text)
+        self.assertTrue(
+            any(
+                item.startswith("document_scan:")
+                for item in response.json()["detail"]["missing"]
+            )
+        )
+
     def test_submit_blocked_when_consent_missing(self) -> None:
         digest = self._create_session()
         application = self._complete_minimal_application(digest)
@@ -357,6 +486,111 @@ class CollectionSubmissionFlowTests(unittest.TestCase):
         missing = response.json()["detail"]["missing"]
         self.assertTrue(any(item.startswith("party_pan:") for item in missing))
         self.assertTrue(any(item.startswith("party_aadhaar:") for item in missing))
+
+    def test_submit_blocked_when_party_details_are_missing(self) -> None:
+        digest = self._create_session()
+        application = self._complete_minimal_application(digest)
+        asyncio.run(_execute("UPDATE persons SET email_enc = NULL, email_hash = NULL"))
+        application = self._grant_mandatory_consent(digest, application["lock_version"])
+
+        response = self.client.post(
+            "/api/apply/applications/current/submit",
+            headers={SESSION_HEADER: digest},
+            json={"expected_lock_version": application["lock_version"]},
+        )
+
+        self.assertEqual(422, response.status_code, response.text)
+        self.assertTrue(
+            any(
+                item.startswith("party_details:")
+                for item in response.json()["detail"]["missing"]
+            )
+        )
+
+    def test_submit_blocked_when_credit_declaration_is_missing(self) -> None:
+        digest = self._create_session()
+        application = self._complete_minimal_application(
+            digest, with_credit_declaration=False
+        )
+        application = self._grant_mandatory_consent(digest, application["lock_version"])
+
+        response = self.client.post(
+            "/api/apply/applications/current/submit",
+            headers={SESSION_HEADER: digest},
+            json={"expected_lock_version": application["lock_version"]},
+        )
+
+        self.assertEqual(422, response.status_code, response.text)
+        self.assertIn("credit_declaration", response.json()["detail"]["missing"])
+
+    def test_submit_blocked_when_active_credit_is_declared_without_a_facility(
+        self,
+    ) -> None:
+        digest = self._create_session()
+        application = self._complete_minimal_application(
+            digest, with_credit_declaration=False
+        )
+        declaration = self.client.put(
+            "/api/apply/applications/current/credit-declaration",
+            headers={SESSION_HEADER: digest},
+            json={
+                "has_active_credit_facilities": True,
+                "declared_cibil_score": 750,
+                "expected_lock_version": application["lock_version"],
+            },
+        )
+        self.assertEqual(200, declaration.status_code, declaration.text)
+        consent = self._grant_mandatory_consent(
+            digest, declaration.json()["lock_version"]
+        )
+
+        response = self.client.post(
+            "/api/apply/applications/current/submit",
+            headers={SESSION_HEADER: digest},
+            json={"expected_lock_version": consent["lock_version"]},
+        )
+
+        self.assertEqual(422, response.status_code, response.text)
+        self.assertIn("existing_credit_facility", response.json()["detail"]["missing"])
+
+    def test_submit_blocked_when_current_gst_consent_is_missing(self) -> None:
+        digest = self._create_session()
+        application = self._complete_minimal_application(digest)
+        profile_payload = self._business_profile_payload(application["lock_version"])
+        profile_payload["gst_registered"] = True
+        profile = self.client.put(
+            "/api/apply/applications/current/business-profile",
+            headers={SESSION_HEADER: digest},
+            json=profile_payload,
+        )
+        self.assertEqual(200, profile.status_code, profile.text)
+        gst = self.client.put(
+            "/api/apply/applications/current/gst-registration",
+            headers={SESSION_HEADER: digest},
+            json={
+                "gst_registered": True,
+                "gst_consent": True,
+                "gstin": "27ABCPD1234E1Z5",
+                "state_code": "27",
+                "expected_lock_version": profile.json()["lock_version"],
+            },
+        )
+        self.assertEqual(200, gst.status_code, gst.text)
+        asyncio.run(
+            _execute(
+                "DELETE FROM consent_grants WHERE purpose_code = 'gst_verification'"
+            )
+        )
+        consent = self._grant_mandatory_consent(digest, gst.json()["lock_version"])
+
+        response = self.client.post(
+            "/api/apply/applications/current/submit",
+            headers={SESSION_HEADER: digest},
+            json={"expected_lock_version": consent["lock_version"]},
+        )
+
+        self.assertEqual(422, response.status_code, response.text)
+        self.assertIn("consent:gst_verification", response.json()["detail"]["missing"])
 
     def test_submit_succeeds_and_returns_application_no(self) -> None:
         digest = self._create_session()
@@ -511,7 +745,9 @@ class CollectionSubmissionFlowTests(unittest.TestCase):
         digest = self._create_session()
         application = self._submitted_application(digest)
         lock = application["lock_version"]
-        party_id = next(p["party_id"] for p in application["parties"] if p["is_primary"])
+        party_id = next(
+            p["party_id"] for p in application["parties"] if p["is_primary"]
+        )
         requirement_id = self.client.get(
             "/api/apply/applications/current/requirements",
             headers={SESSION_HEADER: digest},
@@ -582,7 +818,11 @@ class CollectionSubmissionFlowTests(unittest.TestCase):
             "gst_registration": lambda: self.client.put(
                 "/api/apply/applications/current/gst-registration",
                 headers={SESSION_HEADER: digest},
-                json={"gst_registered": False, "expected_lock_version": lock},
+                json={
+                    "gst_registered": False,
+                    "gst_consent": False,
+                    "expected_lock_version": lock,
+                },
             ),
             "credit_declaration": lambda: self.client.put(
                 "/api/apply/applications/current/credit-declaration",

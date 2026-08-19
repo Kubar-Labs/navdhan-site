@@ -5,13 +5,17 @@ describe("getTranslator and t() behavior", () => {
   it("joins array leaves with the middle-dot separator", async () => {
     const t = await getTranslator("en");
     const joined = t("global.footer.badges");
-    expect(joined).toBe("RBI Aligned · FACE Registered · Powered by Kubar");
+    expect(joined).toBe(
+      "Consent-led application · Encrypted data · Independent lender decisions",
+    );
   });
 
   it("joins namespaced array leaves with the middle-dot separator", async () => {
     const t = await getTranslator("en", "home.whyNavDhan");
     const joined = t("trustBadges");
-    expect(joined).toBe("RBI Aligned · FACE Registered · Powered by Kubar");
+    expect(joined).toBe(
+      "Consent-led application · Encrypted data · Independent lender decisions",
+    );
   });
 
   it("returns an empty string when a leaf resolves to an empty array", async () => {

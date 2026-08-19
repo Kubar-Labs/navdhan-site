@@ -37,13 +37,9 @@ export interface ApplyFormValues {
   additional_party_type_of_residence?: ResidenceType;
   additional_party_employment_status_code?: EmploymentStatusCode;
   additional_party_ownership_pct?: number;
-  aadhaar_number?: string;
-  confirm_aadhaar_number?: string;
   party_aadhaar_numbers?: Record<string, string>;
   confirm_party_aadhaar_numbers?: Record<string, string>;
   aadhaar_consent?: boolean;
-  pan_number?: string;
-  confirm_pan_number?: string;
   party_pan_numbers?: Record<string, string>;
   confirm_party_pan_numbers?: Record<string, string>;
   entity_pan?: string;
@@ -136,6 +132,7 @@ export interface EntityPanPayload extends VersionedCollectionWrite {
 
 export interface GstRegistrationPayload extends VersionedCollectionWrite {
   gst_registered: boolean;
+  gst_consent: boolean;
   state_code?: string;
   gstin?: string;
 }
@@ -189,7 +186,7 @@ export interface CollectionWriteResponse {
 }
 
 export type FacilityType =
-  | "home" | "personal" | "car" | "education" | "vehicle" | "business" | "gold" | "credit" | "other";
+  "home" | "personal" | "car" | "education" | "vehicle" | "business" | "gold" | "credit" | "other";
 
 export interface CreditDeclarationPayload extends VersionedCollectionWrite {
   has_active_credit_facilities: boolean;
@@ -217,11 +214,25 @@ export interface RequirementDocument {
   uploaded_at: string | null;
   coverage_from: string | null;
   coverage_to: string | null;
+  status:
+    | "uploading"
+    | "quarantined"
+    | "uploaded"
+    | "scan_failed"
+    | "superseded"
+    | "purged";
+  scan_result: "pending" | "clean" | "infected" | "unreadable";
 }
 
 export type RequirementStatus =
-  | "pending" | "partial" | "collected" | "accepted_for_review" | "rejected"
-  | "waived" | "not_applicable" | "missing";
+  | "pending"
+  | "partial"
+  | "collected"
+  | "accepted_for_review"
+  | "rejected"
+  | "waived"
+  | "not_applicable"
+  | "missing";
 
 export interface RequirementRow {
   application_requirement_id: string;

@@ -106,7 +106,7 @@ function requirementsResponse(
   return {
     application_id: "10000000-0000-4000-8000-000000000001",
     lock_version: 6,
-    credit_declaration: { has_active_credit_facilities: null, declared_cibil_score: null },
+    credit_declaration: { has_active_credit_facilities: false, declared_cibil_score: 750 },
     facilities: [],
     requirements: [],
     ...overrides,
@@ -144,6 +144,7 @@ describe("WizardShell Phase 6 backend-authoritative restore and review", () => {
 
     await screen.findByRole("heading", { name: "Submission result" });
     expect(await screen.findByTestId("reference-number")).toHaveTextContent("ND-2026-0001");
+    expect(screen.getByRole("link", { name: "Back to home" })).toHaveAttribute("href", "/en");
 
     // No editable step content and no Continue/Submit footer button should
     // ever have been rendered for a submitted application on resume.

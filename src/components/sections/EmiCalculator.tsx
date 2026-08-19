@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import Link from "next/link";
 import { calculateEmiBreakdown, formatCurrencyInr } from "@/src/lib/utils/emi";
 import type { EmiDefaults } from "@/src/types";
@@ -81,15 +81,15 @@ export function EmiCalculator({
           />
         </div>
 
-        <div className="rounded-2xl border border-nt-slate-200 bg-nt-cream p-8">
-          <div className="grid grid-cols-2 gap-6">
+        <div className="rounded-2xl border border-nt-slate-200 bg-nt-cream p-5 sm:p-8">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
             <Metric label={monthlyLabel} value={formatCurrencyInr(breakdown.emi)} large />
             <Metric label={totalPayableLabel} value={formatCurrencyInr(breakdown.totalPayable)} />
             <Metric label={principalLabel} value={formatCurrencyInr(breakdown.principal)} />
             <Metric label={totalInterestLabel} value={formatCurrencyInr(breakdown.totalInterest)} />
           </div>
           <Link
-            href="/apply"
+            href={`/${locale}/apply`}
             className="mt-8 inline-flex w-full items-center justify-center rounded-md bg-nt-orange-600 px-6 py-3 text-sm font-semibold text-white hover:bg-nt-orange-700"
           >
             {cta}
@@ -111,20 +111,25 @@ interface SliderProps {
 }
 
 function Slider({ label, value, min, max, step, format, onChange }: SliderProps) {
+  const inputId = useId();
   return (
     <div>
-      <label className="flex justify-between text-sm font-medium text-nt-slate-700">
-        <span>{label}</span>
-        <span>{format(value)}</span>
-      </label>
+      <div className="flex justify-between gap-4 text-sm font-medium text-nt-slate-700">
+        <label htmlFor={inputId}>{label}</label>
+        <output htmlFor={inputId} className="shrink-0 tabular-nums">
+          {format(value)}
+        </output>
+      </div>
       <input
+        id={inputId}
         type="range"
         min={min}
         max={max}
         step={step}
         value={value}
+        aria-valuetext={format(value)}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="mt-3"
+        className="mt-3 w-full"
       />
     </div>
   );
@@ -141,7 +146,7 @@ function Metric({ label, value, large = false }: MetricProps) {
     <div>
       <p className="text-sm text-nt-slate-600">{label}</p>
       <p
-        className={`mt-1 font-bold text-nt-slate-900 ${large ? "text-3xl" : "text-xl font-semibold"}`}
+        className={`mt-1 break-words font-bold tabular-nums text-nt-slate-900 ${large ? "text-2xl sm:text-3xl" : "text-xl font-semibold"}`}
       >
         {value}
       </p>

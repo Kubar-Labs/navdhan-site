@@ -1,6 +1,10 @@
 import { notFound } from "next/navigation";
 import { legalPageSchema, type LegalPageSchema } from "@/src/lib/legal/schemas";
-import { defaultLocale, isValidLocale } from "@/src/lib/i18n/config";
+import {
+  defaultLocale,
+  isValidLocale,
+  type Locale,
+} from "@/src/lib/i18n/config";
 
 export const legalSlugs = [
   "privacy-policy",
@@ -13,6 +17,15 @@ export const legalSlugs = [
 ] as const;
 
 export type LegalSlug = (typeof legalSlugs)[number];
+
+// Only these locales currently contain reviewed legal translations. The
+// other locale files are explicit English-heavy placeholders and must not be
+// advertised to crawlers as equivalent localized policies.
+export const publishedLegalLocales = ["en", "hi"] as const satisfies readonly Locale[];
+
+export function hasPublishedLegalContent(locale: Locale): boolean {
+  return (publishedLegalLocales as readonly Locale[]).includes(locale);
+}
 
 export function isValidLegalSlug(value: string): boolean {
   if (value === "terms-of-service") return true;

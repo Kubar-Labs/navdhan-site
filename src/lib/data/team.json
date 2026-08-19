@@ -9,7 +9,7 @@
       "name": "Vaibhav Sharma",
       "roleKey": "Founder & Head of Product",
       "bioKey": "Building NavDhan to make MSME credit calm, fair and accessible across India.",
-      "imageAsset": "/assets/team/vaibhav.jpg",
+      "imageAsset": "/assets/people/vaibhav.webp",
       "linkedIn": "https://www.linkedin.com/in/fenestbuc/"
     },
     {
@@ -17,7 +17,7 @@
       "name": "Agniva Ray",
       "roleKey": "Operations",
       "bioKey": "People and Internal Systems | 7 YOE | Ex- Govt. Of Goa",
-      "imageAsset": "/assets/team/agniva.png",
+      "imageAsset": "/assets/people/agniva.webp",
       "linkedIn": "https://www.linkedin.com/in/agnivaray/"
     },
     {
@@ -25,7 +25,7 @@
       "name": "Rayansh Srivastava",
       "roleKey": "Founding Engineer",
       "bioKey": "Multi-Agent AI Systems Builder | LLMs, GANs & MLOps",
-      "imageAsset": "/assets/team/rayansh.png",
+      "imageAsset": "/assets/people/rayansh.webp",
       "linkedIn": "https://www.linkedin.com/in/rayansh-srivastava-419951219/"
     },
     {
@@ -33,7 +33,7 @@
       "name": "Manchit Sanan",
       "roleKey": "Founding Engineer",
       "bioKey": "API & Automation Expert | 13 YOE | US Healthcare to Fintech",
-      "imageAsset": "/assets/team/manchit.png",
+      "imageAsset": "/assets/people/manchit.webp",
       "linkedIn": "https://www.linkedin.com/in/manchit-sanan-6b9705158/"
     },
     {
@@ -41,7 +41,7 @@
       "name": "Sreyan M Chowdhury",
       "roleKey": "Growth & Revenue Lead",
       "bioKey": "GTM & RevOps Operator | 7+ YOE | B2B Distribution",
-      "imageAsset": "/assets/team/sreyan.png",
+      "imageAsset": "/assets/people/sreyan.webp",
       "linkedIn": "https://www.linkedin.com/in/sreyanmchowdhury/"
     },
     {
@@ -49,7 +49,7 @@
       "name": "Divyesh Reddy",
       "roleKey": "Borrower Onboarding",
       "bioKey": "Buyer-Risk Intelligence | MSME Credit Analytics",
-      "imageAsset": "/assets/team/divyesh.png",
+      "imageAsset": "/assets/people/divyesh.webp",
       "linkedIn": "https://www.linkedin.com/in/divyesh-reddy/"
     },
     {
@@ -57,7 +57,7 @@
       "name": "Debpriyo Ghosal",
       "roleKey": "Founding Engineer",
       "bioKey": "Full-Stack & AI Developer | Open-Source Contributor",
-      "imageAsset": "/assets/team/debpriyo.png",
+      "imageAsset": "/assets/people/debpriyo.webp",
       "linkedIn": "https://www.linkedin.com/in/debpriyo-ghosal-0759a92a6/"
     },
     {
@@ -65,7 +65,7 @@
       "name": "Mridul Malani",
       "roleKey": "Resource Development Lead",
       "bioKey": "MS at HEC Paris | CUDA and Triton | Ex- RIL, CWC, Earlyseed",
-      "imageAsset": "/assets/team/mridul.png",
+      "imageAsset": "/assets/people/mridul.webp",
       "linkedIn": "https://www.linkedin.com/in/mridulmalani/"
     }
   ],
@@ -75,32 +75,28 @@
       "name": "Debayan Gupta",
       "domainKey": "Professor, CS - MIT, Ashoka University",
       "contributionKey": "Advises on research-led technology choices and academic partnerships.",
-      "imageAsset": "/assets/advisors/debayan.png",
-      "linkedIn": "https://linkedin.com"
+      "imageAsset": "/assets/people/debayan.webp"
     },
     {
       "id": "amit-sagar",
       "name": "Amit Sagar",
       "domainKey": "Lead System Architect at Bank of England",
       "contributionKey": "Contributes system architecture and CBDC insight for secure infrastructure.",
-      "imageAsset": "/assets/advisors/amit.png",
-      "linkedIn": "https://linkedin.com"
+      "imageAsset": "/assets/people/amit.webp"
     },
     {
       "id": "shridhar-sethuram",
       "name": "Shridhar Sethuram",
       "domainKey": "Finance veteran, 25+ years in Private Equity",
       "contributionKey": "Brings long-term capital markets perspective to growth strategy.",
-      "imageAsset": "/assets/advisors/shridhar.png",
-      "linkedIn": "https://linkedin.com"
+      "imageAsset": "/assets/people/shridhar.webp"
     },
     {
       "id": "tushar-jaruhar",
       "name": "Tushar Jaruhar",
       "domainKey": "Ex-Pricing Actuary at Zurich Insurance Co.",
       "contributionKey": "Advises on pricing discipline and insurance-linked risk thinking.",
-      "imageAsset": "/assets/advisors/tushar.png",
-      "linkedIn": "https://linkedin.com"
+      "imageAsset": "/assets/people/tushar.webp"
     }
   ]
 }

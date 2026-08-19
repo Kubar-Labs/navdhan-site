@@ -7,6 +7,7 @@ import json
 import os
 import secrets
 import unittest
+import uuid
 from datetime import date, datetime, timedelta, timezone
 from unittest.mock import AsyncMock, patch
 
@@ -24,6 +25,8 @@ from tests.db_test_support import (
 
 MARKETPLACE_ID = "10000000-0000-0000-0000-000000000001"
 SESSION_HEADER = "x-navdhan-session-digest"
+SERVICE_HEADER = "x-navdhan-service-token"
+SERVICE_TOKEN = "test-backend-service-token-32-bytes-minimum"
 
 
 async def _execute(statement: str, *arguments: object) -> str:
@@ -57,7 +60,14 @@ async def _clear_transaction_rows() -> None:
         await guard_live_connection_is_test_database(connection)
         async with connection.transaction():
             for table in (
+                "consent_grants",
+                "document_requirement_satisfactions",
+                "application_requirement_events",
+                "document_events",
+                "documents",
                 "application_requirements",
+                "application_credit_declarations",
+                "application_existing_credit_facilities",
                 "application_status_events",
                 "person_identifiers",
                 "borrower_registrations",
@@ -78,15 +88,24 @@ class CollectionApplicationFlowTests(unittest.TestCase):
     def setUpClass(cls) -> None:
         cls._previous_encryption_key = os.environ.get("ENCRYPTION_KEY")
         cls._previous_lookup_key = os.environ.get("LOOKUP_HMAC_KEY")
-        os.environ["ENCRYPTION_KEY"] = base64.b64encode(secrets.token_bytes(32)).decode()
-        os.environ["LOOKUP_HMAC_KEY"] = base64.b64encode(secrets.token_bytes(32)).decode()
+        cls._previous_service_token = os.environ.get("APPLY_SERVICE_TOKEN")
+        os.environ["ENCRYPTION_KEY"] = base64.b64encode(
+            secrets.token_bytes(32)
+        ).decode()
+        os.environ["LOOKUP_HMAC_KEY"] = base64.b64encode(
+            secrets.token_bytes(32)
+        ).decode()
+        os.environ["APPLY_SERVICE_TOKEN"] = SERVICE_TOKEN
         from security import crypto
 
         crypto._cached_key = None
         asyncio.run(ensure_test_schema())
         asyncio.run(_clear_transaction_rows())
         cls.app = build_collection_app(database_url=TEST_DATABASE_URL)
-        cls.client_context = TestClient(cls.app)
+        cls.client_context = TestClient(
+            cls.app,
+            headers={SERVICE_HEADER: SERVICE_TOKEN},
+        )
         cls.client = cls.client_context.__enter__()
 
     @classmethod
@@ -96,6 +115,7 @@ class CollectionApplicationFlowTests(unittest.TestCase):
         for name, prior in (
             ("ENCRYPTION_KEY", cls._previous_encryption_key),
             ("LOOKUP_HMAC_KEY", cls._previous_lookup_key),
+            ("APPLY_SERVICE_TOKEN", cls._previous_service_token),
         ):
             if prior is None:
                 os.environ.pop(name, None)
@@ -147,7 +167,9 @@ class CollectionApplicationFlowTests(unittest.TestCase):
         self.assertIsNotNone(row)
         presented_digest = bytes.fromhex(digest)
         self.assertNotEqual(presented_digest, bytes(row["token_hash"]))
-        self.assertEqual(hashlib.sha256(presented_digest).digest(), bytes(row["token_hash"]))
+        self.assertEqual(
+            hashlib.sha256(presented_digest).digest(), bytes(row["token_hash"])
+        )
         self.assertEqual(32, len(row["token_hash"]))
         self.assertIsNone(row["application_id"])
         self.assertGreaterEqual(row["created_at"], before)
@@ -170,7 +192,9 @@ class CollectionApplicationFlowTests(unittest.TestCase):
                 )
                 self.assertEqual(422, response.status_code)
 
-    def test_current_endpoints_reject_missing_unknown_expired_and_revoked_sessions(self) -> None:
+    def test_current_endpoints_reject_missing_unknown_expired_and_revoked_sessions(
+        self,
+    ) -> None:
         missing = self.client.get("/api/apply/applications/current")
         self.assertEqual(401, missing.status_code)
 
@@ -237,7 +261,9 @@ class CollectionApplicationFlowTests(unittest.TestCase):
         )
         self.assertEqual(422, missing_version.status_code, missing_version.text)
 
-    def test_initialization_is_atomic_and_materializes_only_applicable_requirements(self) -> None:
+    def test_initialization_is_atomic_and_materializes_only_applicable_requirements(
+        self,
+    ) -> None:
         expected_counts = {
             "proprietorship": 9,
             "partnership": 10,
@@ -310,7 +336,9 @@ class CollectionApplicationFlowTests(unittest.TestCase):
 
         self.assertEqual(200, second.status_code, second.text)
         self.assertEqual(200, restored.status_code, restored.text)
-        self.assertEqual(first.json()["application_id"], second.json()["application_id"])
+        self.assertEqual(
+            first.json()["application_id"], second.json()["application_id"]
+        )
         self.assertEqual(second.json(), restored.json())
         self.assertEqual(
             {
@@ -365,7 +393,9 @@ class CollectionApplicationFlowTests(unittest.TestCase):
         self.assertEqual(800_000, restored.json()["values"]["requested_amount"])
         self.assertEqual(1, restored.json()["lock_version"])
 
-    def test_constitution_change_atomically_repins_and_rematerializes_requirements(self) -> None:
+    def test_constitution_change_atomically_repins_and_rematerializes_requirements(
+        self,
+    ) -> None:
         digest = self._create_session()
         initial = self._put_intent(digest, constitution="proprietorship")
         self.assertEqual(200, initial.status_code, initial.text)
@@ -399,7 +429,58 @@ class CollectionApplicationFlowTests(unittest.TestCase):
         self.assertEqual("director", row["party_role"])
         self.assertEqual(10, row["requirements"])
 
-    def test_materialized_requirements_snapshot_rolling_and_fiscal_windows(self) -> None:
+    def test_constitution_change_is_blocked_after_a_credit_facility_is_added(
+        self,
+    ) -> None:
+        digest = self._create_session()
+        initial = self._put_intent(digest, constitution="proprietorship").json()
+        declaration = self.client.put(
+            "/api/apply/applications/current/credit-declaration",
+            headers={SESSION_HEADER: digest},
+            json={
+                "has_active_credit_facilities": True,
+                "declared_cibil_score": 750,
+                "expected_lock_version": initial["lock_version"],
+            },
+        )
+        self.assertEqual(200, declaration.status_code, declaration.text)
+        facility = self.client.post(
+            "/api/apply/applications/current/credit-facilities",
+            headers={SESSION_HEADER: digest},
+            json={
+                "facility_type": "business",
+                "lender_name": "Test Bank",
+                "original_loan_amount": 500000,
+                "outstanding_amount": 250000,
+                "emi_amount": 15000,
+                "interest_rate_percent": 12.5,
+                "tenure_months": 36,
+                "start_date": "2025-01-01",
+                "end_date": "2028-01-01",
+                "emis_paid_count": 12,
+                "expected_lock_version": declaration.json()["lock_version"],
+            },
+        )
+        self.assertEqual(201, facility.status_code, facility.text)
+
+        changed = self._put_intent(
+            digest,
+            constitution="private_limited",
+            expected_lock_version=facility.json()["lock_version"],
+        )
+
+        self.assertEqual(422, changed.status_code, changed.text)
+        current = self.client.get(
+            "/api/apply/applications/current", headers={SESSION_HEADER: digest}
+        )
+        self.assertEqual("proprietorship", current.json()["values"]["constitution"])
+        self.assertEqual(
+            facility.json()["lock_version"], current.json()["lock_version"]
+        )
+
+    def test_materialized_requirements_snapshot_rolling_and_fiscal_windows(
+        self,
+    ) -> None:
         """No fixed-window coverage is asserted: checklist v2 dropped the only
         requirement using fixed_period_start (private limited's April-2025
         GSTR-3B). _coverage_snapshot still supports it, but nothing seeds it."""
@@ -407,7 +488,9 @@ class CollectionApplicationFlowTests(unittest.TestCase):
         response = self._put_intent(digest, constitution="private_limited")
         self.assertEqual(200, response.status_code, response.text)
         today = date.today()
-        fiscal_year_start = date(today.year if today.month >= 4 else today.year - 1, 4, 1)
+        fiscal_year_start = date(
+            today.year if today.month >= 4 else today.year - 1, 4, 1
+        )
         expected_fiscal_start = date(fiscal_year_start.year - 2, 4, 1)
         expected_fiscal_end = fiscal_year_start - timedelta(days=1)
         rolling_start = date(today.year - 1, today.month, today.day)
@@ -422,24 +505,42 @@ class CollectionApplicationFlowTests(unittest.TestCase):
                 "WHERE dr.coverage_mode <> 'none' ORDER BY dr.display_order"
             )
         )
-        rolling = next(row for row in rows if row["document_type_code"] == "bank_statement")
+        rolling = next(
+            row for row in rows if row["document_type_code"] == "bank_statement"
+        )
         fiscal = next(row for row in rows if row["document_type_code"] == "itr")
-        self.assertEqual((rolling_start, today, None), (
-            rolling["required_period_from"], rolling["required_period_to"], rolling["fiscal_year_start"]
-        ))
-        self.assertEqual((expected_fiscal_start, expected_fiscal_end, expected_fiscal_start), (
-            fiscal["required_period_from"], fiscal["required_period_to"], fiscal["fiscal_year_start"]
-        ))
+        self.assertEqual(
+            (rolling_start, today, None),
+            (
+                rolling["required_period_from"],
+                rolling["required_period_to"],
+                rolling["fiscal_year_start"],
+            ),
+        )
+        self.assertEqual(
+            (expected_fiscal_start, expected_fiscal_end, expected_fiscal_start),
+            (
+                fiscal["required_period_from"],
+                fiscal["required_period_to"],
+                fiscal["fiscal_year_start"],
+            ),
+        )
         self.assertTrue(all(row["coverage_mode"] != "none" for row in rows))
-        self.assertTrue(all(row["min_count"] == row["source_min_count"] for row in rows))
+        self.assertTrue(
+            all(row["min_count"] == row["source_min_count"] for row in rows)
+        )
 
     def test_initialization_rolls_back_all_application_rows_on_failure(self) -> None:
         digest = self._create_session()
         with patch(
             "services.collection_application._materialize_requirements",
-            new=AsyncMock(side_effect=RuntimeError("simulated materialization failure")),
+            new=AsyncMock(
+                side_effect=RuntimeError("simulated materialization failure")
+            ),
         ):
-            with self.assertRaisesRegex(RuntimeError, "simulated materialization failure"):
+            with self.assertRaisesRegex(
+                RuntimeError, "simulated materialization failure"
+            ):
                 self._put_intent(digest)
 
         row = asyncio.run(
@@ -509,7 +610,9 @@ class CollectionApplicationFlowTests(unittest.TestCase):
         self.assertEqual(200, person.status_code, person.text)
         self.assertEqual(person.json(), restored.json())
         snapshot = restored.json()
-        self.assertEqual("NavDhan Traders", snapshot["business_profile"]["business_legal_name"])
+        self.assertEqual(
+            "NavDhan Traders", snapshot["business_profile"]["business_legal_name"]
+        )
         self.assertEqual("560001", snapshot["business_profile"]["business_pincode"])
         primary = snapshot["parties"][0]
         self.assertEqual("applicant", primary["role"])
@@ -546,7 +649,9 @@ class CollectionApplicationFlowTests(unittest.TestCase):
         self.assertEqual(32, len(row["mobile_hash"]))
         self.assertEqual(32, len(row["email_hash"]))
 
-    def test_phase_three_party_role_rules_and_kyc_requirement_materialization(self) -> None:
+    def test_phase_three_party_role_rules_and_kyc_requirement_materialization(
+        self,
+    ) -> None:
         # An added party supplies its own KYC (PAN + Aadhaar) but not the CIBIL
         # report: that requirement is flagged primary_party_only, so it is
         # collected once per application rather than once per director/partner.
@@ -585,7 +690,9 @@ class CollectionApplicationFlowTests(unittest.TestCase):
                 self.assertEqual(1 if status_code == 201 else 0, row["parties"])
                 self.assertEqual(expected_requirements, row["requirements"])
 
-    def test_phase_three_identifiers_and_registrations_are_encrypted_hashed_and_masked(self) -> None:
+    def test_phase_three_identifiers_and_registrations_are_encrypted_hashed_and_masked(
+        self,
+    ) -> None:
         digest = self._create_session()
         intent = self._put_intent(digest, constitution="partnership")
         party_id = intent.json()["parties"][0]["party_id"]
@@ -609,7 +716,8 @@ class CollectionApplicationFlowTests(unittest.TestCase):
             headers={SESSION_HEADER: digest},
             json={
                 "gst_registered": True,
-                "gstin": "27ABCDE1234F1Z5",
+                "gst_consent": True,
+                "gstin": "27AAEFN1234F1Z5",
                 "state_code": "27",
                 "expected_lock_version": 3,
             },
@@ -618,7 +726,12 @@ class CollectionApplicationFlowTests(unittest.TestCase):
         for response in (pan, aadhaar, entity_pan, gst):
             self.assertEqual(200, response.status_code, response.text)
         snapshot_text = str(gst.json())
-        for plaintext in ("ABCDE1234F", "123412341234", "AAEFN1234F", "27ABCDE1234F1Z5"):
+        for plaintext in (
+            "ABCDE1234F",
+            "123412341234",
+            "AAEFN1234F",
+            "27AAEFN1234F1Z5",
+        ):
             self.assertNotIn(plaintext, snapshot_text)
         identifiers = gst.json()["parties"][0]["identifiers"]
         self.assertEqual("ABCDE***F", identifiers["pan_masked"])
@@ -648,12 +761,30 @@ class CollectionApplicationFlowTests(unittest.TestCase):
         self.assertTrue(
             all(row["verification_state"] == "not_attempted" for row in rows)
         )
-        self.assertTrue(all(row["value_enc"] and len(row["value_hash"]) == 32 for row in rows))
-        self.assertTrue(all(b"123412341234" not in bytes(row["value_enc"]) for row in rows))
+        self.assertTrue(
+            all(row["value_enc"] and len(row["value_hash"]) == 32 for row in rows)
+        )
+        self.assertTrue(
+            all(b"123412341234" not in bytes(row["value_enc"]) for row in rows)
+        )
+        consent_rows = asyncio.run(
+            _fetch(
+                "SELECT purpose_code, action::text, notice_version "
+                "FROM consent_grants WHERE application_id = $1",
+                uuid.UUID(gst.json()["application_id"]),
+            )
+        )
+        self.assertEqual(
+            [("gst_verification", "granted", 1)],
+            [
+                (row["purpose_code"], row["action"], row["notice_version"])
+                for row in consent_rows
+            ],
+        )
 
     def test_phase_three_entity_pan_constitution_and_gst_state_rules(self) -> None:
         digest = self._create_session()
-        intent = self._put_intent(digest, constitution="proprietorship")
+        self._put_intent(digest, constitution="proprietorship")
         entity_pan = self.client.put(
             "/api/apply/applications/current/entity-pan",
             headers={SESSION_HEADER: digest},
@@ -662,22 +793,44 @@ class CollectionApplicationFlowTests(unittest.TestCase):
         invalid_gst = self.client.put(
             "/api/apply/applications/current/gst-registration",
             headers={SESSION_HEADER: digest},
-            json={"gst_registered": True, "gstin": "27ABCDE1234F1Z5", "state_code": "29", "expected_lock_version": 0},
+            json={
+                "gst_registered": True,
+                "gst_consent": True,
+                "gstin": "27AAEFN1234F1Z5",
+                "state_code": "29",
+                "expected_lock_version": 0,
+            },
+        )
+        missing_gst_consent = self.client.put(
+            "/api/apply/applications/current/gst-registration",
+            headers={SESSION_HEADER: digest},
+            json={
+                "gst_registered": True,
+                "gst_consent": False,
+                "gstin": "27ABCDE1234F1Z5",
+                "state_code": "27",
+                "expected_lock_version": 0,
+            },
         )
         self.assertEqual(422, entity_pan.status_code)
         self.assertEqual(422, invalid_gst.status_code)
+        self.assertEqual(422, missing_gst_consent.status_code)
 
     def test_phase_three_stale_write_is_atomic(self) -> None:
         digest = self._create_session()
         self._put_intent(digest)
-        winner = self._put_business_profile(digest, 0, business_legal_name="Winner Business")
+        winner = self._put_business_profile(
+            digest, 0, business_legal_name="Winner Business"
+        )
         stale = self._put_primary_person(digest, 0, full_name="Must Not Persist")
         self.assertEqual(200, winner.status_code, winner.text)
         self.assertEqual(409, stale.status_code, stale.text)
         row = asyncio.run(_fetchrow("SELECT full_name FROM persons LIMIT 1"))
         self.assertIsNone(row["full_name"])
 
-    def test_phase_three_added_party_updates_both_relationships_and_blocks_constitution_change(self) -> None:
+    def test_phase_three_added_party_updates_both_relationships_and_blocks_constitution_change(
+        self,
+    ) -> None:
         digest = self._create_session()
         intent = self._put_intent(digest, constitution="partnership")
         created = self.client.post(
@@ -694,7 +847,9 @@ class CollectionApplicationFlowTests(unittest.TestCase):
                 "expected_lock_version": intent.json()["lock_version"],
             },
         )
-        party = next(item for item in created.json()["parties"] if not item["is_primary"])
+        party = next(
+            item for item in created.json()["parties"] if not item["is_primary"]
+        )
         updated = self.client.put(
             f"/api/apply/applications/current/parties/{party['party_id']}",
             headers={SESSION_HEADER: digest},
@@ -767,6 +922,7 @@ class CollectionApplicationFlowTests(unittest.TestCase):
                 "/api/apply/applications/current/gst-registration",
                 {
                     "gst_registered": False,
+                    "gst_consent": False,
                     "gstin": "27ABCDE1234F1Z5",
                     "state_code": "27",
                     "expected_lock_version": 0,
@@ -781,9 +937,11 @@ class CollectionApplicationFlowTests(unittest.TestCase):
                 self.assertEqual(422, response.status_code, response.text)
         self.assertEqual(0, intent.json()["lock_version"])
 
-    def test_phase_three_constitution_and_gst_transitions_purge_inapplicable_registrations(self) -> None:
+    def test_phase_three_constitution_and_gst_transitions_purge_inapplicable_registrations(
+        self,
+    ) -> None:
         digest = self._create_session()
-        intent = self._put_intent(digest, constitution="partnership")
+        self._put_intent(digest, constitution="partnership")
         entity_pan = self.client.put(
             "/api/apply/applications/current/entity-pan",
             headers={SESSION_HEADER: digest},
@@ -794,7 +952,8 @@ class CollectionApplicationFlowTests(unittest.TestCase):
             headers={SESSION_HEADER: digest},
             json={
                 "gst_registered": True,
-                "gstin": "27ABCDE1234F1Z5",
+                "gst_consent": True,
+                "gstin": "27AAEFN1234F1Z5",
                 "state_code": "27",
                 "expected_lock_version": 1,
             },
@@ -818,7 +977,40 @@ class CollectionApplicationFlowTests(unittest.TestCase):
         self.assertEqual([], rows)
         self.assertEqual("proprietorship", changed.json()["values"]["constitution"])
 
-    def test_phase_three_rejects_personal_pan_that_matches_existing_entity_pan(self) -> None:
+    def test_phase_three_rejects_gstin_whose_embedded_pan_does_not_match(self) -> None:
+        digest = self._create_session()
+        self._put_intent(digest, constitution="partnership")
+        entity = self.client.put(
+            "/api/apply/applications/current/entity-pan",
+            headers={SESSION_HEADER: digest},
+            json={"entity_pan": "AAEFN1234F", "expected_lock_version": 0},
+        )
+        self.assertEqual(200, entity.status_code, entity.text)
+
+        mismatched = self.client.put(
+            "/api/apply/applications/current/gst-registration",
+            headers={SESSION_HEADER: digest},
+            json={
+                "gst_registered": True,
+                "gst_consent": True,
+                "gstin": "27ABCDE1234F1Z5",
+                "state_code": "27",
+                "expected_lock_version": entity.json()["lock_version"],
+            },
+        )
+
+        self.assertEqual(422, mismatched.status_code, mismatched.text)
+        self.assertIn("does not match", mismatched.json()["detail"])
+        current = self.client.get(
+            "/api/apply/applications/current",
+            headers={SESSION_HEADER: digest},
+        )
+        self.assertEqual(entity.json()["lock_version"], current.json()["lock_version"])
+        self.assertIsNone(current.json()["registrations"]["gstin_masked"])
+
+    def test_phase_three_rejects_personal_pan_that_matches_existing_entity_pan(
+        self,
+    ) -> None:
         digest = self._create_session()
         intent = self._put_intent(digest, constitution="partnership")
         party_id = intent.json()["parties"][0]["party_id"]
@@ -851,9 +1043,11 @@ class CollectionApplicationFlowTests(unittest.TestCase):
         self.assertEqual(1, row["entity_pans"])
         self.assertEqual(0, row["personal_pans"])
 
-    def test_phase_three_rejects_entity_pan_that_matches_any_party_personal_pan(self) -> None:
+    def test_phase_three_rejects_entity_pan_that_matches_any_party_personal_pan(
+        self,
+    ) -> None:
         digest = self._create_session()
-        intent = self._put_intent(digest, constitution="private_limited")
+        self._put_intent(digest, constitution="private_limited")
         added = self.client.post(
             "/api/apply/applications/current/parties",
             headers={SESSION_HEADER: digest},
@@ -868,7 +1062,9 @@ class CollectionApplicationFlowTests(unittest.TestCase):
             },
         )
         party_id = next(
-            party["party_id"] for party in added.json()["parties"] if not party["is_primary"]
+            party["party_id"]
+            for party in added.json()["parties"]
+            if not party["is_primary"]
         )
         personal = self.client.put(
             f"/api/apply/applications/current/parties/{party_id}/identifiers/pan",

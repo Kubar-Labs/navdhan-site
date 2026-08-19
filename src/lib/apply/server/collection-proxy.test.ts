@@ -122,7 +122,7 @@ describe("Phase 3 collection proxy boundary", () => {
     const invalid = await proxyCollectionWrite(
       request(JSON.stringify({ expected_lock_version: -1 })),
       "/api/apply/applications/current/example",
-      (input) => ({
+      () => ({
         errors: [{ field: "body", message_i18n_key: "apply.errors.invalidRequest" }],
       }),
     );
@@ -144,7 +144,7 @@ describe("Phase 3 collection proxy boundary", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it("preserves safe backend errors but sanitizes backend failures", async () => {
+  it("allowlists safe backend error fields and sanitizes backend failures", async () => {
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(
@@ -167,7 +167,9 @@ describe("Phase 3 collection proxy boundary", () => {
     );
 
     expect(stale.status).toBe(409);
-    expect(await stale.json()).toEqual({ detail: "stale", current_lock_version: 2 });
+    expect(await stale.json()).toEqual({
+      message: "stale",
+    });
     expect(unavailable.status).toBe(503);
     expect(await unavailable.json()).toEqual({ error: "BACKEND_UNAVAILABLE" });
   });

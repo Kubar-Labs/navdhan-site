@@ -40,7 +40,9 @@ def normalize_identifier(value: str) -> str:
     if not isinstance(value, str):
         raise TypeError("identifier must be a string")
 
-    normalized = "".join(character for character in value.upper() if character.isalnum())
+    normalized = "".join(
+        character for character in value.upper() if character.isalnum()
+    )
     if not normalized:
         raise ValueError("identifier must contain at least one alphanumeric character")
     return normalized

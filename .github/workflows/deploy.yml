@@ -1,35 +1,75 @@
 name: Deploy to Cloudflare Workers
 
-# Push to main → build the Next.js site with OpenNext and deploy the
-# Cloudflare Worker "kubar-labs-navdhan-site" (Workers Static Assets; serves
-# navdhan.app once the custom domain is attached to the Worker).
-# The embedded DSA portal ships via the committed public/apply/ (re-sync
-# locally with `npm run sync:portal` when it changes).
-
 on:
-  push:
-    branches: [main]
-  workflow_dispatch: {}
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production
+  cancel-in-progress: false
 
 jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+  verify:
+    name: Run release gates
+    uses: ./.github/workflows/ci.yml
 
-      - uses: actions/setup-node@v4
+  deploy:
+    name: Deploy navdhan.app
+    needs: verify
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment:
+      name: production
+      url: https://navdhan.app
+    steps:
+      - name: Check out source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22
+          cache: npm
 
-      - name: Install dependencies
+      - name: Install locked dependencies
         run: npm ci
+
+      - name: Verify required Worker runtime secrets
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          # shellcheck disable=SC2016
+          npx wrangler secret list --format json | node -e '
+            let input = "";
+            process.stdin.setEncoding("utf8");
+            process.stdin.on("data", (chunk) => { input += chunk; });
+            process.stdin.on("end", () => {
+              const configured = new Set(JSON.parse(input).map((item) => item.name));
+              const required = [
+                "APPLY_BACKEND_BASE_URL",
+                "APPLY_BACKEND_SERVICE_TOKEN",
+              ];
+              const missing = required.filter((name) => !configured.has(name));
+              if (missing.length > 0) {
+                console.error(`Missing required Worker secrets: ${missing.join(", ")}`);
+                process.exit(1);
+              }
+            });
+          '
 
       - name: Build (OpenNext → .open-next/)
         run: npm run cf:build
 
       - name: Deploy to Cloudflare Workers
-        uses: cloudflare/wrangler-action@v3
+        uses: cloudflare/wrangler-action@9acf94ace14e7dc412b076f2c5c20b8ce93c79cd # v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          wranglerVersion: "4.124.0"
           command: deploy

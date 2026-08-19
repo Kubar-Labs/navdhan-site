@@ -39,6 +39,17 @@ tests/
 **/*.test.ts
 **/*.test.tsx
 
+# Database release tests are deployment controls and must be versioned. The
+# broad historical tests/ ignores above would otherwise hide new checks.
+!database/tests/
+!database/tests/test_release_tooling.py
+
+# The collection backend's test suite and shared fakes are release gates. Keep
+# new Python support modules visible instead of silently hiding them behind the
+# historical blanket tests/ rules above.
+!dsa_portal/backend/tests/
+!dsa_portal/backend/tests/*.py
+
 # Next.js
 .next/
 

@@ -6,6 +6,7 @@ import {
 } from "@/src/lib/apply/server/backend-proxy";
 import { proxyCollectionWrite } from "@/src/lib/apply/server/collection-proxy";
 import { sessionInvalidResponse } from "@/src/lib/apply/server/errors";
+import { enforceReadRateLimit } from "@/src/lib/apply/server/rate-limit";
 import { extractSessionId, hashSessionId } from "@/src/lib/apply/server/session";
 
 export async function GET(request: Request): Promise<Response> {
@@ -13,6 +14,9 @@ export async function GET(request: Request): Promise<Response> {
   if (!sessionId) {
     return sessionInvalidResponse();
   }
+
+  const rateLimitResponse = await enforceReadRateLimit(request);
+  if (rateLimitResponse) return rateLimitResponse;
 
   try {
     const response = await requestApplyBackend(

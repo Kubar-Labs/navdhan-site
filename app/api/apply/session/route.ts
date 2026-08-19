@@ -1,15 +1,17 @@
 import {
   generateSessionId,
   hashSessionId,
+  serializeOppositeSessionCookieExpiry,
   serializeSessionCookie,
 } from "@/src/lib/apply/server/session";
 import { isValidCsrfHeader } from "@/src/lib/apply/server/csrf";
-import { csrfInvalidResponse } from "@/src/lib/apply/server/errors";
+import { csrfInvalidResponse, jsonResponse } from "@/src/lib/apply/server/errors";
 import {
   backendUnavailableResponse,
   passBackendResponse,
   requestApplyBackend,
 } from "@/src/lib/apply/server/backend-proxy";
+import { enforceSessionRateLimit } from "@/src/lib/apply/server/rate-limit";
 
 function removeSessionSecrets(value: unknown): unknown {
   if (Array.isArray(value)) {
@@ -27,19 +29,19 @@ function removeSessionSecrets(value: unknown): unknown {
 }
 
 async function safeSessionResponse(response: Response): Promise<Response> {
-  if (response.status >= 500) {
+  if (!response.ok) {
     return passBackendResponse(response);
   }
-  const contentType = response.headers.get("content-type");
+  const contentType = response.headers.get("content-type")?.toLowerCase();
   if (!contentType?.includes("application/json")) {
     return passBackendResponse(response);
   }
 
   try {
     const payload = removeSessionSecrets(await response.json());
-    return Response.json(payload, { status: response.status });
+    return jsonResponse(payload, response.status);
   } catch {
-    return Response.json({ error: "BACKEND_INVALID_RESPONSE" }, { status: 502 });
+    return jsonResponse({ error: "BACKEND_INVALID_RESPONSE" }, 502);
   }
 }
 
@@ -47,6 +49,9 @@ export async function POST(request: Request): Promise<Response> {
   if (!isValidCsrfHeader(request)) {
     return csrfInvalidResponse();
   }
+
+  const rateLimitResponse = await enforceSessionRateLimit(request);
+  if (rateLimitResponse) return rateLimitResponse;
 
   const sessionId = generateSessionId();
   const tokenDigest = hashSessionId(sessionId);
@@ -59,6 +64,7 @@ export async function POST(request: Request): Promise<Response> {
     const response = await safeSessionResponse(backendResponse);
     if (response.ok) {
       response.headers.append("set-cookie", serializeSessionCookie(sessionId));
+      response.headers.append("set-cookie", serializeOppositeSessionCookieExpiry());
     }
     return response;
   } catch {

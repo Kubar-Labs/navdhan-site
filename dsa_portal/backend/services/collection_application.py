@@ -12,6 +12,7 @@ from typing import Any
 from sqlalchemy import delete, select, update
 
 from db.collection_models import (
+    ApplicationExistingCreditFacility,
     ApplicationParty,
     ApplicationRequirement,
     ApplicationSession,
@@ -20,6 +21,9 @@ from db.collection_models import (
     BorrowerPerson,
     BorrowerRegistration,
     ChecklistVersion,
+    ConsentGrant,
+    ConsentPurpose,
+    Document,
     DocumentRequirement,
     LoanApplication,
     Person,
@@ -45,6 +49,8 @@ from services.collection_snapshot import serialize_application
 MARKETPLACE_ID = uuid.UUID("10000000-0000-0000-0000-000000000001")
 PRODUCT_CODE = "business_loan"
 SESSION_LIFETIME = timedelta(days=7)
+GST_CONSENT_PURPOSE = "gst_verification"
+DEFAULT_CONSENT_DESTINATION_ID = uuid.UUID("40000000-0000-0000-0000-000000000001")
 
 
 class InvalidSessionError(Exception):
@@ -104,7 +110,9 @@ async def create_session(digest: bytes) -> ApplicationSession:
     stored_hash = _credential_hash(digest)
     async with tenant_session(MARKETPLACE_ID) as database:
         existing = await database.scalar(
-            select(ApplicationSession).where(ApplicationSession.token_hash == stored_hash)
+            select(ApplicationSession).where(
+                ApplicationSession.token_hash == stored_hash
+            )
         )
         if existing is not None:
             if existing.revoked_at is not None or existing.expires_at <= now:
@@ -128,7 +136,9 @@ async def save_loan_intent(digest: bytes, intent: LoanIntent) -> dict[str, Any]:
     async with tenant_session(MARKETPLACE_ID) as database:
         browser_session = await _active_session(database, digest, now, lock=True)
         if browser_session.application_id is not None:
-            application = await database.get(LoanApplication, browser_session.application_id)
+            application = await database.get(
+                LoanApplication, browser_session.application_id
+            )
             if application is None:
                 raise InvalidSessionError
             # This path predates (and bypasses) _application_for_write, so it
@@ -140,7 +150,9 @@ async def save_loan_intent(digest: bytes, intent: LoanIntent) -> dict[str, Any]:
         else:
             if intent.expected_lock_version != 0:
                 raise StaleApplicationError(0)
-            application = await _initialize_application(database, browser_session, intent)
+            application = await _initialize_application(
+                database, browser_session, intent
+            )
         browser_session.last_used_at = now
         await database.flush()
         return await serialize_application(database, application, MARKETPLACE_ID)
@@ -152,14 +164,18 @@ async def get_current_application(digest: bytes) -> dict[str, Any]:
         browser_session = await _active_session(database, digest, now)
         if browser_session.application_id is None:
             raise ApplicationNotStartedError
-        application = await database.get(LoanApplication, browser_session.application_id)
+        application = await database.get(
+            LoanApplication, browser_session.application_id
+        )
         if application is None:
             raise ApplicationNotStartedError
         browser_session.last_used_at = now
         return await serialize_application(database, application, MARKETPLACE_ID)
 
 
-async def save_business_profile(digest: bytes, profile: BusinessProfile) -> dict[str, Any]:
+async def save_business_profile(
+    digest: bytes, profile: BusinessProfile
+) -> dict[str, Any]:
     async with tenant_session(MARKETPLACE_ID) as database:
         browser_session, application = await _application_for_write(
             database, digest, profile.expected_lock_version
@@ -220,7 +236,9 @@ async def save_primary_person(digest: bytes, details: PersonDetails) -> dict[str
         return await serialize_application(database, application, MARKETPLACE_ID)
 
 
-async def create_application_party(digest: bytes, details: PartyDetails) -> dict[str, Any]:
+async def create_application_party(
+    digest: bytes, details: PartyDetails
+) -> dict[str, Any]:
     async with tenant_session(MARKETPLACE_ID) as database:
         browser_session, application = await _application_for_write(
             database, digest, details.expected_lock_version
@@ -301,7 +319,11 @@ async def save_personal_aadhaar(
     digest: bytes, party_id: uuid.UUID, payload: PersonalAadhaar
 ) -> dict[str, Any]:
     return await _save_person_identifier(
-        digest, party_id, payload.expected_lock_version, "aadhaar", payload.aadhaar_number
+        digest,
+        party_id,
+        payload.expected_lock_version,
+        "aadhaar",
+        payload.aadhaar_number,
     )
 
 
@@ -354,6 +376,54 @@ async def save_gst_registration(
         borrower = await database.get(Borrower, application.borrower_id)
         if borrower is None:
             raise ApplicationNotStartedError
+        primary_party = await database.scalar(
+            select(ApplicationParty).where(
+                ApplicationParty.marketplace_id == MARKETPLACE_ID,
+                ApplicationParty.application_id == application.application_id,
+                ApplicationParty.is_primary.is_(True),
+            )
+        )
+        if primary_party is None:
+            raise ApplicationNotStartedError
+        if payload.gstin is not None:
+            if application.constitution == "proprietorship":
+                canonical_pan_hash = await database.scalar(
+                    select(PersonIdentifier.value_hash).where(
+                        PersonIdentifier.marketplace_id == MARKETPLACE_ID,
+                        PersonIdentifier.person_id == primary_party.person_id,
+                        PersonIdentifier.id_type == "pan",
+                    )
+                )
+            else:
+                canonical_pan_hash = await database.scalar(
+                    select(BorrowerRegistration.value_hash).where(
+                        BorrowerRegistration.marketplace_id == MARKETPLACE_ID,
+                        BorrowerRegistration.borrower_id == application.borrower_id,
+                        BorrowerRegistration.kind == "entity_pan",
+                    )
+                )
+            if canonical_pan_hash is None:
+                raise InvalidApplicationOperationError("PAN must be saved before GSTIN")
+            embedded_pan_hash = tenant_lookup_digest(
+                _lookup_key(), MARKETPLACE_ID, payload.gstin[2:12]
+            )
+            if canonical_pan_hash != embedded_pan_hash:
+                raise InvalidApplicationOperationError(
+                    "GSTIN PAN does not match the application PAN"
+                )
+        today = date.today()
+        consent_purpose = await database.scalar(
+            select(ConsentPurpose).where(
+                ConsentPurpose.purpose_code == GST_CONSENT_PURPOSE,
+                ConsentPurpose.effective_from <= today,
+                (ConsentPurpose.effective_to.is_(None))
+                | (ConsentPurpose.effective_to >= today),
+            )
+        )
+        if consent_purpose is None:
+            raise InvalidApplicationOperationError(
+                "GST consent purpose is not configured"
+            )
         borrower.attributes = {
             **(borrower.attributes or {}),
             "gst_registered": payload.gst_registered,
@@ -374,7 +444,20 @@ async def save_gst_registration(
                     BorrowerRegistration.kind == "gstin",
                 )
             )
-        browser_session.last_used_at = datetime.now(timezone.utc)
+        now = datetime.now(timezone.utc)
+        database.add(
+            ConsentGrant(
+                marketplace_id=MARKETPLACE_ID,
+                application_id=application.application_id,
+                person_id=primary_party.person_id,
+                purpose_code=GST_CONSENT_PURPOSE,
+                destination_id=DEFAULT_CONSENT_DESTINATION_ID,
+                notice_version=consent_purpose.notice_version,
+                action="granted" if payload.gst_consent else "revoked",
+                occurred_at=now,
+            )
+        )
+        browser_session.last_used_at = now
         await database.flush()
         return await serialize_application(database, application, MARKETPLACE_ID)
 
@@ -560,7 +643,9 @@ async def _upsert_registration(
     registration.state_code = state_code
 
 
-async def _active_session(database: Any, digest: bytes, now: datetime, *, lock: bool = False) -> ApplicationSession:
+async def _active_session(
+    database: Any, digest: bytes, now: datetime, *, lock: bool = False
+) -> ApplicationSession:
     query = select(ApplicationSession).where(
         ApplicationSession.marketplace_id == MARKETPLACE_ID,
         ApplicationSession.token_hash == _credential_hash(digest),
@@ -584,7 +669,10 @@ async def _active_checklist(database: Any, constitution: str) -> ChecklistVersio
             ChecklistVersion.constitution == constitution,
             ChecklistVersion.status == "active",
             ChecklistVersion.effective_from <= date.today(),
-            (ChecklistVersion.effective_to.is_(None) | (ChecklistVersion.effective_to >= date.today())),
+            (
+                ChecklistVersion.effective_to.is_(None)
+                | (ChecklistVersion.effective_to >= date.today())
+            ),
         )
         .order_by(ChecklistVersion.version_no.desc())
         .limit(1)
@@ -600,7 +688,9 @@ async def _initialize_application(
     checklist = await _active_checklist(database, intent.constitution)
     borrower_id, person_id, application_id, party_id = (uuid.uuid4() for _ in range(4))
     application_suffix = uuid.uuid4().hex[:12].upper()
-    primary_role = "director" if intent.constitution == "private_limited" else "applicant"
+    primary_role = (
+        "director" if intent.constitution == "private_limited" else "applicant"
+    )
 
     borrower = Borrower(
         borrower_id=borrower_id,
@@ -659,7 +749,9 @@ async def _initialize_application(
     return application
 
 
-async def _update_application(database: Any, application: LoanApplication, intent: LoanIntent) -> None:
+async def _update_application(
+    database: Any, application: LoanApplication, intent: LoanIntent
+) -> None:
     next_version = intent.expected_lock_version + 1
     constitution_changed = application.constitution != intent.constitution
     if constitution_changed:
@@ -673,6 +765,23 @@ async def _update_application(database: Any, application: LoanApplication, inten
         if additional_party_exists is not None:
             raise InvalidApplicationOperationError(
                 "Constitution cannot change after additional parties are added"
+            )
+        document_exists = await database.scalar(
+            select(Document.document_id).where(
+                Document.marketplace_id == MARKETPLACE_ID,
+                Document.application_id == application.application_id,
+            )
+        )
+        facility_exists = await database.scalar(
+            select(ApplicationExistingCreditFacility.facility_id).where(
+                ApplicationExistingCreditFacility.marketplace_id == MARKETPLACE_ID,
+                ApplicationExistingCreditFacility.application_id
+                == application.application_id,
+            )
+        )
+        if document_exists is not None or facility_exists is not None:
+            raise InvalidApplicationOperationError(
+                "Constitution cannot change after documents or credit facilities are added"
             )
     checklist = (
         await _active_checklist(database, intent.constitution)
@@ -728,7 +837,9 @@ async def _update_application(database: Any, application: LoanApplication, inten
         )
         if party is None:
             raise RuntimeError("Application has no primary party")
-        primary_role = "director" if intent.constitution == "private_limited" else "applicant"
+        primary_role = (
+            "director" if intent.constitution == "private_limited" else "applicant"
+        )
         party.role = primary_role
         relationship = await database.scalar(
             select(BorrowerPerson).where(
@@ -757,7 +868,8 @@ async def _materialize_requirements(
         await database.scalars(
             select(DocumentRequirement).where(
                 DocumentRequirement.marketplace_id == MARKETPLACE_ID,
-                DocumentRequirement.checklist_version_id == application.checklist_version_id,
+                DocumentRequirement.checklist_version_id
+                == application.checklist_version_id,
             )
         )
     ).all()
@@ -768,7 +880,9 @@ async def _materialize_requirements(
             continue
         if requirement.attaches_to == "person" and requirement.party_role != party.role:
             continue
-        period_from, period_to, fiscal_year_start = _coverage_snapshot(requirement, date.today())
+        period_from, period_to, fiscal_year_start = _coverage_snapshot(
+            requirement, date.today()
+        )
         database.add(
             ApplicationRequirement(
                 marketplace_id=MARKETPLACE_ID,
@@ -777,7 +891,9 @@ async def _materialize_requirements(
                 document_type_code=requirement.document_type_code,
                 attaches_to=requirement.attaches_to,
                 application_party_id=(
-                    party.application_party_id if requirement.attaches_to == "person" else None
+                    party.application_party_id
+                    if requirement.attaches_to == "person"
+                    else None
                 ),
                 obligation=requirement.obligation,
                 blocks_submission=requirement.blocks_submission,
@@ -800,7 +916,8 @@ async def _materialize_party_requirements(
         await database.scalars(
             select(DocumentRequirement).where(
                 DocumentRequirement.marketplace_id == MARKETPLACE_ID,
-                DocumentRequirement.checklist_version_id == application.checklist_version_id,
+                DocumentRequirement.checklist_version_id
+                == application.checklist_version_id,
                 DocumentRequirement.attaches_to == "person",
                 DocumentRequirement.party_role == party.role,
             )
@@ -812,7 +929,9 @@ async def _materialize_party_requirements(
         # collected once for the application rather than once per director,
         # partner or co-applicant. KYC requirements carry no such flag and are
         # therefore materialized for every party.
-        if not party.is_primary and (requirement.condition or {}).get("primary_party_only"):
+        if not party.is_primary and (requirement.condition or {}).get(
+            "primary_party_only"
+        ):
             continue
         period_from, period_to, fiscal_year_start = _coverage_snapshot(
             requirement, date.today()
@@ -852,10 +971,16 @@ def _coverage_snapshot(
     if requirement.fixed_period_start is not None:
         return requirement.fixed_period_start, application_date, None
     if requirement.coverage_mode == "month_range" and requirement.lookback_months:
-        return _shift_months(application_date, -requirement.lookback_months), application_date, None
+        return (
+            _shift_months(application_date, -requirement.lookback_months),
+            application_date,
+            None,
+        )
     if requirement.coverage_mode == "fiscal_year" and requirement.lookback_months:
         current_fiscal_start = date(
-            application_date.year if application_date.month >= 4 else application_date.year - 1,
+            application_date.year
+            if application_date.month >= 4
+            else application_date.year - 1,
             4,
             1,
         )
