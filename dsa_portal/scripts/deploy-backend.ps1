@@ -143,7 +143,7 @@ $Image = "${ImageBase}@$ImageDigest"
 $RevisionSuffix = "$($CommitSha.Substring(0, 12))-$($ImageDigest.Substring(7, 12))"
 
 Write-Host "[3/3] Deploying a zero-traffic candidate revision..." -ForegroundColor Cyan
-$EnvironmentVariables = "^@^APP_ENV=prod@HOST=0.0.0.0@LOG_LEVEL=INFO@GCS_BUCKET=$Bucket@GOOGLE_CLOUD_PROJECT=$Project@DB_HOST=/cloudsql/$SqlConnection@DB_USER=navdhan_app@DB_NAME=navdhan@DB_POOL_SIZE=4@DB_MAX_OVERFLOW=1@ALLOWED_ORIGINS=https://navdhan.app,https://www.navdhan.app"
+$EnvironmentVariables = "^@^APP_ENV=prod@HOST=0.0.0.0@LOG_LEVEL=INFO@GCS_BUCKET=$Bucket@GOOGLE_CLOUD_PROJECT=$Project@DB_HOST=/cloudsql/$SqlConnection@DB_USER=navdhan_collection_app@DB_NAME=navdhan_collection@DB_POOL_SIZE=4@DB_MAX_OVERFLOW=1@ALLOWED_ORIGINS=https://navdhan.app,https://www.navdhan.app"
 $Secrets = "DB_PASSWORD=navdhan-prod-db-password:$DbPasswordSecretVersion,ENCRYPTION_KEY=navdhan-prod-encryption-key:$EncryptionKeySecretVersion,LOOKUP_HMAC_KEY=navdhan-prod-lookup-hmac-key:$LookupHmacKeySecretVersion,APPLY_SERVICE_TOKEN=navdhan-prod-apply-service-token:$ApplyServiceTokenSecretVersion,DOCUMENT_SCAN_CALLBACK_TOKEN=navdhan-prod-document-scan-callback-token:$ScanCallbackTokenSecretVersion"
 
 Invoke-Gcloud -Arguments @(

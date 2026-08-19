@@ -2,8 +2,10 @@
 
 This directory is the authoritative collection-flow schema. It is not an
 upgrade path for the legacy DSA schema: the two define incompatible tables.
-Staging must be rebuilt from this directory, and production must begin with the
-fresh PostgreSQL 18 `navdhan` database.
+Staging must be rebuilt from this directory. Production uses the fresh
+PostgreSQL 18 `navdhan_collection` database; the incompatible legacy DSA
+`navdhan` database remains preserved in place and is never modified by this
+release.
 
 ## Release rules
 
@@ -15,8 +17,9 @@ fresh PostgreSQL 18 `navdhan` database.
 - Never run `*.down.sql` against staging or production. Application rollback
   and database recovery are separate operations; see `DEPLOYMENT.md`.
 - Run migrations as the same administrative database role each time. The
-  service connects only as `navdhan_app`, which must remain a non-superuser
-  without `BYPASSRLS`, `CREATEDB`, or `CREATEROLE`.
+  production service connects only as `navdhan_collection_app` (staging uses
+  `navdhan_app`); both must remain non-superusers without `BYPASSRLS`,
+  `CREATEDB`, or `CREATEROLE`.
 
 `scripts/release.sh` enforces these rules. It:
 
@@ -29,7 +32,8 @@ fresh PostgreSQL 18 `navdhan` database.
 - leaves interrupted work in a fail-closed `applying` state instead of guessing
   whether partially completed DDL is safe to repeat;
 - applies the required seed exactly once as an immutable release input;
-- refreshes table, sequence, and default privileges for `navdhan_app`; and
+- refreshes table, sequence, and default privileges for the guarded runtime
+  role; and
 - verifies the audited seed shape while explicitly setting the RLS tenant.
 
 The seed is application configuration, not sample data. It creates the NavDhan
@@ -52,10 +56,11 @@ SQL instances. The release runner intentionally supports only:
 
 - `kubardevops:asia-south1:navdhan-staging` / `navdhan`;
 - a disposable `navdhan_rehearsal_*` database on that staging instance; and
-- `kubardevops:asia-south1:navdhan-prod` / `navdhan`, with an additional
-  production acknowledgement after backup/PITR preflight.
+- `kubardevops:asia-south1:navdhan-prod` / `navdhan_collection`, with an
+  additional production acknowledgement after backup/PITR preflight. The
+  legacy `navdhan` database on that instance is explicitly outside the release.
 
-After release, reconnect directly as `navdhan_app` and run
+After release, reconnect directly as the guarded environment runtime role and run
 `scripts/verify-runtime.sh`. Its SQL transaction is read-only and sets
 `app.current_marketplace_id` before reading tenant tables, so RLS is tested
 rather than accidentally bypassed.

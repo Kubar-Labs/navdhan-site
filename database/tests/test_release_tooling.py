@@ -46,6 +46,9 @@ class DatabaseReleaseToolingTests(unittest.TestCase):
         for fragment in (
             "kubardevops:asia-south1:navdhan-prod",
             "kubardevops:asia-south1:navdhan-staging",
+            "navdhan_collection",
+            "navdhan_collection_app",
+            "legacy navdhan is protected",
             "PRODUCTION_RELEASE_ACK",
             "server major version must be 18",
             "pg_auth_members",
@@ -107,6 +110,8 @@ class DatabaseReleaseToolingTests(unittest.TestCase):
         self.assertIn('.s.PGSQL.${PGPORT}', self.runtime_runner)
         self.assertIn('--host="$PGHOST"', self.runtime_runner)
         self.assertIn('--dbname="$PGDATABASE"', self.runtime_runner)
+        self.assertIn('PROD_DATABASE="navdhan_collection"', self.runtime_runner)
+        self.assertIn('PROD_RUNTIME_ROLE="navdhan_collection_app"', self.runtime_runner)
         self.assertIn(
             "NOT has_table_privilege(current_user, oid, 'UPDATE')",
             self.runtime_verify,
@@ -122,6 +127,8 @@ class DatabaseReleaseToolingTests(unittest.TestCase):
         for fragment in (
             'PROJECT="kubardevops"',
             'INSTANCE="navdhan-prod"',
+            'DATABASE="navdhan_collection"',
+            'LEGACY_DATABASE="navdhan"',
             "POSTGRES_18",
             "pointInTimeRecoveryEnabled",
             "transactionLogRetentionDays",
@@ -219,6 +226,8 @@ class DatabaseReleaseToolingTests(unittest.TestCase):
             "ScanCallbackTokenSecretVersion",
             "navdhan-prod-lookup-hmac-key",
             "navdhan-prod-apply-service-token",
+            "DB_USER=navdhan_collection_app",
+            "DB_NAME=navdhan_collection",
         ):
             with self.subTest(fragment=fragment):
                 self.assertIn(fragment, self.powershell)

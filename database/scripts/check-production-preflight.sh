@@ -9,7 +9,8 @@ IFS=$'\n\t'
 readonly PROJECT="kubardevops"
 readonly INSTANCE="navdhan-prod"
 readonly CONNECTION="kubardevops:asia-south1:navdhan-prod"
-readonly DATABASE="navdhan"
+readonly DATABASE="navdhan_collection"
+readonly LEGACY_DATABASE="navdhan"
 readonly MAX_BACKUP_AGE_SECONDS=21600
 
 die() {
@@ -53,6 +54,12 @@ database_name="$(gcloud sql databases describe "$DATABASE" \
   --project="$PROJECT" \
   --format='value(name)')"
 [[ "$database_name" == "$DATABASE" ]] || die "Database ${DATABASE} does not exist"
+legacy_database_name="$(gcloud sql databases describe "$LEGACY_DATABASE" \
+  --instance="$INSTANCE" \
+  --project="$PROJECT" \
+  --format='value(name)')"
+[[ "$legacy_database_name" == "$LEGACY_DATABASE" ]] ||
+  die "Protected legacy database ${LEGACY_DATABASE} does not exist"
 
 approved_backup="$(gcloud sql backups describe "$EXPECTED_BACKUP_ID" \
   --instance="$INSTANCE" \

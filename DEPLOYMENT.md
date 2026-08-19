@@ -5,7 +5,9 @@ Commands below are instructions for an approved operator; preparing this file
 does not authorize or perform a cloud change.
 
 The legacy DSA database and Vite/Perfios portal are not part of this release.
-Do not migrate, preserve, or layer the new schema over their tables.
+Do not migrate or layer the new schema over their tables. Production preserves
+the legacy `navdhan` database in place and installs this release only in the
+separate `navdhan_collection` database.
 
 The supplied `gcp.md` is a historical handoff snapshot and is internally
 inconsistent about whether production is provisioned. This tracked runbook and
@@ -28,8 +30,9 @@ non-empty database without this branch's ledger.
 | Cloud SQL instance | `navdhan-prod` |
 | Connection name | `kubardevops:asia-south1:navdhan-prod` |
 | Engine | PostgreSQL 18 |
-| Database | `navdhan` |
-| Runtime role | `navdhan_app` |
+| Collection database | `navdhan_collection` |
+| Protected legacy database | `navdhan` (never modified by this release) |
+| Runtime role | `navdhan_collection_app` |
 | Document bucket | `gs://navdhan-documents-prod` |
 | Region | `asia-south1` |
 | Cloud Run service | `navdhan-backend` |
@@ -56,9 +59,9 @@ instance, bucket, or secrets.
 4. Rebuild the stale staging database from the current upward migrations and
    immutable seed; run the complete staging acceptance matrix, including the
    quarantine-to-clean and infected-file paths.
-5. Verify production backup/PITR, bootstrap a confirmed-empty production
-   database, and
-   run read-only verification directly as `navdhan_app`.
+5. Verify production backup/PITR, bootstrap the confirmed-empty production
+   `navdhan_collection` database, and run read-only verification directly as
+   `navdhan_collection_app`.
 6. Build a Cloud Run candidate with **zero traffic** and smoke-test its tagged
    revision.
 7. Promote the backend, observe it, then deploy the root Next.js Worker.
@@ -139,20 +142,21 @@ environment-specific IAM, monitoring, and reconciliation remain external
 infrastructure and remain a release blocker until provisioned and exercised in
 staging.
 
-`navdhan_app` is a PostgreSQL role, not a `gcloud sql users` user. The latter
-would receive `cloudsqlsuperuser`, defeating row-level security. Verify it as
-an administrative database user:
+The production `navdhan_collection_app` role and staging `navdhan_app` role are
+PostgreSQL roles, not `gcloud sql users` users. The latter would receive
+`cloudsqlsuperuser`, defeating row-level security. Verify the production role
+as an administrative database user:
 
 ```sql
 SELECT rolname, rolcanlogin, rolsuper, rolbypassrls, rolcreatedb, rolcreaterole
 FROM pg_roles
-WHERE rolname = 'navdhan_app';
+WHERE rolname = 'navdhan_collection_app';
 
 SELECT parent.rolname AS inherited_role
 FROM pg_auth_members membership
 JOIN pg_roles member ON member.oid = membership.member
 JOIN pg_roles parent ON parent.oid = membership.roleid
-WHERE member.rolname = 'navdhan_app';
+WHERE member.rolname = 'navdhan_collection_app';
 ```
 
 It must be `LOGIN` with every privilege flag in that result false and no role
@@ -161,7 +165,7 @@ memberships (especially not `cloudsqlsuperuser`, `pg_read_all_data`, or
 generated password and:
 
 ```sql
-CREATE ROLE navdhan_app
+CREATE ROLE navdhan_collection_app
   LOGIN NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE
   PASSWORD '<generated-and-not-logged>';
 ```
@@ -290,12 +294,12 @@ released.
 
 ## 4. Production bootstrap and backup/PITR gate
 
-Production must start this release as an empty PostgreSQL 18 database. If
-read-only inspection shows the legacy schema or any other objects, stop: never
-run the release over it. A separately approved cutover must first stop legacy
-writers, take and verify a recoverable backup/export, and then recreate only
-the `navdhan` database empty (or point the release at a separately approved
-fresh database). No legacy rows are migrated into the new schema.
+Production must start this release in an empty PostgreSQL 18
+`navdhan_collection` database. The existing `navdhan` database contains the
+legacy DSA loan and borrower data and is protected: never delete, rename,
+truncate, migrate, or install this release into it. Both databases live on the
+same protected instance, but use distinct runtime roles and credentials. No
+legacy rows are migrated into the collection schema.
 
 After emptiness is confirmed and the staging gate is signed off, create an
 on-demand backup of the empty database and bind the preflight to the exact ID
@@ -345,16 +349,16 @@ export PGHOST="$NAVDHAN_PROXY_SOCKET_ROOT/$CLOUD_SQL_CONNECTION_NAME"
 export PGPORT=5432
 unset PGHOSTADDR PGSERVICE PGSERVICEFILE
 export PGUSER=postgres
-export PGDATABASE=navdhan
-export RUNTIME_ROLE=navdhan_app
-export PRODUCTION_RELEASE_ACK=kubardevops:asia-south1:navdhan-prod/navdhan
+export PGDATABASE=navdhan_collection
+export RUNTIME_ROLE=navdhan_collection_app
+export PRODUCTION_RELEASE_ACK=kubardevops:asia-south1:navdhan-prod/navdhan_collection
 database/scripts/release.sh
 ```
 
-Then reconnect directly as `navdhan_app` with its separate password:
+Then reconnect directly as `navdhan_collection_app` with its separate password:
 
 ```bash
-export PGUSER=navdhan_app
+export PGUSER=navdhan_collection_app
 database/scripts/verify-runtime.sh
 ```
 
@@ -412,7 +416,7 @@ Production plain environment variables are fixed by the deployment config:
 | `GCS_BUCKET` | `navdhan-documents-prod` |
 | `GOOGLE_CLOUD_PROJECT` | `kubardevops` |
 | `DB_HOST` | `/cloudsql/kubardevops:asia-south1:navdhan-prod` |
-| `DB_USER` / `DB_NAME` | `navdhan_app` / `navdhan` |
+| `DB_USER` / `DB_NAME` | `navdhan_collection_app` / `navdhan_collection` |
 | `DB_POOL_SIZE` / `DB_MAX_OVERFLOW` | `4` / `1` |
 | `LOG_LEVEL` | `INFO` |
 | `ALLOWED_ORIGINS` | `https://navdhan.app,https://www.navdhan.app` |
@@ -536,7 +540,7 @@ instance during diagnosis.
 
 ## 9. Post-deploy checks
 
-- Run `database/scripts/verify-runtime.sh` as `navdhan_app` without changing
+- Run `database/scripts/verify-runtime.sh` as `navdhan_collection_app` without changing
   rows.
 - Confirm Cloud Run has only the intended Cloud SQL attachment, service
   account, secrets, environment variables, scaling limits, and traffic split.

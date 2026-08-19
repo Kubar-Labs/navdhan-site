@@ -22,8 +22,10 @@ readonly SEEDS_DIR="${DATABASE_DIR}/seeds"
 readonly MARKETPLACE_ID="10000000-0000-0000-0000-000000000001"
 readonly PROD_CONNECTION="kubardevops:asia-south1:navdhan-prod"
 readonly STAGING_CONNECTION="kubardevops:asia-south1:navdhan-staging"
-readonly PROD_ACK="kubardevops:asia-south1:navdhan-prod/navdhan"
-readonly EXPECTED_ROLE="navdhan_app"
+readonly PROD_DATABASE="navdhan_collection"
+readonly PROD_RUNTIME_ROLE="navdhan_collection_app"
+readonly NONPROD_RUNTIME_ROLE="navdhan_app"
+readonly PROD_ACK="kubardevops:asia-south1:navdhan-prod/navdhan_collection"
 
 die() {
   printf 'ERROR: %s\n' "$*" >&2
@@ -59,8 +61,6 @@ validate_target() {
   require_variable PGDATABASE
   require_variable RUNTIME_ROLE
 
-  [[ "$RUNTIME_ROLE" == "$EXPECTED_ROLE" ]] ||
-    die "RUNTIME_ROLE must be ${EXPECTED_ROLE}"
   [[ "$PGDATABASE" != "postgres" && "$PGDATABASE" != "template0" && "$PGDATABASE" != "template1" ]] ||
     die "Refusing to install application tables in ${PGDATABASE}"
 
@@ -68,7 +68,10 @@ validate_target() {
     production)
       [[ "$CLOUD_SQL_CONNECTION_NAME" == "$PROD_CONNECTION" ]] ||
         die "Production connection must be ${PROD_CONNECTION}"
-      [[ "$PGDATABASE" == "navdhan" ]] || die "Production database must be navdhan"
+      [[ "$PGDATABASE" == "$PROD_DATABASE" ]] ||
+        die "Production database must be ${PROD_DATABASE}; legacy navdhan is protected"
+      [[ "$RUNTIME_ROLE" == "$PROD_RUNTIME_ROLE" ]] ||
+        die "Production RUNTIME_ROLE must be ${PROD_RUNTIME_ROLE}"
       [[ "${PRODUCTION_RELEASE_ACK:-}" == "$PROD_ACK" ]] ||
         die "Set PRODUCTION_RELEASE_ACK=${PROD_ACK} after completing the production preflight"
       ;;
@@ -76,12 +79,16 @@ validate_target() {
       [[ "$CLOUD_SQL_CONNECTION_NAME" == "$STAGING_CONNECTION" ]] ||
         die "Staging connection must be ${STAGING_CONNECTION}"
       [[ "$PGDATABASE" == "navdhan" ]] || die "Staging database must be navdhan"
+      [[ "$RUNTIME_ROLE" == "$NONPROD_RUNTIME_ROLE" ]] ||
+        die "Staging RUNTIME_ROLE must be ${NONPROD_RUNTIME_ROLE}"
       ;;
     rehearsal)
       [[ "$CLOUD_SQL_CONNECTION_NAME" == "$STAGING_CONNECTION" ]] ||
         die "Rehearsals must run on ${STAGING_CONNECTION}"
       [[ "$PGDATABASE" == navdhan_rehearsal_* ]] ||
         die "A rehearsal database name must start with navdhan_rehearsal_"
+      [[ "$RUNTIME_ROLE" == "$NONPROD_RUNTIME_ROLE" ]] ||
+        die "Rehearsal RUNTIME_ROLE must be ${NONPROD_RUNTIME_ROLE}"
       ;;
     *)
       die "TARGET_ENV must be production, staging, or rehearsal"
