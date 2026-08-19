@@ -135,7 +135,7 @@ def _download_exact_generation(
         str(destination),
         if_generation_match=generation,
         timeout=60,
-        checksum="auto",
+        checksum="crc32c",
     )
 
 

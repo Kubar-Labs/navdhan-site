@@ -294,7 +294,7 @@ class ScannerPrimitiveTests(unittest.TestCase):
             str(destination),
             if_generation_match=42,
             timeout=60,
-            checksum="auto",
+            checksum="crc32c",
         )
 
     def test_clamav_clean_infected_and_infrastructure_results(self) -> None:
