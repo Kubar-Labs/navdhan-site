@@ -58,7 +58,7 @@ describe("apply backend service boundary", () => {
 
     const headers = new Headers((fetchMock.mock.calls[0]?.[1] as RequestInit).headers);
     expect(headers.get("x-navdhan-service-token")).toBe(SERVICE_TOKEN);
-    expect((fetchMock.mock.calls[0]?.[1] as RequestInit).redirect).toBe("error");
+    expect((fetchMock.mock.calls[0]?.[1] as RequestInit).redirect).toBe("manual");
   });
 
   it("sends the dedicated service token header on multipart requests", async () => {
@@ -111,6 +111,28 @@ describe("apply backend service boundary", () => {
       "APPLY_BACKEND_SERVICE_TOKEN",
     );
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("fails closed on backend redirects without following them", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("APPLY_BACKEND_BASE_URL", "https://backend.example");
+    vi.stubEnv("APPLY_BACKEND_SERVICE_TOKEN", SERVICE_TOKEN);
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(null, {
+        status: 302,
+        headers: { location: "https://other.example/collect-token" },
+      }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    const error = vi.spyOn(console, "error").mockImplementation(() => undefined);
+
+    await expect(
+      requestApplyBackend("/api/apply/session", { method: "POST" }),
+    ).rejects.toThrow("redirects are not allowed");
+
+    expect((fetchMock.mock.calls[0]?.[1] as RequestInit).redirect).toBe("manual");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(JSON.stringify(error.mock.calls)).not.toContain("other.example");
   });
 
   it("requires HTTPS in production but permits loopback HTTP in development", async () => {

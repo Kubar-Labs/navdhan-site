@@ -95,6 +95,18 @@ interface ProxyRequestOptions {
   body?: unknown;
 }
 
+async function fetchApplyBackend(url: string, init: RequestInit): Promise<Response> {
+  // Cloudflare Workers does not implement redirect: "error". Manual mode keeps
+  // the service token on the configured origin; explicitly reject every 3xx so
+  // callers cannot accidentally accept or follow a backend redirect.
+  const response = await fetch(url, { ...init, redirect: "manual" });
+  if (response.status >= 300 && response.status < 400) {
+    console.error("The apply backend returned a redirect, which is not allowed.");
+    throw new Error("Apply backend redirects are not allowed");
+  }
+  return response;
+}
+
 export async function requestApplyBackend(
   path: string,
   options: ProxyRequestOptions,
@@ -105,7 +117,6 @@ export async function requestApplyBackend(
     method: options.method,
     headers,
     cache: "no-store",
-    redirect: "error",
     signal: AbortSignal.timeout(JSON_BACKEND_TIMEOUT_MS),
   };
   if (options.body !== undefined) {
@@ -113,7 +124,7 @@ export async function requestApplyBackend(
     init.body = JSON.stringify(options.body);
   }
 
-  return fetch(`${applyBackendBaseUrl()}${path}`, init);
+  return fetchApplyBackend(`${applyBackendBaseUrl()}${path}`, init);
 }
 
 interface ProxyFormRequestOptions {
@@ -128,11 +139,10 @@ export async function requestApplyBackendForm(
 ): Promise<Response> {
   const headers = applyBackendHeaders(options.sessionDigest);
 
-  return fetch(`${applyBackendBaseUrl()}${path}`, {
+  return fetchApplyBackend(`${applyBackendBaseUrl()}${path}`, {
     method: options.method,
     headers,
     cache: "no-store",
-    redirect: "error",
     body: options.formData,
     signal: AbortSignal.timeout(FORM_BACKEND_TIMEOUT_MS),
   });
