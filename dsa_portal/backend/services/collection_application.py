@@ -807,6 +807,13 @@ async def _materialize_party_requirements(
         )
     ).all()
     for requirement in requirements:
+        # Parties added after initialization are never primary, so a
+        # requirement flagged primary_party_only (the CIBIL report) is
+        # collected once for the application rather than once per director,
+        # partner or co-applicant. KYC requirements carry no such flag and are
+        # therefore materialized for every party.
+        if not party.is_primary and (requirement.condition or {}).get("primary_party_only"):
+            continue
         period_from, period_to, fiscal_year_start = _coverage_snapshot(
             requirement, date.today()
         )

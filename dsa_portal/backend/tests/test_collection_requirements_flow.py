@@ -206,9 +206,9 @@ class CollectionRequirementsFlowTests(unittest.TestCase):
 
     def test_requirements_are_materialized_per_constitution_at_init(self) -> None:
         expected_counts = {
-            "proprietorship": 14,
-            "partnership": 16,
-            "private_limited": 20,
+            "proprietorship": 9,
+            "partnership": 10,
+            "private_limited": 10,
         }
         for constitution, expected_count in expected_counts.items():
             with self.subTest(constitution=constitution):
@@ -530,32 +530,6 @@ class CollectionRequirementsFlowTests(unittest.TestCase):
         document_ids = {document["document_id"] for document in updated["documents"]}
         self.assertEqual(3, len(document_ids))
 
-    # -- private limited GST dual-window overlap -----------------------------
-
-    def test_private_limited_single_gst_upload_can_satisfy_both_gst_windows(self) -> None:
-        digest = self._create_session()
-        started = self._start_application(digest, "private_limited")
-        requirements = self._requirements(digest)
-        gst_rows = [
-            row for row in requirements["requirements"] if row["document_type_code"] == "gstr_3b"
-        ]
-        self.assertEqual(2, len(gst_rows))
-        widest_from = min(date.fromisoformat(row["required_period_from"]) for row in gst_rows)
-        widest_to = max(date.fromisoformat(row["required_period_to"]) for row in gst_rows)
-
-        response = self._upload(
-            digest,
-            requirement_id=gst_rows[0]["application_requirement_id"],
-            lock_version=started["lock_version"],
-            coverage_from=widest_from.isoformat(),
-            coverage_to=widest_to.isoformat(),
-        )
-        self.assertEqual(201, response.status_code, response.text)
-        updated_rows = [
-            row for row in response.json()["requirements"] if row["document_type_code"] == "gstr_3b"
-        ]
-        self.assertTrue(all(row["status"] == "collected" for row in updated_rows))
-
     # -- re-upload / supersede ------------------------------------------------
 
     def test_reupload_supersedes_the_previous_document(self) -> None:
@@ -851,10 +825,10 @@ class CollectionRequirementsFlowTests(unittest.TestCase):
         self.assertEqual(12, facility["emis_paid_count"])
         facility_id = body["facilities"][0]["facility_id"]
         facility_rows = [row for row in body["requirements"] if row["attaches_to"] == "facility"]
-        self.assertEqual(2, len(facility_rows))
+        self.assertEqual(1, len(facility_rows))
         self.assertTrue(all(row["facility_id"] == facility_id for row in facility_rows))
         self.assertEqual(
-            {"existing_loan_track", "sanction_letter"},
+            {"sanction_letter"},
             {row["document_type_code"] for row in facility_rows},
         )
 
@@ -982,14 +956,14 @@ class CollectionRequirementsFlowTests(unittest.TestCase):
         self.assertNotEqual(facility_id_a, facility_id_b)
 
         facility_rows = [row for row in body["requirements"] if row["attaches_to"] == "facility"]
-        self.assertEqual(4, len(facility_rows))
+        self.assertEqual(2, len(facility_rows))
         rows_by_facility: dict[str, set[str]] = {}
         for row in facility_rows:
             rows_by_facility.setdefault(row["facility_id"], set()).add(row["document_type_code"])
-        self.assertEqual({"existing_loan_track", "sanction_letter"}, rows_by_facility[facility_id_a])
-        self.assertEqual({"existing_loan_track", "sanction_letter"}, rows_by_facility[facility_id_b])
+        self.assertEqual({"sanction_letter"}, rows_by_facility[facility_id_a])
+        self.assertEqual({"sanction_letter"}, rows_by_facility[facility_id_b])
         requirement_ids = {row["application_requirement_id"] for row in facility_rows}
-        self.assertEqual(4, len(requirement_ids))
+        self.assertEqual(2, len(requirement_ids))
 
         current = self._requirements(digest)
         sanction_letter_a = self._find_requirement(
@@ -1009,15 +983,12 @@ class CollectionRequirementsFlowTests(unittest.TestCase):
         )
         # A document uploaded against facility A's requirement must not
         # satisfy facility B's same-document-type requirement.
+        # (Checklist v2 leaves sanction_letter as the only per-facility
+        # requirement, so cross-document-type isolation within one facility is
+        # no longer expressible here.)
         self.assertEqual(
             "pending",
             self._find_requirement(after, "sanction_letter", facility_id=facility_id_b)["status"],
-        )
-        self.assertEqual(
-            "pending",
-            self._find_requirement(after, "existing_loan_track", facility_id=facility_id_a)[
-                "status"
-            ],
         )
 
     def test_creating_a_facility_without_declaration_is_rejected(self) -> None:

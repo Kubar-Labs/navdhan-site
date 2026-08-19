@@ -239,9 +239,9 @@ class CollectionApplicationFlowTests(unittest.TestCase):
 
     def test_initialization_is_atomic_and_materializes_only_applicable_requirements(self) -> None:
         expected_counts = {
-            "proprietorship": 14,
-            "partnership": 16,
-            "private_limited": 20,
+            "proprietorship": 9,
+            "partnership": 10,
+            "private_limited": 10,
         }
         for constitution, expected_count in expected_counts.items():
             with self.subTest(constitution=constitution):
@@ -332,7 +332,7 @@ class CollectionApplicationFlowTests(unittest.TestCase):
             )
         )
         self.assertEqual(1, row["applications"])
-        self.assertEqual(16, row["requirements"])
+        self.assertEqual(10, row["requirements"])
         self.assertEqual(1, row["lock_version"])
 
     def test_stale_loan_intent_update_is_rejected_without_overwriting(self) -> None:
@@ -378,7 +378,7 @@ class CollectionApplicationFlowTests(unittest.TestCase):
 
         self.assertEqual(200, changed.status_code, changed.text)
         self.assertEqual("private_limited", changed.json()["values"]["constitution"])
-        self.assertEqual(20, changed.json()["requirements_count"])
+        self.assertEqual(10, changed.json()["requirements_count"])
         row = asyncio.run(
             _fetchrow(
                 "SELECT la.constitution, cv.constitution AS checklist_constitution, "
@@ -397,9 +397,12 @@ class CollectionApplicationFlowTests(unittest.TestCase):
         self.assertEqual("private_limited", row["borrower_constitution"])
         self.assertEqual("director", row["relationship_role"])
         self.assertEqual("director", row["party_role"])
-        self.assertEqual(20, row["requirements"])
+        self.assertEqual(10, row["requirements"])
 
-    def test_materialized_requirements_snapshot_rolling_fiscal_and_fixed_windows(self) -> None:
+    def test_materialized_requirements_snapshot_rolling_and_fiscal_windows(self) -> None:
+        """No fixed-window coverage is asserted: checklist v2 dropped the only
+        requirement using fixed_period_start (private limited's April-2025
+        GSTR-3B). _coverage_snapshot still supports it, but nothing seeds it."""
         digest = self._create_session()
         response = self._put_intent(digest, constitution="private_limited")
         self.assertEqual(200, response.status_code, response.text)
@@ -421,19 +424,11 @@ class CollectionApplicationFlowTests(unittest.TestCase):
         )
         rolling = next(row for row in rows if row["document_type_code"] == "bank_statement")
         fiscal = next(row for row in rows if row["document_type_code"] == "itr")
-        fixed = next(
-            row
-            for row in rows
-            if row["document_type_code"] == "gstr_3b" and row["fixed_period_start"] is not None
-        )
         self.assertEqual((rolling_start, today, None), (
             rolling["required_period_from"], rolling["required_period_to"], rolling["fiscal_year_start"]
         ))
         self.assertEqual((expected_fiscal_start, expected_fiscal_end, expected_fiscal_start), (
             fiscal["required_period_from"], fiscal["required_period_to"], fiscal["fiscal_year_start"]
-        ))
-        self.assertEqual((date(2025, 4, 1), today, None), (
-            fixed["required_period_from"], fixed["required_period_to"], fixed["fiscal_year_start"]
         ))
         self.assertTrue(all(row["coverage_mode"] != "none" for row in rows))
         self.assertTrue(all(row["min_count"] == row["source_min_count"] for row in rows))
@@ -552,10 +547,13 @@ class CollectionApplicationFlowTests(unittest.TestCase):
         self.assertEqual(32, len(row["email_hash"]))
 
     def test_phase_three_party_role_rules_and_kyc_requirement_materialization(self) -> None:
+        # An added party supplies its own KYC (PAN + Aadhaar) but not the CIBIL
+        # report: that requirement is flagged primary_party_only, so it is
+        # collected once per application rather than once per director/partner.
         cases = (
             ("proprietorship", "co_applicant", 422, 0),
             ("partnership", "co_applicant", 201, 2),
-            ("private_limited", "director", 201, 3),
+            ("private_limited", "director", 201, 2),
             ("private_limited", "co_applicant", 422, 0),
         )
         for constitution, role, status_code, expected_requirements in cases:

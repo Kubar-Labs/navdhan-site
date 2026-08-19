@@ -16,6 +16,7 @@ from db.collection_models import (
     Borrower,
     BorrowerRegistration,
     Document,
+    DocumentRequirement,
     DocumentRequirementSatisfaction,
     DocumentType,
     LoanApplication,
@@ -166,14 +167,28 @@ async def serialize_application(
 async def serialize_requirements(
     database: Any, application: LoanApplication, marketplace_id: uuid.UUID
 ) -> dict[str, Any]:
+    # Ordered by the checklist's display_order, not created_at: every
+    # requirement is materialized inside one transaction, so created_at ties
+    # and the resulting order is arbitrary. created_at remains the tiebreak so
+    # per-party and per-facility rows sharing a display_order stay in the order
+    # their party/facility was added.
     requirement_rows = (
         await database.scalars(
             select(ApplicationRequirement)
+            .join(
+                DocumentRequirement,
+                (DocumentRequirement.marketplace_id == ApplicationRequirement.marketplace_id)
+                & (DocumentRequirement.requirement_id == ApplicationRequirement.requirement_id),
+            )
             .where(
                 ApplicationRequirement.marketplace_id == marketplace_id,
                 ApplicationRequirement.application_id == application.application_id,
             )
-            .order_by(ApplicationRequirement.created_at)
+            .order_by(
+                DocumentRequirement.display_order,
+                ApplicationRequirement.created_at,
+                ApplicationRequirement.application_requirement_id,
+            )
         )
     ).all()
     document_type_codes = {row.document_type_code for row in requirement_rows}
@@ -191,6 +206,31 @@ async def serialize_requirements(
         if document_type_codes
         else {}
     )
+    # Person-attached requirements are materialized once per matching party, so
+    # a two-director company legitimately shows two "PAN Card" rows. Without a
+    # label they are indistinguishable in the UI, and this payload carries no
+    # parties list to join against.
+    party_labels: dict[uuid.UUID, dict[str, Any]] = {}
+    party_ids = {
+        row.application_party_id for row in requirement_rows if row.application_party_id
+    }
+    if party_ids:
+        for party, person in (
+            await database.execute(
+                select(ApplicationParty, Person)
+                .join(Person, Person.person_id == ApplicationParty.person_id)
+                .where(
+                    ApplicationParty.marketplace_id == marketplace_id,
+                    ApplicationParty.application_party_id.in_(party_ids),
+                )
+            )
+        ).all():
+            party_labels[party.application_party_id] = {
+                "party_role": party.role,
+                "party_name": person.full_name,
+                "party_is_primary": party.is_primary,
+            }
+
     requirement_ids = [row.application_requirement_id for row in requirement_rows]
     documents_by_requirement: dict[uuid.UUID, list[dict[str, Any]]] = {
         requirement_id: [] for requirement_id in requirement_ids
@@ -304,6 +344,11 @@ async def serialize_requirements(
                 "attaches_to": row.attaches_to,
                 "application_party_id": (
                     str(row.application_party_id) if row.application_party_id else None
+                ),
+                "party_role": party_labels.get(row.application_party_id, {}).get("party_role"),
+                "party_name": party_labels.get(row.application_party_id, {}).get("party_name"),
+                "party_is_primary": party_labels.get(row.application_party_id, {}).get(
+                    "party_is_primary"
                 ),
                 "facility_id": str(row.facility_id) if row.facility_id else None,
                 "obligation": row.obligation,

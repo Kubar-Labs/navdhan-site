@@ -230,6 +230,12 @@ export interface RequirementRow {
   category: string | null;
   attaches_to: "entity" | "person" | "facility" | "document" | "registration";
   application_party_id: string | null;
+  // Person-attached requirements repeat per party, so the row needs to say
+  // whose document it is. Optional: a frontend can transiently run against a
+  // backend that predates these fields.
+  party_role?: string | null;
+  party_name?: string | null;
+  party_is_primary?: boolean | null;
   facility_id: string | null;
   obligation: "mandatory" | "optional" | "conditional";
   blocks_submission: boolean;

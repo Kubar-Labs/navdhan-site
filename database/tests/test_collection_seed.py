@@ -14,6 +14,7 @@ DOCUMENT_TYPES = {
     "balance_sheet",
     "bank_statement",
     "certificate_of_incorporation",
+    "cibil_report",
     "computation_of_income",
     "existing_loan_track",
     "entity_pan_card",
@@ -75,6 +76,17 @@ class CollectionSeedContractTests(unittest.TestCase):
         self.assertIn("vintage_proof", self.normalized)
         self.assertIn("lookback_months", self.normalized)
         self.assertIn("fixed_period_start", self.normalized)
+
+    def test_a_single_active_checklist_version_is_seeded(self) -> None:
+        """One version per constitution. Versioning machinery stays in the
+        schema for the first post-launch policy change, but nothing is live
+        yet, so there is no retired version to carry."""
+        versions = re.findall(
+            r"bl — (?:proprietorship|partnership|private limited)', (\d+),.*?'(active|retired|draft)'",
+            self.normalized,
+        )
+        self.assertEqual(3, len(versions))
+        self.assertEqual({("1", "active")}, set(versions))
 
     def test_product_limits_match_the_current_frontend_contract(self) -> None:
         self.assertRegex(

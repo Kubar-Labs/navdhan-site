@@ -19,6 +19,15 @@ export interface DocumentChecklistProps {
   emptyMessage?: string;
 }
 
+const PARTY_ROLE_LABELS: Record<string, string> = {
+  applicant: "Applicant",
+  co_applicant: "Co-applicant",
+  director: "Director",
+  partner: "Partner",
+  proprietor: "Proprietor",
+  guarantor: "Guarantor",
+};
+
 const STATUS_LABELS: Record<string, string> = {
   pending: "Not uploaded",
   partial: "Partially covered",
@@ -285,16 +294,62 @@ export const DocumentChecklist: React.FC<DocumentChecklistProps> = ({
     return <p className="text-sm text-slate-500">{emptyMessage}</p>;
   }
 
+  // Personal documents repeat per party, so they are grouped under the person
+  // they belong to. Everything else keeps the checklist's own order. Group
+  // order follows the API, which already returns the primary party first.
+  const personGroups: { key: string; label: string; rows: RequirementRow[] }[] = [];
+  const businessRows: RequirementRow[] = [];
+  for (const row of rows) {
+    if (row.attaches_to !== "person" || !row.application_party_id) {
+      businessRows.push(row);
+      continue;
+    }
+    const existing = personGroups.find((group) => group.key === row.application_party_id);
+    if (existing) {
+      existing.rows.push(row);
+      continue;
+    }
+    const roleLabel = row.party_role
+      ? (PARTY_ROLE_LABELS[row.party_role] ?? row.party_role)
+      : null;
+    personGroups.push({
+      key: row.application_party_id,
+      label: [row.party_name, roleLabel && `(${roleLabel})`].filter(Boolean).join(" ") || "Applicant",
+      rows: [row],
+    });
+  }
+
+  const renderRows = (group: RequirementRow[]) =>
+    group.map((row) => (
+      <DocumentRow
+        key={row.application_requirement_id}
+        row={row}
+        lockVersion={requirements.lock_version}
+        onChange={onChange}
+      />
+    ));
+
+  // A single person and nothing else needs no headings.
+  if (personGroups.length <= 1 && businessRows.length === 0) {
+    return <div className={cn("space-y-3", className)}>{renderRows(rows)}</div>;
+  }
+
   return (
-    <div className={cn("space-y-3", className)}>
-      {rows.map((row) => (
-        <DocumentRow
-          key={row.application_requirement_id}
-          row={row}
-          lockVersion={requirements.lock_version}
-          onChange={onChange}
-        />
+    <div className={cn("space-y-6", className)}>
+      {personGroups.map((group) => (
+        <section key={group.key} className="space-y-3">
+          <h4 className="text-sm font-semibold text-slate-700">{group.label}</h4>
+          {renderRows(group.rows)}
+        </section>
       ))}
+      {businessRows.length > 0 && (
+        <section className="space-y-3">
+          {personGroups.length > 0 && (
+            <h4 className="text-sm font-semibold text-slate-700">Business documents</h4>
+          )}
+          {renderRows(businessRows)}
+        </section>
+      )}
     </div>
   );
 };
