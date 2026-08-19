@@ -17,18 +17,33 @@ from sqlalchemy.ext.asyncio import (
 )
 from fastapi import Request
 
+from settings import load_settings
+
 _engine: AsyncEngine | None = None
 _SessionFactory: async_sessionmaker[AsyncSession] | None = None
 
 
-def init_engine(database_url: str) -> None:
-    """Initialize the async engine for the given database URL."""
+def init_engine(
+    database_url: str,
+    *,
+    pool_size: int | None = None,
+    max_overflow: int | None = None,
+) -> None:
+    """Initialize the async engine for the given database URL.
+
+    Pool sizing is configuration, not a constant: every process gets its own
+    pool, so the total connections held against the database scale with how
+    many instances are running. A deployment that scales out has to be able to
+    lower these without a code change, or it exhausts the server's
+    max_connections. Explicit arguments win; otherwise the environment decides.
+    """
     global _engine, _SessionFactory
 
+    settings = load_settings()
     _engine = create_async_engine(
         database_url,
-        pool_size=10,
-        max_overflow=10,
+        pool_size=settings.db_pool_size if pool_size is None else pool_size,
+        max_overflow=settings.db_max_overflow if max_overflow is None else max_overflow,
         pool_pre_ping=True,
         future=True,
     )

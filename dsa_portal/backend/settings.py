@@ -20,7 +20,9 @@ from urllib.parse import quote, quote_plus
 DEFAULT_HOST = "0.0.0.0"
 DEFAULT_PORT = 8000
 DEFAULT_DB_PORT = 5432
-DEFAULT_LOG_LEVEL = "INFO"
+DEFAULT_DB_POOL_SIZE = 10
+DEFAULT_DB_MAX_OVERFLOW = 10
+DEFAULT_LOG_LEVEL = "DEBUG"
 DEFAULT_APP_ENV = "dev"
 
 
@@ -90,19 +92,26 @@ class Settings:
     allowed_origins: list[str]
     gcs_bucket: str | None
     google_cloud_project: str | None
+    # Per-process connection pool. The database's max_connections must cover
+    # (pool_size + max_overflow) x number of running instances.
+    db_pool_size: int
+    db_max_overflow: int
 
     @property
     def allows_any_origin(self) -> bool:
         return "*" in self.allowed_origins
 
 
-def _resolve_port(raw: str | None, *, default: int, name: str) -> int:
+def _resolve_int(raw: str | None, *, default: int, name: str, minimum: int = 0) -> int:
     if not raw:
         return default
     try:
-        return int(raw)
+        value = int(raw)
     except ValueError as error:
         raise ConfigurationError(f"{name} must be an integer, got {raw!r}") from error
+    if value < minimum:
+        raise ConfigurationError(f"{name} must be at least {minimum}, got {value}")
+    return value
 
 
 def load_settings() -> Settings:
@@ -113,18 +122,30 @@ def load_settings() -> Settings:
         app_env=app_env,
         log_level=(os.getenv("LOG_LEVEL") or DEFAULT_LOG_LEVEL).upper(),
         host=os.getenv("HOST") or DEFAULT_HOST,
-        port=_resolve_port(os.getenv("PORT"), default=DEFAULT_PORT, name="PORT"),
+        port=_resolve_int(os.getenv("PORT"), default=DEFAULT_PORT, name="PORT", minimum=1),
         allowed_origins=_parse_allowed_origins(os.getenv("ALLOWED_ORIGINS")),
         gcs_bucket=os.getenv("GCS_BUCKET"),
         google_cloud_project=os.getenv("GOOGLE_CLOUD_PROJECT"),
+        db_pool_size=_resolve_int(
+            os.getenv("DB_POOL_SIZE"),
+            default=DEFAULT_DB_POOL_SIZE,
+            name="DB_POOL_SIZE",
+            minimum=1,
+        ),
+        db_max_overflow=_resolve_int(
+            os.getenv("DB_MAX_OVERFLOW"),
+            default=DEFAULT_DB_MAX_OVERFLOW,
+            name="DB_MAX_OVERFLOW",
+            minimum=0,
+        ),
     )
 
 
 def configure_logging(log_level: str) -> None:
     """Apply LOG_LEVEL. An unrecognised value falls back to INFO rather than
     crashing the process over a logging setting."""
-    level = logging.getLevelName(log_level)
-    if not isinstance(level, int):
+    level = logging.getLevelNamesMapping().get(log_level)
+    if level is None:
         logging.basicConfig(level=logging.INFO)
         logging.getLogger(__name__).warning(
             "Unrecognised LOG_LEVEL %r; falling back to INFO", log_level
