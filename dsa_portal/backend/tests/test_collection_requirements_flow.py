@@ -407,6 +407,21 @@ class CollectionRequirementsFlowTests(unittest.TestCase):
         self.assertEqual(200, clean.status_code, clean.text)
         replay = self._scan_document(document, scanner_job_id="successful-clean-job")
         self.assertEqual(200, replay.status_code, replay.text)
+        replay_status = self.client.get(
+            f"/internal/document-scans/{document['document_id']}/events/"
+            "successful-clean-job",
+            headers={SCAN_HEADER: SCAN_TOKEN},
+            params={"gcs_generation": document["gcs_generation"]},
+        )
+        self.assertEqual(200, replay_status.status_code, replay_status.text)
+        self.assertEqual({"processed": True}, replay_status.json())
+        wrong_replay_status = self.client.get(
+            f"/internal/document-scans/{document['document_id']}/events/other-job",
+            headers={SCAN_HEADER: SCAN_TOKEN},
+            params={"gcs_generation": document["gcs_generation"]},
+        )
+        self.assertEqual(200, wrong_replay_status.status_code, wrong_replay_status.text)
+        self.assertEqual({"processed": False}, wrong_replay_status.json())
         conflicting = self._scan_document(
             document,
             scan_result="infected",

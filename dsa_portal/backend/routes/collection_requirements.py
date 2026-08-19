@@ -6,13 +6,14 @@ from datetime import date
 from typing import Annotated
 import uuid
 
-from fastapi import APIRouter, Form, Header, HTTPException, UploadFile, status
+from fastapi import APIRouter, Form, Header, HTTPException, Query, UploadFile, status
 
 from models.collection_application import DigestHex
 from models.collection_requirements import (
     CreditDeclaration,
     CreditFacility,
     DocumentScanResult,
+    ScannerJobId,
 )
 from services.collection_application import (
     ApplicationLockedError,
@@ -30,6 +31,7 @@ from services.collection_requirements import (
     RequirementNotFoundError,
     create_credit_facility,
     delete_document,
+    document_scan_event_processed,
     get_requirements,
     record_document_scan_result,
     save_credit_declaration,
@@ -42,6 +44,22 @@ internal_router = APIRouter(prefix="/internal")
 SessionDigest = Annotated[DigestHex | None, Header(alias="x-navdhan-session-digest")]
 
 MAX_UPLOAD_BYTES = 20 * 1024 * 1024
+
+
+@internal_router.get("/document-scans/{document_id}/events/{scanner_job_id}")
+async def get_document_scan_event(
+    document_id: uuid.UUID,
+    scanner_job_id: ScannerJobId,
+    gcs_generation: Annotated[int, Query(gt=0)],
+) -> dict[str, bool]:
+    """Let the scanner safely acknowledge an exact duplicate Eventarc delivery."""
+    return {
+        "processed": await document_scan_event_processed(
+            document_id,
+            scanner_job_id=scanner_job_id,
+            gcs_generation=gcs_generation,
+        )
+    }
 
 
 @internal_router.post("/document-scans/{document_id}/result")

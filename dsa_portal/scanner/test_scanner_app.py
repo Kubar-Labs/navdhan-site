@@ -11,6 +11,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from unittest.mock import Mock, patch
 
+from google.api_core import exceptions as gcs_exceptions
+
 from scanner_app import (
     ScannerUnavailableError,
     Settings,
@@ -66,6 +68,21 @@ class FakeStorage:
 
     def bucket(self, name: str) -> FakeBucket:
         return FakeBucket(self.data)
+
+
+class MissingBlob:
+    def download_to_filename(self, filename: str, **kwargs: object) -> None:
+        raise gcs_exceptions.NotFound("already removed")
+
+
+class MissingBucket:
+    def blob(self, name: str, generation: int) -> MissingBlob:
+        return MissingBlob()
+
+
+class MissingStorage:
+    def bucket(self, name: str) -> MissingBucket:
+        return MissingBucket()
 
 
 class ScannerAppTests(unittest.IsolatedAsyncioTestCase):
@@ -193,6 +210,41 @@ class ScannerAppTests(unittest.IsolatedAsyncioTestCase):
         )
         self.assertEqual({"status": "ignored"}, response.json())
         callback.assert_not_called()
+
+    async def test_missing_quarantine_generation_acknowledges_only_an_exact_replay(
+        self,
+    ) -> None:
+        data = b"%PDF test\n"
+        for processed, expected_status in ((True, 200), (False, 503)):
+            with self.subTest(processed=processed):
+                callback = Mock()
+                replay_check = Mock(return_value=processed)
+                app = create_app(
+                    settings_loader=lambda: Settings(BUCKET, BACKEND, TOKEN),
+                    storage_client_factory=MissingStorage,
+                    scan_file=lambda _: "clean",
+                    post_verdict=callback,
+                    scan_event_processed=replay_check,
+                    run_sync=run_inline,
+                )
+                event = self._event(data)
+                document_id = str(event["name"]).removesuffix(".pdf").rsplit("/", 1)[-1]
+                response = await self._post(
+                    app,
+                    headers=self._headers(event, event_id="duplicate-event-123"),
+                    json=event,
+                )
+
+                self.assertEqual(expected_status, response.status_code, response.text)
+                if processed:
+                    self.assertEqual({"status": "already_processed"}, response.json())
+                replay_check.assert_called_once_with(
+                    settings=Settings(BUCKET, BACKEND, TOKEN),
+                    document_id=uuid.UUID(document_id),
+                    generation=42,
+                    event_id="duplicate-event-123",
+                )
+                callback.assert_not_called()
 
     async def test_wrong_bucket_event_type_and_size_fail_closed(self) -> None:
         app, callback, data = self._app()

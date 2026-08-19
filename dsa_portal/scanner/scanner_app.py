@@ -13,10 +13,11 @@ from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, AsyncIterator, Awaitable, Callable
-from urllib.parse import urlsplit
+from urllib.parse import quote, urlsplit
 
 import httpx
 from fastapi import FastAPI, HTTPException, Request, status
+from google.api_core import exceptions as gcs_exceptions
 from google.cloud import storage
 
 
@@ -162,12 +163,34 @@ def _post_verdict(
     response.raise_for_status()
 
 
+def _scan_event_processed(
+    *,
+    settings: Settings,
+    document_id: uuid.UUID,
+    generation: int,
+    event_id: str,
+) -> bool:
+    response = httpx.get(
+        f"{settings.backend_url}/internal/document-scans/{document_id}/events/"
+        f"{quote(event_id, safe='')}",
+        headers={"x-navdhan-scan-token": settings.callback_token},
+        params={"gcs_generation": generation},
+        timeout=30,
+    )
+    response.raise_for_status()
+    payload = response.json()
+    if not isinstance(payload, dict) or not isinstance(payload.get("processed"), bool):
+        raise ScannerUnavailableError("Backend returned an invalid replay status")
+    return payload["processed"]
+
+
 def create_app(
     *,
     settings_loader: Callable[[], Settings] = load_settings,
     storage_client_factory: Callable[[], storage.Client] = storage.Client,
     scan_file: Callable[[Path], str] = _scan_file,
     post_verdict: Callable[..., None] = _post_verdict,
+    scan_event_processed: Callable[..., bool] = _scan_event_processed,
     run_sync: Callable[..., Awaitable[Any]] = asyncio.to_thread,
 ) -> FastAPI:
     loaded_settings: Settings | None = None
@@ -251,6 +274,24 @@ def create_app(
                     generation=generation,
                     destination=path,
                 )
+            except gcs_exceptions.NotFound as error:
+                try:
+                    processed = await run_sync(
+                        scan_event_processed,
+                        settings=settings,
+                        document_id=document_id,
+                        generation=generation,
+                        event_id=event_id,
+                    )
+                except Exception as status_error:
+                    raise HTTPException(
+                        status_code=503, detail="Scanner unavailable"
+                    ) from status_error
+                if processed:
+                    return {"status": "already_processed"}
+                raise HTTPException(
+                    status_code=503, detail="Scanner unavailable"
+                ) from error
             except Exception as error:
                 raise HTTPException(status_code=503, detail="Scanner unavailable") from error
             actual_size = path.stat().st_size

@@ -474,6 +474,43 @@ async def record_document_scan_result(
         raise
 
 
+async def document_scan_event_processed(
+    document_id: uuid.UUID,
+    *,
+    scanner_job_id: str,
+    gcs_generation: int,
+) -> bool:
+    """Confirm that one exact Eventarc delivery already reached a terminal state."""
+
+    async with tenant_session(MARKETPLACE_ID) as database:
+        document = await database.scalar(
+            select(Document).where(
+                Document.marketplace_id == MARKETPLACE_ID,
+                Document.document_id == document_id,
+            )
+        )
+        if (
+            document is None
+            or document.scan_result == "pending"
+            or document.status == "quarantined"
+            or document.scan_job_id != scanner_job_id
+        ):
+            return False
+
+        scan_event = await database.scalar(
+            select(DocumentEvent)
+            .where(
+                DocumentEvent.marketplace_id == MARKETPLACE_ID,
+                DocumentEvent.document_id == document_id,
+                DocumentEvent.event_type == "scanned",
+                DocumentEvent.actor_ref == scanner_job_id,
+            )
+            .order_by(DocumentEvent.occurred_at.desc())
+        )
+        metadata = scan_event.metadata_ if scan_event is not None else {}
+        return metadata.get("gcs_generation") == gcs_generation
+
+
 async def _record_document_scan_result_transaction(
     document_id: uuid.UUID,
     payload: DocumentScanResult,
