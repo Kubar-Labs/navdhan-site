@@ -112,7 +112,7 @@ class GCSStorage:
                 content_type=_CONTENT_TYPE,
                 if_generation_match=0,
                 timeout=60,
-                checksum="auto",
+                checksum="crc32c",
             )
         except _BACKEND_ERRORS as error:
             raise DocumentStorageError(

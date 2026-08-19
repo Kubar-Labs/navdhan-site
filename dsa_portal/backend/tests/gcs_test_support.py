@@ -13,6 +13,7 @@ class FakeGCSBucket:
     name: str
     objects: dict[str, bytes] = field(default_factory=dict)
     generations: dict[str, int] = field(default_factory=dict)
+    last_upload_kwargs: dict[str, Any] | None = None
     _next_generation: int = 1
 
     def _write(self, object_key: str, data: bytes) -> int:
@@ -58,6 +59,7 @@ class FakeGCSBlob:
         self, data: bytes, *, content_type: str, **kwargs: Any
     ) -> None:
         del content_type
+        self.bucket.last_upload_kwargs = dict(kwargs)
         if kwargs.get("if_generation_match") == 0 and self.name in self.bucket.objects:
             raise gcs_exceptions.PreconditionFailed("object already exists")
         self.generation = self.bucket._write(self.name, bytes(data))

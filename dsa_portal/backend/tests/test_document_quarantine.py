@@ -60,6 +60,10 @@ class DocumentQuarantineTests(unittest.TestCase):
         )
 
         self.assertTrue(stored.object_key.startswith("quarantine/"))
+        self.assertEqual(
+            "crc32c",
+            client.bucket("documents-test").last_upload_kwargs["checksum"],
+        )
         with self.assertRaises(DocumentStorageError):
             storage.save(
                 marketplace_id=marketplace_id,
