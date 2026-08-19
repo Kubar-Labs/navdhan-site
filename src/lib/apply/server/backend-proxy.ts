@@ -1,3 +1,5 @@
+import { getCloudflareContext } from "@opennextjs/cloudflare";
+
 import { jsonResponse } from "./errors";
 
 const SESSION_DIGEST_HEADER = "x-navdhan-session-digest";
@@ -5,6 +7,21 @@ const SERVICE_TOKEN_HEADER = "x-navdhan-service-token";
 const MIN_SERVICE_TOKEN_BYTES = 32;
 const JSON_BACKEND_TIMEOUT_MS = 30_000;
 const FORM_BACKEND_TIMEOUT_MS = 90_000;
+
+type ApplyBackendBinding =
+  | "APPLY_BACKEND_BASE_URL"
+  | "APPLY_BACKEND_SERVICE_TOKEN";
+
+function runtimeBinding(name: ApplyBackendBinding): string | undefined {
+  try {
+    const env = getCloudflareContext().env as unknown as Record<string, unknown>;
+    const value = env[name];
+    if (typeof value === "string") return value;
+  } catch {
+    // Local Node processes and unit tests have no Cloudflare request context.
+  }
+  return process.env[name];
+}
 
 /**
  * Base URL of the collection backend: the local uvicorn process in development,
@@ -20,7 +37,7 @@ const FORM_BACKEND_TIMEOUT_MS = 90_000;
  * isolate started.
  */
 function applyBackendBaseUrl(): string {
-  const configured = process.env.APPLY_BACKEND_BASE_URL?.trim();
+  const configured = runtimeBinding("APPLY_BACKEND_BASE_URL")?.trim();
   if (!configured) {
     // Route handlers turn any throw from here into BACKEND_UNAVAILABLE, so log
     // the real cause first or a missing variable looks like a backend outage.
@@ -52,7 +69,7 @@ function applyBackendBaseUrl(): string {
 }
 
 function applyBackendServiceToken(): string {
-  const token = process.env.APPLY_BACKEND_SERVICE_TOKEN;
+  const token = runtimeBinding("APPLY_BACKEND_SERVICE_TOKEN");
   if (!token || new TextEncoder().encode(token).byteLength < MIN_SERVICE_TOKEN_BYTES) {
     console.error(
       `APPLY_BACKEND_SERVICE_TOKEN must be configured with at least ${MIN_SERVICE_TOKEN_BYTES} bytes.`,

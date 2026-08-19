@@ -1,5 +1,13 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+const cloudflareEnv = vi.hoisted(() => ({
+  current: {} as Record<string, unknown>,
+}));
+
+vi.mock("@opennextjs/cloudflare", () => ({
+  getCloudflareContext: () => ({ env: cloudflareEnv.current }),
+}));
+
 import {
   backendUnavailableResponse,
   passBackendResponse,
@@ -11,12 +19,31 @@ import { jsonResponse, rateLimitedResponse } from "./errors";
 const SERVICE_TOKEN = "test-service-token-at-least-32-bytes";
 
 afterEach(() => {
+  cloudflareEnv.current = {};
   vi.unstubAllEnvs();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
 });
 
 describe("apply backend service boundary", () => {
+  it("reads deployed secrets from the Cloudflare runtime context", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    cloudflareEnv.current = {
+      APPLY_BACKEND_BASE_URL: "https://backend.example",
+      APPLY_BACKEND_SERVICE_TOKEN: SERVICE_TOKEN,
+    };
+    const fetchMock = vi.fn().mockResolvedValue(Response.json({ ok: true }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await requestApplyBackend("/api/apply/session", { method: "POST" });
+
+    expect(fetchMock.mock.calls[0]?.[0]).toBe(
+      "https://backend.example/api/apply/session",
+    );
+    const headers = new Headers((fetchMock.mock.calls[0]?.[1] as RequestInit).headers);
+    expect(headers.get("x-navdhan-service-token")).toBe(SERVICE_TOKEN);
+  });
+
   it("sends the dedicated service token header on JSON requests", async () => {
     vi.stubEnv("NODE_ENV", "development");
     vi.stubEnv("APPLY_BACKEND_BASE_URL", "http://127.0.0.1:8000");
