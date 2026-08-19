@@ -7,20 +7,24 @@ export const STEP_ORDER: StepDefinition[] = [
   { id: "personal_contact", title: "Personal contact", description: "Share your contact details." },
   {
     id: "aadhaar_verification",
-    title: "Aadhaar verification",
-    description: "Verify your identity with Aadhaar OTP.",
+    title: "Aadhaar Details",
+    description: "Add your Aadhaar number.",
   },
-  { id: "pan_verification", title: "PAN verification", description: "Confirm your PAN for KYC." },
+  { id: "pan_verification", title: "PAN Details", description: "Add your PAN for KYC." },
   {
     id: "gst_verification",
-    title: "GST verification",
+    title: "GST Details",
     description: "Add your GSTIN or skip if not registered.",
   },
-  { id: "itr_upload", title: "ITR upload", description: "Upload your latest ITR PDF." },
+  {
+    id: "itr_upload",
+    title: "Documents",
+    description: "Upload the documents required for your business constitution.",
+  },
   {
     id: "bank_statements",
-    title: "Bank statements",
-    description: "Link your bank statements securely.",
+    title: "Existing loans",
+    description: "Tell us about any existing credit facilities and upload supporting documents.",
   },
   {
     id: "review_submit",

@@ -40,6 +40,15 @@ def _key() -> bytes:
     return key
 
 
+def require_key() -> None:
+    """Validate ENCRYPTION_KEY eagerly (e.g. at process startup).
+
+    Raises RuntimeError with a clear message if the key is missing or
+    malformed, instead of letting the first encrypted write fail at runtime.
+    """
+    _key()
+
+
 def encrypt(plaintext: str) -> str:
     """Encrypt a string — returns base64(nonce || ciphertext || auth_tag)."""
     nonce = os.urandom(_NONCE_LEN)
