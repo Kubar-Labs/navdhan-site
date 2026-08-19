@@ -209,20 +209,42 @@ it does not protect the backend — see §8.
 
 **Service-to-service authentication is not implemented.** Once the backend has
 a public URL, the only thing in front of it is a session digest supplied by
-the client. Anyone who can reach the URL can reach the API.
+the client. Anyone who can reach that URL can reach the API — including the
+document upload and submission endpoints.
 
-This must be resolved as part of the deployment architecture. The options, in
-order of preference:
+This has to be resolved as part of the deployment, and the frontend's hosting
+constrains the options. The Next.js app runs on **Cloudflare Workers**
+(`wrangler.jsonc` pins `navdhan.app` and `www.navdhan.app` as custom domains),
+so the two services sit on different clouds. That rules out the approach that
+would otherwise be simplest — keeping the backend on internal ingress and
+reaching it privately — because a Worker cannot route to a Cloud Run service
+that is not on the public internet.
 
-1. Run the Next.js app on Cloud Run as well, and keep the backend on internal
-   ingress so it is not reachable from the internet at all.
-2. Google-issued OIDC identity tokens between the two services. This requires
-   token verification in the backend — application code that does not exist
-   yet.
-3. A shared-secret header. The floor, not a recommendation.
+Given that, in order of strength:
 
-Option 1 needs no application changes. Option 2 does. Decide before, not
-after, the backend URL is exposed.
+1. **Cloudflare Tunnel, or mTLS between the Worker and Cloud Run.** The
+   backend stops being reachable by anything that cannot present the right
+   client certificate or tunnel identity. Most work, strongest result, no
+   application code.
+2. **A shared secret.** Stored as a Worker secret, sent as a header by
+   `backend-proxy.ts`, verified by backend middleware before any route runs.
+   Requests without it are rejected at the edge of the application. This is
+   the pragmatic fit for a Workers frontend and is perhaps half a day of work
+   including a test. Rotate it by setting both values, deploying, then
+   removing the old one.
+3. **Re-platform the frontend to Cloud Run**, and put the backend on internal
+   ingress. Architecturally the cleanest and needs no application code, but it
+   means abandoning the Cloudflare setup that is already configured and
+   deployed. Only worth considering if the frontend is moving anyway.
+
+Google-issued OIDC tokens are the usual answer for Cloud Run to Cloud Run, but
+they do not help here: a Cloudflare Worker is not on GCP's metadata server, so
+it cannot mint an identity token without a service-account credential stored
+inside the Worker — which is option 2 with more moving parts and a
+longer-lived secret.
+
+Whichever is chosen, decide before the backend URL is exposed rather than
+after.
 
 **Do not copy the existing deployment on `main`.** It deploys the backend with
 `--allow-unauthenticated` and lists the site's origins in `ALLOWED_ORIGINS`
@@ -238,7 +260,7 @@ service account rather than the default compute account, and it pulls secrets
 from Secret Manager with `--set-secrets`. Both match §4 and §5 here.
 
 **Rate limiting is also not implemented.** There is no throttling on the
-public API surface.
+public API surface, which matters more while the API is publicly reachable.
 
 ---
 
