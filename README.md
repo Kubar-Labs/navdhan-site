@@ -1,56 +1,89 @@
-# Navdhan Site
+# NavDhan
 
-Marketing site for Navdhan, built with Next.js 15 (App Router), React 19, and Tailwind CSS 4.
+NavDhan is a localized Next.js marketing site and borrower application gateway.
+The production architecture consists of:
 
-## Stack
+- the Next.js 15 / React 19 frontend on Cloudflare Workers;
+- a collection-only FastAPI service behind the server-side Next.js API proxy;
+- the PostgreSQL 18 schema and release tooling in `database/`; and
+- quarantined PDF storage with an isolated scanner boundary in Google Cloud.
 
-- Next.js 15 (App Router, SSR)
-- next-intl (i18n, `app/[locale]`)
-- Tailwind CSS 4
-- Framer Motion
-- Drizzle ORM + Postgres (server-side, `app/api/*`)
+The former Vite/Perfios portal is retired. `/{locale}/apply` is the only
+supported borrower UI; do not recreate `public/apply` or deploy a second
+frontend.
 
-## Getting started
+## Local frontend
 
-Install dependencies and start the dev server:
+Use Node.js 22 and the committed lockfile:
 
 ```bash
-npm install
+npm ci
+cp .env.example .env.local
 npm run dev
 ```
 
-## Scripts
+The site runs at `http://localhost:3000`. Application routes proxy server-side
+to `APPLY_BACKEND_BASE_URL`; `APPLY_BACKEND_SERVICE_TOKEN` must match the
+backend's `APPLY_SERVICE_TOKEN`. Neither value may use a `NEXT_PUBLIC_` name.
 
-- `dev`: local development server
-- `build`: production build
-- `start`: run the production build locally
-- `lint`: run ESLint
-- `test` / `test:watch`: run Vitest
-- `sync:portal`: copy the built DSA portal (`dsa_portal/frontend`) into `public/apply/`
-- `db:generate` / `db:migrate` / `db:studio`: Drizzle ORM helpers
-- `cf:build` / `cf:preview` / `deploy:cf`: build & deploy to Cloudflare Workers via OpenNext
+Sensitive intake is fail-closed. `APPLY_INTAKE_MODE` must remain `paused` until
+the database, gateway, scanner, and provider acceptance gates in
+`DEPLOYMENT.md` pass in staging.
 
-## Environment variables
+Run the complete frontend gate with:
 
-Server-only values are read from `process.env` inside server handlers, route
-handlers (`app/api/*`), or server components. See `CLOUDFLARE-DEPLOY.md` for
-setting secrets (e.g. `DATABASE_URL`) on the deployed Worker.
+```bash
+npm run verify
+```
 
-## Deployment (Cloudflare Workers)
+This runs zero-warning ESLint, TypeScript, Vitest, the production dependency
+audit, and the OpenNext Cloudflare build. `npm run build` runs the normal
+Next.js build independently.
 
-See `CLOUDFLARE-DEPLOY.md`. In short: `npm run deploy:cf` builds with the
-OpenNext Cloudflare adapter and deploys the Worker `kubar-labs-navdhan-site`
-via `wrangler deploy`. `.github/workflows/deploy.yml` does this automatically
-on push to `main`.
+## Local backend and database
 
-## Project structure
+The canonical backend is `dsa_portal/backend/collection_app.py`. Copy its
+`.env.example` to an ignored `.env`, configure PostgreSQL 18 and the encryption
+keys, then run from `dsa_portal/backend`:
 
-- `app/`: Next.js App Router routes, layouts, and API route handlers
-- `app/[locale]/(marketing)`: localized marketing pages
-- `app/apply`: application flow pages
-- `src/components`: shared React components
-- `src/db`: Drizzle schema/config
-- `src/lib`, `src/hooks`, `src/types`: utilities, hooks, and types
-- `content/`: structured content (company info, legal pages)
-- `public/apply/`: built DSA portal (embedded verification flow), synced via `npm run sync:portal` — do not edit by hand
-- `dsa_portal/`: separate DSA portal frontend/backend, untouched by this migration
+```bash
+python -m pip install --require-hashes --requirement requirements.lock
+python -m uvicorn collection_app:app --host 127.0.0.1 --port 8000
+```
+
+Never apply the collection migrations over the incompatible legacy database.
+Cloud releases must use `database/scripts/release.sh`, which accepts only an
+empty target or a database carrying this release ledger.
+
+Static and backend checks:
+
+```bash
+python -m unittest discover -s database/tests -v
+cd dsa_portal/backend
+python -m unittest discover -s tests -v
+```
+
+## Repository map
+
+- `app/`, `src/`, `content/`: routes, UI, localization, and legal content
+- `database/`: PostgreSQL migrations, seeds, release tools, and tests
+- `dsa_portal/backend/`: authenticated collection API
+- `dsa_portal/scanner/`: isolated malware-scanner runtime
+- `DEPLOYMENT.md`: staging and production release authority
+- `CLOUDFLARE-DEPLOY.md`: Worker delivery, verification, and rollback
+
+## Delivery
+
+GitHub Actions are intentionally not required. Cloudflare Git Builds may build
+the repository-connected commit, but it does not bypass the release gates.
+Production remains operator-controlled: record the approved SHA and current
+Worker version, pass staging, keep intake paused until acceptance, then use the
+Cloudflare project connection documented in `CLOUDFLARE-DEPLOY.md`.
+
+No generic production deploy npm script is provided. The preview command is
+explicitly scoped as `npm run cf:deploy:preview` and uses
+`wrangler.preview.jsonc`, which has no production routes.
+
+## License
+
+Proprietary.

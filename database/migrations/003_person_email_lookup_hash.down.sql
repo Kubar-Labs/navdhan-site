@@ -1,0 +1,8 @@
+DROP INDEX CONCURRENTLY IF EXISTS persons_email_hash_idx;
+
+BEGIN;
+
+ALTER TABLE persons
+    DROP COLUMN IF EXISTS email_hash;
+
+COMMIT;

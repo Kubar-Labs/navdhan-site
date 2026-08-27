@@ -2,7 +2,7 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "kubar-labs-navdhan-site",
   "main": ".open-next/worker.js",
-  "compatibility_date": "2025-03-01",
+  "compatibility_date": "2026-08-19",
   "compatibility_flags": ["nodejs_compat"],
   "routes": [
     { "pattern": "navdhan.app", "custom_domain": true },
@@ -12,6 +12,31 @@
     "directory": ".open-next/assets",
     "binding": "ASSETS"
   },
+  "vars": {
+    "APPLY_INTAKE_MODE": "paused"
+  },
+  "ratelimits": [
+    {
+      "name": "APPLY_SESSION_RATE_LIMITER",
+      "namespace_id": "1001",
+      "simple": { "limit": 10, "period": 60 }
+    },
+    {
+      "name": "APPLY_WRITE_RATE_LIMITER",
+      "namespace_id": "1002",
+      "simple": { "limit": 120, "period": 60 }
+    },
+    {
+      "name": "APPLY_UPLOAD_RATE_LIMITER",
+      "namespace_id": "1003",
+      "simple": { "limit": 10, "period": 60 }
+    },
+    {
+      "name": "APPLY_READ_RATE_LIMITER",
+      "namespace_id": "1004",
+      "simple": { "limit": 300, "period": 60 }
+    }
+  ],
   "observability": {
     "enabled": true
   }

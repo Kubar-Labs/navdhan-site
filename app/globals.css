@@ -3,9 +3,9 @@
 @theme {
   --color-nt-white: #ffffff;
   --color-nt-cream: #fafaf8;
-  --color-nt-orange-500: #f97316;
-  --color-nt-orange-600: #ea580c;
-  --color-nt-orange-700: #c2410c;
+  --color-nt-orange-500: #ea580c;
+  --color-nt-orange-600: #c2410c;
+  --color-nt-orange-700: #9a3412;
   --color-nt-green-500: #22c55e;
   --color-nt-slate-900: #0f172a;
   --color-nt-slate-600: #475569;
@@ -72,7 +72,7 @@ input[type="range"]::-webkit-slider-thumb {
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  background: #ea580c;
+  background: #c2410c;
   border: 2px solid #ffffff;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
   cursor: pointer;
@@ -87,7 +87,7 @@ input[type="range"]::-moz-range-thumb {
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  background: #ea580c;
+  background: #c2410c;
   border: 2px solid #ffffff;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
   cursor: pointer;

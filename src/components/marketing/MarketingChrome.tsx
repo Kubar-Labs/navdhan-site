@@ -2,14 +2,17 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import { isValidLocale, localeOptions, type Locale } from "@/src/lib/i18n/config";
+import { localizedUrl } from "@/src/lib/i18n/navigation";
 import styles from "./navdhan-marketing.module.css";
 
 export function MarketingHeader({ locale }: { locale: Locale }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
   const links = [
     { label: "Loan Options", href: `/${locale}/#products` },
     { label: "How It Works", href: `/${locale}/#how-it-works` },
@@ -18,10 +21,23 @@ export function MarketingHeader({ locale }: { locale: Locale }) {
     { label: "For Lenders", href: `/${locale}/lenders` },
   ];
 
+  useEffect(() => {
+    if (!open) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      setOpen(false);
+      menuButtonRef.current?.focus();
+    };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [open]);
+
+  const prefetchApplication = () => router.prefetch(`/${locale}/apply`);
+
   return (
     <header className={styles.header}>
       <Link className={styles.logoLink} href={`/${locale}`} aria-label="NavDhan home">
-        <Image src="/assets/logos/NavDhan.png" alt="NavDhan" width={160} height={71} priority />
+        <Image src="/assets/logos/navdhan-wordmark.webp" alt="NavDhan" width={320} height={159} priority />
       </Link>
       <nav className={styles.desktopNav} aria-label="Main navigation">
         {links.map((link) => (
@@ -34,10 +50,17 @@ export function MarketingHeader({ locale }: { locale: Locale }) {
           </Link>
         ))}
       </nav>
-      <Link className={`${styles.button} ${styles.headerCta}`} href={`/${locale}/apply`}>
+      <Link
+        className={`${styles.button} ${styles.headerCta}`}
+        href={`/${locale}/apply`}
+        prefetch={false}
+        onMouseEnter={prefetchApplication}
+        onFocus={prefetchApplication}
+      >
         Start Application
       </Link>
       <button
+        ref={menuButtonRef}
         className={styles.menuButton}
         type="button"
         aria-expanded={open}
@@ -56,7 +79,14 @@ export function MarketingHeader({ locale }: { locale: Locale }) {
               {link.label}
             </Link>
           ))}
-          <Link className={`${styles.button} ${styles.primary}`} href={`/${locale}/apply`}>
+          <Link
+            className={`${styles.button} ${styles.primary}`}
+            href={`/${locale}/apply`}
+            prefetch={false}
+            onMouseEnter={prefetchApplication}
+            onFocus={prefetchApplication}
+            onClick={() => setOpen(false)}
+          >
             Start Application <Arrow light />
           </Link>
         </nav>
@@ -68,9 +98,10 @@ export function MarketingHeader({ locale }: { locale: Locale }) {
 export function MarketingFooter({ locale }: { locale: Locale }) {
   const pathname = usePathname();
   const switchLocale = (nextLocale: string) => {
-    const [, currentLocale, ...rest] = pathname.split("/");
-    const suffix = isValidLocale(currentLocale) && rest.length > 0 ? `/${rest.join("/")}` : "";
-    window.location.assign(`/${nextLocale}${suffix}${window.location.search}${window.location.hash}`);
+    if (!isValidLocale(nextLocale)) return;
+    window.location.assign(
+      localizedUrl(pathname, nextLocale, window.location.search, window.location.hash),
+    );
   };
 
   const explore = [
@@ -103,7 +134,7 @@ export function MarketingFooter({ locale }: { locale: Locale }) {
     <footer className={styles.footer}>
       <div className={styles.footerGrid}>
         <div className={styles.footerBrand}>
-          <Image src="/assets/logos/NavDhan.png" alt="NavDhan" width={160} height={71} />
+          <Image src="/assets/logos/navdhan-wordmark.webp" alt="NavDhan" width={320} height={159} />
           <p>Business financing,<br />made simple.</p>
         </div>
         <FooterColumn title="Explore" links={explore} />

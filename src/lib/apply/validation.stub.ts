@@ -116,7 +116,6 @@ export function validateItrDocument(value: unknown): string[] {
   }
   if (!isString(doc.url)) return ["invalid_format"];
   try {
-    // eslint-disable-next-line no-new
     new URL(doc.url);
     return [];
   } catch {

@@ -20,6 +20,9 @@ export default async function ApplyLayout({ children, params }: ApplyLayoutProps
           variant: "secondary",
         }}
         currentLocale={locale}
+        languageSelectorLabel={t("localeSelector.label")}
+        mobileMenuOpenLabel={t("mobileMenu.open")}
+        mobileMenuCloseLabel={t("mobileMenu.close")}
       />
       <main id="main-content" className="min-h-screen bg-nt-cream">
         {children}

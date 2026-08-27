@@ -14,7 +14,7 @@ gitignored, so these stay local to your machine.
 ## Prerequisites
 
 - `cloud-sql-proxy.exe` in `backend/` (or on PATH).
-- `gcloud` CLI installed and account `rayansh@kubar.tech` (or another member of
+- `gcloud` CLI installed and an authorized NavDhan operator account (or another member of
   `kubar-protocol-main` with `cloudsql.client` + Secret Manager access).
 - Python venv at `.venv/` with `asyncpg` and `python-dotenv` (already in
   `requirements.txt`).

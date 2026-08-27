@@ -9,7 +9,6 @@ export type ApplyMessages = Partial<WizardMessages>;
 
 interface ApplyWizardProps {
   locale: string;
-  applicationId?: string;
   initialStep?: WizardStepId;
   messages?: ApplyMessages;
   onComplete?: () => void;
@@ -71,7 +70,6 @@ function mapApplyMessages(messages: ApplyMessages = {}): WizardMessages {
  */
 export function ApplyWizard({
   locale,
-  applicationId,
   initialStep = "loan_intent",
   messages = {},
   onComplete,

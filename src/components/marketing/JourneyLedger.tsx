@@ -29,7 +29,7 @@ export function JourneyLedger({ audience }: { audience: JourneyAudience }) {
   const journey = journeys[audience];
   return (
     <div className={styles.ledger}>
-      <Image className={styles.ledgerPaper} src="/assets/navdhan-redesign/ledger-paper.svg" alt="" fill sizes="(max-width: 700px) 100vw, 736px" />
+      <Image className={styles.ledgerPaper} src="/assets/navdhan-redesign/ledger-paper.svg" alt="" fill priority sizes="(max-width: 700px) 100vw, 736px" />
       <div className={styles.ledgerRows}>
         {journey.steps.map((label, index) => (
           <div className={styles.ledgerRow} key={label}>
