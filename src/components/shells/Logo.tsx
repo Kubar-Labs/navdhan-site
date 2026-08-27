@@ -1,6 +1,3 @@
-"use client";
-
-import Image from "next/image";
 import { cn } from "@/src/lib/utils/cn";
 
 interface LogoProps {
@@ -8,15 +5,25 @@ interface LogoProps {
   className?: string;
 }
 
-export function Logo({ className }: LogoProps) {
+export function Logo({ variant = "dark", className }: LogoProps) {
+  const light = variant === "light";
+
   return (
-    <Image
-      src="/assets/logos/NavDhan.png"
-      alt="NavDhan"
-      width={160}
-      height={40}
-      className={cn("h-8 w-auto object-contain", className)}
-      priority
-    />
+    <span className={cn("inline-flex items-center gap-3", className)} aria-label="NavDhan">
+      <span
+        className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-nt-orange-700 text-sm font-semibold text-white"
+        aria-hidden="true"
+      >
+        N
+      </span>
+      <span
+        className={cn(
+          "text-2xl font-semibold leading-8 tracking-[-0.5px]",
+          light ? "text-white" : "text-nt-slate-900",
+        )}
+      >
+        NavDhan
+      </span>
+    </span>
   );
 }
