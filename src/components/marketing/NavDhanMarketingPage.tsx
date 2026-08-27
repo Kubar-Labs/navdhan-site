@@ -14,10 +14,18 @@ const trustItems = [
   ["trust-terms.svg", "Lender-decided terms"],
 ];
 
-export function HomeMarketingPage({ locale }: { locale: string }) {
+export interface BorrowerHeroCopy {
+  eyebrow: string;
+  title: string;
+  body: string;
+  primary: string;
+  secondary: string;
+}
+
+export function HomeMarketingPage({ locale, heroCopy }: { locale: string; heroCopy?: BorrowerHeroCopy }) {
   return (
     <div className={styles.site}>
-      <Hero locale={locale} audience="borrower" />
+      <Hero locale={locale} audience="borrower" borrowerCopy={heroCopy} />
       <TrustStrip />
       <section className={`${styles.section} ${styles.financeSection}`} id="products">
         <h2 className={styles.centerHeading}>What could you finance?</h2>
@@ -92,17 +100,28 @@ export function PartnerMarketingPage({ locale, audience }: { locale: string; aud
   );
 }
 
-function Hero({ locale, audience }: { locale: string; audience: JourneyAudience }) {
+function Hero({ locale, audience, borrowerCopy }: { locale: string; audience: JourneyAudience; borrowerCopy?: BorrowerHeroCopy }) {
+  const borrower = borrowerCopy
+    ? {
+        eyebrow: borrowerCopy.eyebrow,
+        title: borrowerCopy.title,
+        body: borrowerCopy.body,
+        primary: borrowerCopy.primary,
+        secondary: borrowerCopy.secondary,
+        primaryHref: `/${locale}/apply`,
+        secondaryHref: "#products",
+      }
+    : {
+        eyebrow: "Business financing, made simple",
+        title: <>Business financing,<br />without the runaround.</>,
+        body: "Apply once, share your details securely, and continue to financing options from our lending partners.",
+        primary: "Start Application",
+        secondary: "See How It Works",
+        primaryHref: `/${locale}/apply`,
+        secondaryHref: "#how-it-works",
+      };
   const content = {
-    borrower: {
-      eyebrow: "Business financing, made simple",
-      title: <>Business financing,<br />without the runaround.</>,
-      body: "Apply once, share your details securely, and continue to financing options from our lending partners.",
-      primary: "Start Application",
-      secondary: "See How It Works",
-      primaryHref: `/${locale}/apply`,
-      secondaryHref: "#how-it-works",
-    },
+    borrower,
     platform: {
       eyebrow: "For platforms",
       title: <>Help your customers<br />take their next step.</>,

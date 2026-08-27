@@ -2,9 +2,9 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { localeOptions, type Locale } from "@/src/lib/i18n/config";
+import { isValidLocale, localeOptions, type Locale } from "@/src/lib/i18n/config";
 import styles from "./navdhan-marketing.module.css";
 
 export function MarketingHeader({ locale }: { locale: Locale }) {
@@ -66,12 +66,11 @@ export function MarketingHeader({ locale }: { locale: Locale }) {
 }
 
 export function MarketingFooter({ locale }: { locale: Locale }) {
-  const router = useRouter();
   const pathname = usePathname();
   const switchLocale = (nextLocale: string) => {
-    const segments = pathname.split("/");
-    segments[1] = nextLocale;
-    router.push(segments.join("/") || `/${nextLocale}`);
+    const [, currentLocale, ...rest] = pathname.split("/");
+    const suffix = isValidLocale(currentLocale) && rest.length > 0 ? `/${rest.join("/")}` : "";
+    window.location.assign(`/${nextLocale}${suffix}${window.location.search}${window.location.hash}`);
   };
 
   const explore = [
