@@ -38,7 +38,6 @@ export function HomeMarketingPage({ locale, heroCopy }: { locale: string; heroCo
 
       <section className={`${styles.section} ${styles.preparation}`} id="why">
         <div className={styles.prepIntro}>
-          <Eyebrow>Before you apply</Eyebrow>
           <h2 className={styles.displayHeading}>Prepared for<br />the next step.</h2>
           <p className={styles.lead}>A straightforward application starts with the right information. Keep these details handy and share them through the guided journey.</p>
           <p className={styles.referral}>Referred by a business platform?<br />You can use the same NavDhan application.</p>
@@ -54,7 +53,6 @@ export function HomeMarketingPage({ locale, heroCopy }: { locale: string; heroCo
       </section>
 
       <section className={`${styles.section} ${styles.emiSection}`} id="emi">
-        <Eyebrow>EMI calculator</Eyebrow>
         <h2 className={styles.sectionHeading}>Plan around your cash flow.</h2>
         <p className={styles.muted}>Adjust the amount, rate and tenure to estimate your monthly EMI.</p>
         <RedesignedEmiCalculator locale={locale} />
@@ -74,7 +72,6 @@ export function PartnerMarketingPage({ locale, audience }: { locale: string; aud
       <Hero locale={locale} audience={audience} />
       <TrustStrip />
       <section className={`${styles.section} ${styles.responsibilitySection} ${platform ? styles.platformResponsibilities : styles.lenderResponsibilities}`} id="responsibilities">
-        <Eyebrow>{platform ? "Start where you are" : "Clear responsibilities"}</Eyebrow>
         <h2 className={styles.sectionHeading}>
           <span className={styles.desktopOnly}>{platform ? "A useful starting point. Room to grow." : "Origination support. Lender-owned decisions."}</span>
           <span className={styles.mobileOnly}>{platform ? "Start here. Grow from here." : "Origination support. Lender decisions."}</span>
@@ -145,7 +142,6 @@ function Hero({ locale, audience, borrowerCopy }: { locale: string; audience: Jo
   return (
     <section className={`${styles.hero} ${audience === "borrower" ? styles.homeHero : styles.partnerHero}`} id="how-it-works">
       <div className={styles.heroCopy}>
-        <Eyebrow>{content.eyebrow}</Eyebrow>
         <h1>{content.title}</h1>
         <p>{content.body}</p>
         <div className={styles.heroActions}>
@@ -214,7 +210,6 @@ function FaqSection() {
   return (
     <section className={`${styles.section} ${styles.faqSection}`}>
       <div className={styles.faqIntro}>
-        <Eyebrow>Good to know</Eyebrow>
         <h2 className={styles.displayHeading}>Answers, without<br />the jargon.</h2>
         <p>A few things to know before you begin.</p>
         <a href="mailto:support@navdhan.app">Still need a hand?<br />support@navdhan.app</a>
