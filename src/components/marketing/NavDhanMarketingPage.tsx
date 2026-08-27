@@ -149,8 +149,8 @@ function Hero({ locale, audience, borrowerCopy }: { locale: string; audience: Jo
         <h1>{content.title}</h1>
         <p>{content.body}</p>
         <div className={styles.heroActions}>
-          <Link className={`${styles.button} ${styles.primary}`} href={content.primaryHref}>{content.primary} <Arrow light /></Link>
-          <Link className={`${styles.button} ${styles.secondary}`} href={content.secondaryHref}>{content.secondary} <Arrow /></Link>
+          <Link className={`${styles.button} ${styles.primary}`} href={content.primaryHref} prefetch={content.primaryHref.includes("/apply") ? false : undefined}>{content.primary} <Arrow light /></Link>
+          <Link className={`${styles.button} ${styles.secondary}`} href={content.secondaryHref} prefetch={content.secondaryHref.includes("/apply") ? false : undefined}>{content.secondary} <Arrow /></Link>
         </div>
       </div>
       <JourneyLedger audience={audience} />
@@ -224,11 +224,17 @@ function FaqSection() {
           const expanded = index === open;
           return (
             <div className={styles.faq} key={question}>
-              <button type="button" aria-expanded={expanded} onClick={() => setOpen(expanded ? -1 : index)}>
+              <button
+                type="button"
+                id={`faq-question-${index}`}
+                aria-expanded={expanded}
+                aria-controls={`faq-answer-${index}`}
+                onClick={() => setOpen(expanded ? -1 : index)}
+              >
                 <span>{question}</span>
                 <Image src={`/assets/navdhan-redesign/faq-${expanded ? "minus" : "plus"}.svg`} alt="" width={22} height={22} />
               </button>
-              {expanded ? <p>{answer}</p> : null}
+              {expanded ? <p id={`faq-answer-${index}`} role="region" aria-labelledby={`faq-question-${index}`}>{answer}</p> : null}
             </div>
           );
         })}
@@ -257,7 +263,7 @@ function Closing({ locale, audience }: { locale: string; audience: JourneyAudien
   return (
     <section className={styles.closing}>
       <div><h2>{content.title}</h2><p>{content.body}</p></div>
-      <div><Link className={`${styles.button} ${styles.primary}`} href={content.href}>{content.button} <Arrow light /></Link><Link className={styles.textLink} href={content.linkHref}>{content.link}</Link></div>
+      <div><Link className={`${styles.button} ${styles.primary}`} href={content.href} prefetch={content.href.includes("/apply") ? false : undefined}>{content.button} <Arrow light /></Link><Link className={styles.textLink} href={content.linkHref}>{content.link}</Link></div>
     </section>
   );
 }

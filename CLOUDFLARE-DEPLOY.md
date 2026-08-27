@@ -1,62 +1,78 @@
-# Deploying navdhan-site to Cloudflare
+# Deploying NavDhan to Cloudflare
 
-The site is a **Next.js** app deployed to **Cloudflare Workers (Static Assets)**
-via the **OpenNext Cloudflare adapter** (`@opennextjs/cloudflare`). It deploys as
-the Worker **`kubar-labs-navdhan-site`** (test URL:
-`https://kubar-labs-navdhan-site.<your-subdomain>.workers.dev`).
+The Next.js site is built with the OpenNext Cloudflare adapter and deployed as
+the Worker `kubar-labs-navdhan-site`. `navdhan.app` and `www.navdhan.app` are
+production custom domains configured only in `wrangler.jsonc`.
 
-> Note: this is a **Worker**, not a Pages project. Deploy with `wrangler deploy`
-> (NOT `wrangler pages deploy`).
+This runbook covers the frontend Worker only. It must not provision, migrate,
+inspect, or reconfigure any database or backend. The application/API baseline
+is commit `9c6a6813df3e01044d83dfdf0bef736b6c0e3451`; compare the protected paths
+listed in `README.md` before every frontend release.
 
-## One-time
+## Delivery model
+
+GitHub Actions are not part of the active release path because the account has
+no active Actions billing. The existing workflow is retained unchanged. A
+reviewed operator builds and deploys the exact pushed commit from a clean
+checkout. Never use a dirty working tree as a deployment source.
+
+`wrangler.preview.jsonc` has a separate Worker name, a `workers.dev` URL, and no
+production routes. `wrangler.jsonc` is the production configuration.
+
+## Preview
+
 ```bash
-npx wrangler login        # opens browser; sign in to the Team@kubar.tech Cloudflare account
+npm ci
+npm run lint
+npm run typecheck
+npm test
+npm run build
+npm run cf:build
+npm run cf:deploy:preview
 ```
 
-## Every deploy
-1. **Point the embedded DSA portal at the live backend** (only when its URL
-   changes). The portal calls `VITE_API_BASE_URL`; in production set the absolute
-   Cloud Run URL:
-   ```bash
-   # in dsa_portal/frontend/.env (or inline):
-   #   VITE_API_BASE_URL=https://<kuber-verification cloud run url>/api/v1/verify
-   cd dsa_portal/frontend && npm run build && cd ../..
-   npm run sync:portal        # copies the portal build into public/apply/
-   ```
-2. **Build + deploy the Worker:**
-   ```bash
-   npm run deploy:cf          # = opennextjs-cloudflare build && opennextjs-cloudflare deploy
-   ```
-   Build output: `.open-next/worker.js` (worker) + `.open-next/assets/` (static
-   assets incl. `assets/apply/` portal), configured via `wrangler.jsonc`
-   (`main` + `assets` binding). `wrangler deploy` reads `wrangler.jsonc`.
+Confirm the preview has no custom domain before exercising it. Do not copy,
+rotate, or delete production secrets for a frontend preview.
 
-## Point navdhan.app at the Worker (one-time, dashboard)
-1. Workers & Pages → **kubar-labs-navdhan-site** → Settings → Domains & Routes →
-   Add → **Custom domain** → `navdhan.app` (and `www.navdhan.app`).
-2. Check the **`navdhan-os-proxy`** Worker doesn't have a route on `navdhan.app/*`.
+## Production gate
 
-## Backend CORS (one-time, on the backend)
-Add the site origins to the Cloud Run backend's `ALLOWED_ORIGINS` so the portal's
-API calls aren't blocked:
-```
-ALLOWED_ORIGINS=https://navdhan.app,https://www.navdhan.app
-```
+Before deploying:
 
-## Auto-deploy on push (optional)
-`.github/workflows/deploy.yml` runs `npm run cf:build && wrangler deploy` on push
-to `main` (needs the `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` GitHub
-secrets, and GitHub Actions billing in good standing). The backend stays on
-**Google Cloud Run**; only the frontend is on Cloudflare Workers.
+1. Record `git rev-parse HEAD`, `git status --short`, and the current Worker
+   deployment/version.
+2. Confirm the release SHA is the exact SHA pushed to `main`.
+3. Confirm the protected backend paths still match the pre-redesign baseline.
+4. Pass lint, typecheck, tests, the normal Next.js build, and the OpenNext build.
+5. Verify desktop, mobile, keyboard navigation, locale switching, legal links,
+   calculator behavior, and the existing application flow in a real browser.
+6. Review the final diff and built artifacts for secrets and unrelated files.
 
-## Server-side env vars (Postgres/Drizzle)
-This app now has server-side API routes (`app/api/*`) using Drizzle + `pg`. Set
-any required DB connection secrets as Worker secrets before deploying:
+Deploy only after those gates pass:
+
 ```bash
-npx wrangler secret put DATABASE_URL
+npx wrangler deployments list --name kubar-labs-navdhan-site
+npx wrangler deploy --config wrangler.jsonc --message "NavDhan release <full-git-sha>"
 ```
-Node APIs (like `pg`'s TCP sockets) require the `nodejs_compat` compatibility
-flag, which is already set in `wrangler.jsonc`. If `pg` doesn't work over
-Workers' runtime in practice, consider swapping to a Postgres driver with
-native Workers/edge support (e.g. Neon's `@neondatabase/serverless` or
-Hyperdrive) — this wasn't tested as part of this migration.
+
+Do not deploy with the preview configuration, alter domain routes, or change
+backend/database configuration during this release.
+
+## Production verification
+
+- Confirm both `https://navdhan.app` and `https://www.navdhan.app` resolve to
+  the newly deployed Worker version; `www` must redirect to the apex domain.
+- Check `/en`, `/en/platforms`, `/en/lenders`, `/en/team`, and `/en/apply` at
+  desktop and mobile widths.
+- Check all supported locale routes and language switching.
+- Check response security headers, canonical metadata, robots, sitemap, asset
+  caching, focus states, overflow, and browser console errors.
+- Exercise only safe application validation and draft behavior. Do not submit
+  real applications, OTP/KYC requests, documents, or transactions.
+
+## Rollback
+
+Record the previous Worker version before deployment. If production regresses,
+roll the Worker back to that exact version through Cloudflare's version
+rollback, then re-run the domain and application smoke checks. A frontend
+rollback must not include database migrations, backend changes, domain changes,
+or secret rotation.

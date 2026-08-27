@@ -181,7 +181,7 @@ function generateDefaultPayload(): ApplyFormPayload {
     referral_code: null,
     full_name: "Amit Sharma",
     mobile_number: "9876543210",
-    email: "applicant@kubar.tech",
+    email: "applicant@navdhan.app",
     business_pin_code: "110001",
     aadhaar_number: "123456789012",
     aadhaar_consent: true,

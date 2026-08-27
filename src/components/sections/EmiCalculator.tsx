@@ -89,7 +89,8 @@ export function EmiCalculator({
             <Metric label={totalInterestLabel} value={formatCurrencyInr(breakdown.totalInterest)} />
           </div>
           <Link
-            href="/apply"
+            href={`/${locale}/apply`}
+            prefetch={false}
             className="mt-8 inline-flex w-full items-center justify-center rounded-md bg-nt-orange-600 px-6 py-3 text-sm font-semibold text-white hover:bg-nt-orange-700"
           >
             {cta}
@@ -111,11 +112,13 @@ interface SliderProps {
 }
 
 function Slider({ label, value, min, max, step, format, onChange }: SliderProps) {
+  const displayValue = format(value);
+
   return (
     <div>
       <label className="flex justify-between text-sm font-medium text-nt-slate-700">
         <span>{label}</span>
-        <span>{format(value)}</span>
+        <output>{displayValue}</output>
       </label>
       <input
         type="range"
@@ -123,8 +126,10 @@ function Slider({ label, value, min, max, step, format, onChange }: SliderProps)
         max={max}
         step={step}
         value={value}
+        aria-label={label}
+        aria-valuetext={displayValue}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="mt-3"
+        className="mt-3 min-h-11 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#007dad]"
       />
     </div>
   );

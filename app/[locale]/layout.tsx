@@ -1,20 +1,25 @@
 import "../globals.css";
-import { Inter, Instrument_Serif } from "next/font/google";
+import localFont from "next/font/local";
 import { notFound } from "next/navigation";
+import { AgentationDevtools } from "@/src/components/dev/AgentationDevtools";
 import { isValidLocale } from "@/src/lib/i18n/config";
 
-const inter = Inter({
-  subsets: ["latin", "latin-ext"],
-  weight: ["400", "500", "600", "700"],
+const inter = localFont({
+  src: [
+    { path: "../fonts/inter-400.woff2", weight: "400", style: "normal" },
+    { path: "../fonts/inter-500.woff2", weight: "500", style: "normal" },
+    { path: "../fonts/inter-600.woff2", weight: "600", style: "normal" },
+    { path: "../fonts/inter-700.woff2", weight: "700", style: "normal" },
+  ],
   variable: "--font-inter",
   display: "swap",
   fallback: ["Noto Sans Devanagari", "system-ui", "sans-serif"],
 });
 
-const instrumentSerif = Instrument_Serif({
-  subsets: ["latin"],
-  weight: ["400"],
-  style: ["normal"],
+const instrumentSerif = localFont({
+  src: "../fonts/instrument-serif.woff2",
+  weight: "400",
+  style: "normal",
   variable: "--font-safira-march",
   display: "swap",
   fallback: ["Georgia", "serif"],
@@ -35,7 +40,10 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
       lang={locale}
       className={`${inter.variable} ${instrumentSerif.variable} --font-inter --font-safira-march --font-instrument-serif`}
     >
-      <body className="bg-nt-cream text-nt-slate-900 antialiased">{children}</body>
+      <body className="bg-nt-cream text-nt-slate-900 antialiased">
+        {children}
+        <AgentationDevtools />
+      </body>
     </html>
   );
 }

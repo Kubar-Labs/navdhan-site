@@ -59,7 +59,7 @@
       "name": "Debayan Gupta",
       "domainKey": "Professor, CS - MIT, Ashoka University",
       "contributionKey": "Advises on research-led technology choices and academic partnerships.",
-      "imageAsset": "/assets/advisors/debayan.png",
+      "imageAsset": "/assets/advisors/debayan.webp",
       "linkedIn": "https://linkedin.com"
     },
     {
@@ -67,7 +67,7 @@
       "name": "Amit Sagar",
       "domainKey": "Lead System Architect at Bank of England",
       "contributionKey": "Contributes system architecture and CBDC insight for secure infrastructure.",
-      "imageAsset": "/assets/advisors/amit.png",
+      "imageAsset": "/assets/advisors/amit.webp",
       "linkedIn": "https://linkedin.com"
     },
     {
@@ -75,7 +75,7 @@
       "name": "Shridhar Sethuram",
       "domainKey": "Finance veteran, 25+ years in Private Equity",
       "contributionKey": "Brings long-term capital markets perspective to growth strategy.",
-      "imageAsset": "/assets/advisors/shridhar.png",
+      "imageAsset": "/assets/advisors/shridhar.webp",
       "linkedIn": "https://linkedin.com"
     },
     {
@@ -83,7 +83,7 @@
       "name": "Tushar Jaruhar",
       "domainKey": "Ex-Pricing Actuary at Zurich Insurance Co.",
       "contributionKey": "Advises on pricing discipline and insurance-linked risk thinking.",
-      "imageAsset": "/assets/advisors/tushar.png",
+      "imageAsset": "/assets/advisors/tushar.webp",
       "linkedIn": "https://linkedin.com"
     }
   ]

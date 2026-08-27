@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Container } from "@/src/components/layout/Container";
@@ -8,6 +8,7 @@ import { Logo } from "@/src/components/shells/Logo";
 import { cn } from "@/src/lib/utils/cn";
 import { Menu, X } from "lucide-react";
 import { localeOptions, isValidLocale, type Locale } from "@/src/lib/i18n/config";
+import { localizedUrl } from "@/src/lib/i18n/navigation";
 
 export interface NavLink {
   label: string;
@@ -24,6 +25,12 @@ export interface HeaderProps {
   navLinks: NavLink[];
   cta: CtaButton;
   currentLocale: string;
+  skipToContentLabel?: string;
+  primaryNavigationLabel?: string;
+  languageSelectorLabel?: string;
+  mobileMenuOpenLabel?: string;
+  mobileMenuCloseLabel?: string;
+  mobileNavigationLabel?: string;
 }
 
 function stripLocalePrefix(pathname: string): string {
@@ -34,20 +41,51 @@ function stripLocalePrefix(pathname: string): string {
   return pathname;
 }
 
-export function Header({ navLinks, cta, currentLocale }: HeaderProps) {
+export function Header({
+  navLinks,
+  cta,
+  currentLocale,
+  skipToContentLabel = "Skip to main content",
+  primaryNavigationLabel = "Primary navigation",
+  languageSelectorLabel = "Choose language",
+  mobileMenuOpenLabel = "Open menu",
+  mobileMenuCloseLabel = "Close menu",
+  mobileNavigationLabel = "Mobile navigation",
+}: HeaderProps) {
   const pathname = usePathname() ?? "/";
   const pathnameWithoutLocale = stripLocalePrefix(pathname);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      setMobileOpen(false);
+      menuButtonRef.current?.focus();
+    };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [mobileOpen]);
 
   return (
     <header className="sticky top-0 z-40 border-b border-nt-slate-200 bg-nt-white/95 backdrop-blur">
+      <a
+        href="#main-content"
+        className="sr-only absolute left-4 top-3 z-50 rounded-md bg-white px-4 py-2 font-semibold text-nt-slate-900 shadow focus:not-sr-only focus:absolute"
+      >
+        {skipToContentLabel}
+      </a>
       <Container size="default">
-        <nav aria-label="Primary" className="flex h-16 items-center justify-between gap-4">
+        <nav
+          aria-label={primaryNavigationLabel}
+          className="flex h-16 items-center justify-between gap-4"
+        >
           <Link
             href={`/${currentLocale}`}
             className="focus-visible:rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-nt-orange-600"
           >
-            <Logo variant="dark" />
+            <Logo variant="dark" priority />
           </Link>
 
           <div className="flex items-center gap-2 md:gap-6">
@@ -67,6 +105,7 @@ export function Header({ navLinks, cta, currentLocale }: HeaderProps) {
             <LocaleSelector
               currentLocale={currentLocale}
               pathnameWithoutLocale={pathnameWithoutLocale}
+              label={languageSelectorLabel}
             />
 
             <Link
@@ -83,9 +122,11 @@ export function Header({ navLinks, cta, currentLocale }: HeaderProps) {
             </Link>
 
             <button
+              ref={menuButtonRef}
               type="button"
-              aria-label={mobileOpen ? "Close menu" : "Open menu"}
+              aria-label={mobileOpen ? mobileMenuCloseLabel : mobileMenuOpenLabel}
               aria-expanded={mobileOpen}
+              aria-controls="mobile-navigation"
               onClick={() => setMobileOpen((open) => !open)}
               className="inline-flex rounded-md p-2 text-nt-slate-700 hover:bg-nt-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-nt-orange-600 md:hidden"
             >
@@ -94,8 +135,12 @@ export function Header({ navLinks, cta, currentLocale }: HeaderProps) {
           </div>
         </nav>
 
-        {mobileOpen && (
-          <div className="border-t border-nt-slate-200 bg-white md:hidden">
+        <nav
+          id="mobile-navigation"
+          aria-label={mobileNavigationLabel}
+          hidden={!mobileOpen}
+          className="border-t border-nt-slate-200 bg-white md:hidden"
+        >
             <ul className="flex flex-col gap-2 px-4 py-4 text-sm font-medium text-nt-slate-700">
               {navLinks.map((item) => (
                 <li key={item.href}>
@@ -113,7 +158,7 @@ export function Header({ navLinks, cta, currentLocale }: HeaderProps) {
                   href={cta.href}
                   onClick={() => setMobileOpen(false)}
                   className={cn(
-                    "block rounded-md px-4 py-2 text-center text-sm font-semibold",
+                    "block rounded-md px-4 py-2 text-center text-sm font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-nt-orange-600",
                     cta.variant === "secondary"
                       ? "border border-nt-slate-300 text-nt-slate-900 hover:bg-nt-slate-50"
                       : "bg-nt-orange-600 text-white hover:bg-nt-orange-700",
@@ -123,8 +168,7 @@ export function Header({ navLinks, cta, currentLocale }: HeaderProps) {
                 </Link>
               </li>
             </ul>
-          </div>
-        )}
+        </nav>
       </Container>
     </header>
   );
@@ -133,18 +177,25 @@ export function Header({ navLinks, cta, currentLocale }: HeaderProps) {
 interface LocaleSelectorProps {
   currentLocale: string;
   pathnameWithoutLocale: string;
+  label: string;
 }
 
-function LocaleSelector({ currentLocale, pathnameWithoutLocale }: LocaleSelectorProps) {
+function LocaleSelector({ currentLocale, pathnameWithoutLocale, label }: LocaleSelectorProps) {
   return (
     <label className="flex items-center gap-2 text-sm text-nt-slate-700">
-      <span className="sr-only">Choose language</span>
+      <span className="sr-only">{label}</span>
       <select
         value={currentLocale}
         onChange={(event) => {
           const locale = event.target.value as Locale;
-          const target = `/${locale}${pathnameWithoutLocale || ""}`;
-          window.location.href = target;
+          window.location.assign(
+            localizedUrl(
+              pathnameWithoutLocale,
+              locale,
+              window.location.search,
+              window.location.hash,
+            ),
+          );
         }}
         className="rounded-md border border-nt-slate-300 bg-nt-white px-2 py-1.5 text-sm focus-visible:border-nt-orange-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-nt-orange-600"
       >

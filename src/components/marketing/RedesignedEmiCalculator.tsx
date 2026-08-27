@@ -28,7 +28,7 @@ export function RedesignedEmiCalculator({ locale }: { locale: string }) {
           <Metric label="Total Interest" value={formatCurrencyInr(result.totalInterest)} />
           <Metric label="Total Repayment" value={formatCurrencyInr(result.totalPayable)} />
         </div>
-        <Link className={`${styles.button} ${styles.primary} ${styles.calculatorCta}`} href={`/${locale}/apply`}>
+        <Link className={`${styles.button} ${styles.primary} ${styles.calculatorCta}`} href={`/${locale}/apply`} prefetch={false}>
           Start Application <Arrow light />
         </Link>
         <p className={styles.estimateNote}>Illustrative estimate. Lender terms may differ.</p>
@@ -41,13 +41,15 @@ function Slider({ label, value, min, max, step, display, onChange }: { label: st
   const progress = ((value - min) / (max - min)) * 100;
   return (
     <label className={styles.slider}>
-      <span><span>{label}</span><strong>{display}</strong></span>
+      <span><span>{label}</span><output>{display}</output></span>
       <input
         type="range"
         value={value}
         min={min}
         max={max}
         step={step}
+        aria-label={label}
+        aria-valuetext={display}
         style={{ "--range-progress": `${progress}%` } as React.CSSProperties}
         onChange={(event) => onChange(Number(event.target.value))}
       />

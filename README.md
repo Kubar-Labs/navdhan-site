@@ -1,56 +1,63 @@
-# Navdhan Site
+# NavDhan site
 
-Marketing site for Navdhan, built with Next.js 15 (App Router), React 19, and Tailwind CSS 4.
+NavDhan's localized marketing site and existing application experience, built
+with Next.js 15, React 19, Tailwind CSS 4, and `next-intl`.
 
-## Stack
-
-- Next.js 15 (App Router, SSR)
-- next-intl (i18n, `app/[locale]`)
-- Tailwind CSS 4
-- Framer Motion
-- Drizzle ORM + Postgres (server-side, `app/api/*`)
-
-## Getting started
-
-Install dependencies and start the dev server:
+## Development
 
 ```bash
-npm install
+npm ci
 npm run dev
 ```
 
-## Scripts
+Useful checks:
 
-- `dev`: local development server
-- `build`: production build
-- `start`: run the production build locally
-- `lint`: run ESLint
-- `test` / `test:watch`: run Vitest
-- `sync:portal`: copy the built DSA portal (`dsa_portal/frontend`) into `public/apply/`
-- `db:generate` / `db:migrate` / `db:studio`: Drizzle ORM helpers
-- `cf:build` / `cf:preview` / `deploy:cf`: build & deploy to Cloudflare Workers via OpenNext
+```bash
+npm run lint
+npm run typecheck
+npm test
+npm run build
+npm run cf:build
+```
 
-## Environment variables
+The lint command enforces the inherited 19-warning ceiling in the frozen
+application/backend files; any additional warning or any error fails the gate.
 
-Server-only values are read from `process.env` inside server handlers, route
-handlers (`app/api/*`), or server components. See `CLOUDFLARE-DEPLOY.md` for
-setting secrets (e.g. `DATABASE_URL`) on the deployed Worker.
+Agentation is available only in development, including on `/en/apply`; it is
+not rendered in production.
 
-## Deployment (Cloudflare Workers)
+## Application boundary
 
-See `CLOUDFLARE-DEPLOY.md`. In short: `npm run deploy:cf` builds with the
-OpenNext Cloudflare adapter and deploys the Worker `kubar-labs-navdhan-site`
-via `wrangler deploy`. `.github/workflows/deploy.yml` does this automatically
-on push to `main`.
+The frontend redesign deliberately preserves the application/backend state
+that existed at commit `9c6a6813df3e01044d83dfdf0bef736b6c0e3451`.
+In particular, frontend-only work must not change:
+
+- `app/api/apply/`
+- `src/lib/apply/server/`
+- `src/types/apply.ts`
+- `dsa_portal/`
+- `public/apply/`
+- `scripts/sync-portal.mjs`
+
+The root application routes retain their pre-redesign in-process MVP storage
+behavior. This repository does not select or migrate to a replacement database
+as part of the frontend release. Database/backend changes require a separate,
+explicitly approved project.
 
 ## Project structure
 
-- `app/`: Next.js App Router routes, layouts, and API route handlers
 - `app/[locale]/(marketing)`: localized marketing pages
-- `app/apply`: application flow pages
-- `src/components`: shared React components
-- `src/db`: Drizzle schema/config
-- `src/lib`, `src/hooks`, `src/types`: utilities, hooks, and types
-- `content/`: structured content (company info, legal pages)
-- `public/apply/`: built DSA portal (embedded verification flow), synced via `npm run sync:portal` — do not edit by hand
-- `dsa_portal/`: separate DSA portal frontend/backend, untouched by this migration
+- `app/[locale]/apply`: localized application entry point
+- `app/apply`: existing application UI and state flow
+- `app/api/apply`: existing application route handlers
+- `src/components`: shared and marketing components
+- `content`: structured marketing and legal content
+- `dsa_portal` and `public/apply`: preserved legacy portal source and assets
+
+## Deployment
+
+The production frontend runs as the Cloudflare Worker
+`kubar-labs-navdhan-site`. GitHub Actions are not relied on because the account
+does not currently have active Actions billing. Follow
+[`CLOUDFLARE-DEPLOY.md`](./CLOUDFLARE-DEPLOY.md) for preview, production,
+verification, and rollback steps.

@@ -64,7 +64,7 @@ Polish the deployed NavDhan marketing MVP on `factory/navdhan-redesign/integrati
 - Borrower-facing wording only; remove lender/platform language.
 - Footer tagline: "One stop-solution for all your working capital needs".
 - HQ address: "156, Tarvakere, BTM Layout 1st Stage, Bengaluru, Karnataka".
-- Emails: `@kubar.tech` for support, partnerships, careers, press, loan; `outreach@kubar.tech` for Talk to Us.
+- Emails: `@navdhan.app` for support, partnerships, careers, press, loan, and general enquiries.
 
 ## Risk / blockers
 
