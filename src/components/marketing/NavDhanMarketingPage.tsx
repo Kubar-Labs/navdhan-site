@@ -95,7 +95,7 @@ export function PartnerMarketingPage({ locale, audience }: { locale: string; aud
 function Hero({ locale, audience }: { locale: string; audience: JourneyAudience }) {
   const content = {
     borrower: {
-      eyebrow: "Business financing, made clear",
+      eyebrow: "Business financing, made simple",
       title: <>Business financing,<br />without the runaround.</>,
       body: "Apply once, share your details securely, and continue to financing options from our lending partners.",
       primary: "Start Application",
@@ -109,7 +109,7 @@ function Hero({ locale, audience }: { locale: string; audience: JourneyAudience 
       body: "Give your business customers a clear path to financing. Start with the hosted NavDhan journey and discuss deeper integration when you’re ready.",
       primary: "Discuss Integration",
       secondary: "Start Application",
-      primaryHref: "mailto:partnerships@kubar.tech",
+      primaryHref: "mailto:partnerships@navdhan.app",
       secondaryHref: `/${locale}/apply`,
     },
     lender: {
@@ -118,7 +118,7 @@ function Hero({ locale, audience }: { locale: string; audience: JourneyAudience 
       body: "Bring structure to origination while keeping eligibility, underwriting and lending terms with your team.",
       primary: "Partner with NavDhan",
       secondary: "See Responsibilities",
-      primaryHref: "mailto:partnerships@kubar.tech",
+      primaryHref: "mailto:partnerships@navdhan.app",
       secondaryHref: "#responsibilities",
     },
   }[audience];
@@ -198,7 +198,7 @@ function FaqSection() {
         <Eyebrow>Good to know</Eyebrow>
         <h2 className={styles.displayHeading}>Answers, without<br />the jargon.</h2>
         <p>A few things to know before you begin.</p>
-        <a href="mailto:support@kubar.tech">Still need a hand?<br />support@kubar.tech</a>
+        <a href="mailto:support@navdhan.app">Still need a hand?<br />support@navdhan.app</a>
       </div>
       <div className={styles.faqList}>
         {faqs.map(([question, answer], index) => {
@@ -231,10 +231,10 @@ function EditorialCard({ accent, eyebrow, title, body, bullets }: { accent: "gre
 
 function Closing({ locale, audience }: { locale: string; audience: JourneyAudience }) {
   const content = audience === "borrower"
-    ? { title: <>Ready for your<br />next business move?</>, body: "Start with one application. Take it one clear step at a time.", button: "Start Application", href: `/${locale}/apply`, link: "Talk to Us", linkHref: "mailto:hello@kubar.tech" }
+    ? { title: <>Ready for your<br />next business move?</>, body: "Start with one application. Take it one clear step at a time.", button: "Start Application", href: `/${locale}/apply`, link: "Talk to Us", linkHref: "mailto:hello@navdhan.app" }
     : audience === "platform"
-      ? { title: <>Let’s map your<br />customer journey.</>, body: "Start with the hosted flow or discuss the next integration step.", button: "Discuss Integration", href: "mailto:partnerships@kubar.tech", link: "partnerships@kubar.tech", linkHref: "mailto:partnerships@kubar.tech" }
-      : { title: <>Let’s discuss your<br />origination needs.</>, body: "Align the borrower journey, information requirements and handoff.", button: "Partner with NavDhan", href: "mailto:partnerships@kubar.tech", link: "partnerships@kubar.tech", linkHref: "mailto:partnerships@kubar.tech" };
+      ? { title: <>Let’s map your<br />customer journey.</>, body: "Start with the hosted flow or discuss the next integration step.", button: "Discuss Integration", href: "mailto:partnerships@navdhan.app", link: "partnerships@navdhan.app", linkHref: "mailto:partnerships@navdhan.app" }
+      : { title: <>Let’s discuss your<br />origination needs.</>, body: "Align the borrower journey, information requirements and handoff.", button: "Partner with NavDhan", href: "mailto:partnerships@navdhan.app", link: "partnerships@navdhan.app", linkHref: "mailto:partnerships@navdhan.app" };
   return (
     <section className={styles.closing}>
       <div><h2>{content.title}</h2><p>{content.body}</p></div>

@@ -2,71 +2,55 @@
   "pageHeadingKey": "Built by people who believe in small business.",
   "pageSubtextKey": "We are builders, engineers, designers, and operators working to make MSME credit calm, clear, and honest.",
   "joinCtaKey": "Join the team",
-  "joinHref": "mailto:careers@kubar.tech",
+  "joinHref": "mailto:careers@navdhan.app",
   "members": [
     {
       "id": "vaibhav-sharma",
       "name": "Vaibhav Sharma",
-      "roleKey": "Founder & Head of Product",
-      "bioKey": "Building NavDhan to make MSME credit calm, fair and accessible across India.",
-      "imageAsset": "/assets/team/vaibhav.jpg",
+      "roleKey": "Founder",
+      "bioKey": "Family-run SME roots | Digital assets, RWA tokenisation & trade-finance workflows | Built NavDhan’s origination stack through 4 months of lender co-design",
+      "imageAsset": "/assets/team/vaibhav.webp",
       "linkedIn": "https://www.linkedin.com/in/fenestbuc/"
-    },
-    {
-      "id": "agniva-ray",
-      "name": "Agniva Ray",
-      "roleKey": "Operations",
-      "bioKey": "People and Internal Systems | 7 YOE | Ex- Govt. Of Goa",
-      "imageAsset": "/assets/team/agniva.png",
-      "linkedIn": "https://www.linkedin.com/in/agnivaray/"
     },
     {
       "id": "rayansh-srivastava",
       "name": "Rayansh Srivastava",
-      "roleKey": "Founding Engineer",
-      "bioKey": "Multi-Agent AI Systems Builder | LLMs, GANs & MLOps",
-      "imageAsset": "/assets/team/rayansh.png",
+      "roleKey": "CTO",
+      "bioKey": "Multi-Agent AI & ML Systems | Previously built wealth-tech solutions for European Family Offices | Ex-Samsung ML Research",
+      "imageAsset": "/assets/team/rayansh.webp",
       "linkedIn": "https://www.linkedin.com/in/rayansh-srivastava-419951219/"
+    },
+    {
+      "id": "keshav-dudani",
+      "name": "Keshav Dudani",
+      "roleKey": "Founding ML Engineer",
+      "bioKey": "Backend & Applied ML | Prediction Systems & Financial NLP | Built commodity-trading systems deployed across 5 enterprises",
+      "imageAsset": "/assets/team/keshav.webp",
+      "linkedIn": "https://www.linkedin.com/in/keshav-dudani-617295251/"
     },
     {
       "id": "manchit-sanan",
       "name": "Manchit Sanan",
-      "roleKey": "Founding Engineer",
-      "bioKey": "API & Automation Expert | 13 YOE | US Healthcare to Fintech",
-      "imageAsset": "/assets/team/manchit.png",
+      "roleKey": "Compliance Lead",
+      "bioKey": "17+ Years Enterprise IT | API & Regulatory Infrastructure | US Healthcare → FinTech",
+      "imageAsset": "/assets/team/manchit.webp",
       "linkedIn": "https://www.linkedin.com/in/manchit-sanan-6b9705158/"
-    },
-    {
-      "id": "sreyan-chowdhury",
-      "name": "Sreyan M Chowdhury",
-      "roleKey": "Growth & Revenue Lead",
-      "bioKey": "GTM & RevOps Operator | 7+ YOE | B2B Distribution",
-      "imageAsset": "/assets/team/sreyan.png",
-      "linkedIn": "https://www.linkedin.com/in/sreyanmchowdhury/"
     },
     {
       "id": "divyesh-reddy",
       "name": "Divyesh Reddy",
-      "roleKey": "Borrower Onboarding",
-      "bioKey": "Buyer-Risk Intelligence | MSME Credit Analytics",
-      "imageAsset": "/assets/team/divyesh.png",
+      "roleKey": "Partnerships Lead",
+      "bioKey": "MSME Credit Analytics | Previously built Buyer-Risk Intelligence for MSMEs | Lender & Ecosystem Partnerships",
+      "imageAsset": "/assets/team/divyesh.webp",
       "linkedIn": "https://www.linkedin.com/in/divyesh-reddy/"
     },
     {
-      "id": "debpriyo-ghosal",
-      "name": "Debpriyo Ghosal",
-      "roleKey": "Founding Engineer",
-      "bioKey": "Full-Stack & AI Developer | Open-Source Contributor",
-      "imageAsset": "/assets/team/debpriyo.png",
-      "linkedIn": "https://www.linkedin.com/in/debpriyo-ghosal-0759a92a6/"
-    },
-    {
-      "id": "mridul-malani",
-      "name": "Mridul Malani",
-      "roleKey": "Resource Development Lead",
-      "bioKey": "MS at HEC Paris | CUDA and Triton | Ex- RIL, CWC, Earlyseed",
-      "imageAsset": "/assets/team/mridul.png",
-      "linkedIn": "https://www.linkedin.com/in/mridulmalani/"
+      "id": "kavish-mahajan",
+      "name": "Kavish Mahajan",
+      "roleKey": "Creative Director",
+      "bioKey": "Brand & Product Design | Owns Kubar’s Brand, UI/UX & Design Systems | Previously founded & scaled a design agency",
+      "imageAsset": "/assets/team/kavish.webp",
+      "linkedIn": "https://www.linkedin.com/in/koverner/"
     }
   ],
   "advisors": [

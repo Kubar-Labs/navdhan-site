@@ -55,7 +55,7 @@ export async function Footer({ locale }: FooterProps) {
               </li>
               <li>
                 <a
-                  href="mailto:hello@kubar.tech"
+                  href="mailto:hello@navdhan.app"
                   className="hover:text-white focus-visible:rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-nt-orange-600"
                 >
                   Contact

@@ -16,7 +16,7 @@ export default async function ApplyLayout({ children, params }: ApplyLayoutProps
         navLinks={[{ label: t("cta.backToHome"), href: `/${locale}` }]}
         cta={{
           label: t("contact.support"),
-          href: "mailto:support@kubar.tech",
+          href: "mailto:support@navdhan.app",
           variant: "secondary",
         }}
         currentLocale={locale}

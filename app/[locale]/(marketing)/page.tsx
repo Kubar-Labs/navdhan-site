@@ -4,7 +4,7 @@ import { HomeMarketingPage } from "@/src/components/marketing/NavDhanMarketingPa
 import { isValidLocale } from "@/src/lib/i18n/config";
 
 export const metadata: Metadata = {
-  title: "Business financing, made clear | NavDhan",
+  title: "Business financing, made simple | NavDhan",
   description: "Apply once, share your details securely, and continue to financing options from NavDhan lending partners.",
 };
 

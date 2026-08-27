@@ -30,7 +30,7 @@ export function MarketingHeader({ locale }: { locale: Locale }) {
             href={link.href}
             className={pathname === link.href ? styles.activeNav : undefined}
           >
-            {link.label}{link.label === "Loan Options" ? <span aria-hidden>⌄</span> : null}
+            {link.label}
           </Link>
         ))}
       </nav>
@@ -83,12 +83,12 @@ export function MarketingFooter({ locale }: { locale: Locale }) {
     ["Team", `/${locale}/team`],
   ];
   const contact = [
-    ["Loan Enquiry", "mailto:loans@kubar.tech"],
-    ["Partnership Enquiry", "mailto:partnerships@kubar.tech"],
-    ["Talk to Us", "mailto:hello@kubar.tech"],
-    ["Support", "mailto:support@kubar.tech"],
-    ["Careers", "mailto:careers@kubar.tech"],
-    ["Press", "mailto:press@kubar.tech"],
+    ["Loan Enquiry", "mailto:loans@navdhan.app"],
+    ["Partnership Enquiry", "mailto:partnerships@navdhan.app"],
+    ["Talk to Us", "mailto:hello@navdhan.app"],
+    ["Support", "mailto:support@navdhan.app"],
+    ["Careers", "mailto:careers@navdhan.app"],
+    ["Press", "mailto:press@navdhan.app"],
   ];
   const legal = [
     ["Privacy Policy", "privacy-policy"],
@@ -105,8 +105,7 @@ export function MarketingFooter({ locale }: { locale: Locale }) {
       <div className={styles.footerGrid}>
         <div className={styles.footerBrand}>
           <Image src="/assets/logos/NavDhan.png" alt="NavDhan" width={160} height={71} />
-          <p>Business financing,<br />made clear.</p>
-          <small>A Kubar Protocol initiative.</small>
+          <p>Business financing,<br />made simple.</p>
         </div>
         <FooterColumn title="Explore" links={explore} />
         <FooterColumn title="Contact" links={contact} />
@@ -123,7 +122,6 @@ export function MarketingFooter({ locale }: { locale: Locale }) {
       <div className={styles.footerBottom}>
         <div>
           <p>Kubar Protocol Private Limited · CIN: U70200WB2024PTC274850</p>
-          <p>156, Tarvakere, BTM Layout 1st Stage, Bengaluru, Karnataka</p>
         </div>
         <label>
           <span className={styles.srOnly}>Language</span>
@@ -134,7 +132,7 @@ export function MarketingFooter({ locale }: { locale: Locale }) {
           </select>
         </label>
         <p>NavDhan does not lend directly. Credit decisions, rates and terms remain with the lending partner.</p>
-        <p>© 2026 Kubar Protocol Private Limited. NavDhan is powered by Kubar.</p>
+        <p>© 2026 Kubar Protocol Private Limited.</p>
       </div>
     </footer>
   );

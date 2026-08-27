@@ -40,12 +40,12 @@
       "ariaLabel": "Mobile navigation"
     },
     "contact": {
-      "loan": "loan@kubar.tech",
-      "partnership": "partnerships@kubar.tech",
-      "support": "support@kubar.tech",
-      "careers": "careers@kubar.tech",
-      "press": "press@kubar.tech",
-      "outreach": "outreach@kubar.tech"
+      "loan": "loan@navdhan.app",
+      "partnership": "partnerships@navdhan.app",
+      "support": "support@navdhan.app",
+      "careers": "careers@navdhan.app",
+      "press": "press@navdhan.app",
+      "outreach": "outreach@navdhan.app"
     },
     "footer": {
       "tagline": "One stop-solution for all your working capital needs",
@@ -58,27 +58,27 @@
       "contactLinks": [
         {
           "labelKey": "Loan Enquiry",
-          "href": "mailto:loan@kubar.tech"
+          "href": "mailto:loan@navdhan.app"
         },
         {
           "labelKey": "Partnership Enquiry",
-          "href": "mailto:partnerships@kubar.tech"
+          "href": "mailto:partnerships@navdhan.app"
         },
         {
           "labelKey": "Talk to Us",
-          "href": "mailto:outreach@kubar.tech"
+          "href": "mailto:outreach@navdhan.app"
         },
         {
           "labelKey": "Support",
-          "href": "mailto:support@kubar.tech"
+          "href": "mailto:support@navdhan.app"
         },
         {
           "labelKey": "Careers",
-          "href": "mailto:careers@kubar.tech"
+          "href": "mailto:careers@navdhan.app"
         },
         {
           "labelKey": "Press",
-          "href": "mailto:press@kubar.tech"
+          "href": "mailto:press@navdhan.app"
         }
       ],
       "companyLinks": [
@@ -92,7 +92,7 @@
         },
         {
           "labelKey": "Contact",
-          "href": "mailto:hello@kubar.tech"
+          "href": "mailto:hello@navdhan.app"
         }
       ],
       "legalLinks": [
