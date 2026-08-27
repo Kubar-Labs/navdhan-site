@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Check } from "lucide-react";
-import { TrustBadgeBar } from "@/src/components/apply/TrustBadgeBar.stub";
 import { InlineFieldFeedback } from "@/src/components/apply/InlineFieldFeedback";
 import { ApplyFormValues, DocumentRef, WizardStepId } from "@/app/apply/lib/types";
 import {
@@ -968,16 +967,8 @@ export function WizardShell({
     title: s.title,
   }));
 
-  const trustBadgeItems = (t.trustBadges ?? defaultMessages.trustBadges ?? [])
-    .filter((name): name is string => typeof name === "string")
-    .map((name) => ({ name }));
-
   return (
     <div className="mx-auto max-w-3xl rounded-3xl border border-nt-slate-200/80 bg-white p-6 sm:p-10 shadow-xl shadow-slate-200/50 backdrop-blur-xs">
-      <div className="mb-6 pb-6 border-b border-nt-slate-100">
-        <TrustBadgeBar badges={trustBadgeItems} layout="inline" variant="light" />
-      </div>
-      
       <Stepper steps={stepperSteps} currentStepId={currentStepId} completedSteps={completedSteps} />
 
       {currentStepDef && (
