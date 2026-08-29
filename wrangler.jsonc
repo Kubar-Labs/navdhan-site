@@ -1,7 +1,7 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "kubar-labs-navdhan-site",
-  "main": ".open-next/worker.js",
+  "main": "worker/index.js",
   "compatibility_date": "2026-08-19",
   "compatibility_flags": ["nodejs_compat"],
   "routes": [
@@ -12,6 +12,14 @@
     "directory": ".open-next/assets",
     "binding": "ASSETS"
   },
+  "durable_objects": {
+    "bindings": [
+      { "name": "APPLY_RATE_LIMITER_DO", "class_name": "ApplyRateLimiter" }
+    ]
+  },
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["ApplyRateLimiter"] }
+  ],
   "ratelimits": [
     {
       "name": "APPLY_SESSION_RATE_LIMITER",

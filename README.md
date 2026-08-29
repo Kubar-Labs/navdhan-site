@@ -28,6 +28,11 @@ backend's `APPLY_SERVICE_TOKEN` and must never use a `NEXT_PUBLIC_` name.
 Agentation is mounted only in development, including on localized `/apply`
 routes, and is not rendered in production.
 
+Deployed apply routes use Cloudflare's native rate-limit bindings as a coarse
+first layer and an `ApplyRateLimiter` Durable Object for exact enforcement. The
+checked-in `worker/index.js` wrapper and both Wrangler configs are therefore
+release-critical; see `CLOUDFLARE-DEPLOY.md` for migration and rollback rules.
+
 Useful release checks:
 
 ```bash

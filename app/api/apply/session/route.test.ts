@@ -4,10 +4,21 @@ import { createHash } from "crypto";
 const sessionRateLimitMock = vi.hoisted(() =>
   vi.fn().mockResolvedValue({ success: true }),
 );
+const exactRateLimitMock = vi.hoisted(() =>
+  vi.fn().mockResolvedValue(
+    Response.json({ success: true, retry_after_seconds: 0 }),
+  ),
+);
 
 vi.mock("@opennextjs/cloudflare", () => ({
   getCloudflareContext: vi.fn().mockResolvedValue({
-    env: { APPLY_SESSION_RATE_LIMITER: { limit: sessionRateLimitMock } },
+    env: {
+      APPLY_SESSION_RATE_LIMITER: { limit: sessionRateLimitMock },
+      APPLY_RATE_LIMITER_DO: {
+        idFromName: vi.fn().mockReturnValue("synthetic-object-id"),
+        get: vi.fn().mockReturnValue({ fetch: exactRateLimitMock }),
+      },
+    },
   }),
 }));
 
@@ -102,7 +113,10 @@ describe("POST /api/apply/session", () => {
     expect(response.status).toBe(201);
     expect(response.headers.get("cache-control")).toBe("no-store");
     expect(response.headers.get("pragma")).toBe("no-cache");
-    expect(sessionRateLimitMock).toHaveBeenCalledWith({ key: "203.0.113.10" });
+    const rateLimitKey = sessionRateLimitMock.mock.calls[0][0].key as string;
+    expect(rateLimitKey).toMatch(/^[a-f0-9]{64}$/);
+    expect(rateLimitKey).not.toContain("203.0.113.10");
+    expect(exactRateLimitMock).toHaveBeenCalledOnce();
     expect(fetchMock).toHaveBeenCalledOnce();
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(url).toBe("https://backend.example/api/apply/session");

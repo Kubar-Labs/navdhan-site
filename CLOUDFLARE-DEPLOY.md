@@ -58,6 +58,28 @@ Do **not** set `DATABASE_URL` on the Worker. The root application reaches
 PostgreSQL only through the authenticated FastAPI backend; Cloud SQL credentials
 belong exclusively to Cloud Run.
 
+### Apply rate limiting
+
+Public apply routes use two Cloudflare layers. The four native rate-limit
+bindings are a fast coarse filter (`session` 10/minute, `write` 120/minute,
+`upload` 10/minute, and `read` 300/minute). Cloudflare documents those bindings
+as permissive and eventually consistent, so they are not the enforcement
+boundary. `APPLY_RATE_LIMITER_DO` is the authoritative fixed-window limiter: it
+keys one `ApplyRateLimiter` Durable Object by a SHA-256 hash of the client IP
+and rate class, stores no raw IP, and fails closed if either layer is missing or
+unavailable.
+
+Both Wrangler configs must continue to point `main` at `worker/index.js`. That
+wrapper re-exports the generated OpenNext handler and named exports, then adds
+`ApplyRateLimiter`; never edit or deploy `.open-next/worker.js` directly because
+the next OpenNext build replaces it. Keep the Durable Object binding and all
+four native bindings in both preview and production configs.
+
+`ApplyRateLimiter` was introduced by the ordered SQLite Durable Object
+migration tagged `v1`. Once deployed to an environment, that migration is
+permanent: do not edit, delete, reorder, or reuse the tag. Future Durable Object
+changes must append a new migration tag.
+
 ## Build and deploy
 
 Authenticate to the Team@kubar.tech Cloudflare account, then run from the
@@ -95,10 +117,11 @@ After deploy:
 - upload a PDF, prove it cannot satisfy a requirement while quarantined, wait
   for an authenticated clean verdict, and confirm the exact generation moves
   from `quarantine/` to `clean/` before delete/re-upload;
-- prove anonymous session and upload limits return 429 with a bounded
-  `Retry-After`, without storing an extra object;
-- verify the active Cloudflare plan accepts the configured upload size and the
-  rate-limit bindings enforce the expected behavior at the edge;
+- prove anonymous session and upload requests 1–10 are admitted and request 11
+  in the same minute returns 429 with a bounded `Retry-After`, without creating
+  an additional backend session or document record;
+- verify the active Cloudflare plan accepts the configured upload size and both
+  the native bindings and authoritative Durable Object are present at the edge;
 - inspect Worker and Cloud Run logs for token, session, and PII leakage; and
 - check CSP/HSTS/frame/nosniff headers, canonical URLs, locale routing, and
   `/sitemap.xml` as independent production gates.
@@ -113,6 +136,11 @@ If frontend errors rise, roll the Worker back to the recorded prior version
 before changing backend traffic. Use the Cloudflare dashboard's version
 rollback or the supported Wrangler rollback command for the installed version.
 Then verify both domains and an application resume.
+
+A Worker code rollback does not reverse the `v1` Durable Object migration or
+delete its namespace. Do not use a `deleted_classes` migration as an incident
+rollback and do not remove `v1` from either Wrangler config; retain the migration
+history so a later forward deployment sees the correct remote state.
 
 If the failure persists, follow `DEPLOYMENT.md`: route Cloud Run to its recorded
 prior revision. Do not run database down migrations as part of either rollback.
