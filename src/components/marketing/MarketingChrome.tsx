@@ -52,13 +52,13 @@ export function MarketingHeader({ locale }: { locale: Locale }) {
         ))}
       </nav>
       <Link
-        className={`${styles.button} ${styles.headerCta}`}
+        className={`${styles.button} ${styles.primary} ${styles.headerCta}`}
         href={`/${locale}/apply`}
         prefetch={false}
         onMouseEnter={prefetchApplication}
         onFocus={prefetchApplication}
       >
-        Start Application
+        Start Application <Arrow light />
       </Link>
       <button
         ref={menuButtonRef}

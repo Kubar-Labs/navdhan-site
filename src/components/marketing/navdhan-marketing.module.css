@@ -55,7 +55,13 @@
 }
 .button:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(15, 23, 42, .12); }
 .button:focus-visible, .site button:focus-visible, .site a:focus-visible, .header a:focus-visible, .header button:focus-visible, .footer a:focus-visible, .footer select:focus-visible { outline: 3px solid #007dad; outline-offset: 3px; }
-.headerCta { justify-self: end; min-height: 44px; padding: 9px 20px; border: 1px solid #ea580c; color: #c2410c !important; font-size: 14px; font-weight: 500; }
+.headerCta {
+  justify-self: end;
+  gap: 12px;
+  padding-inline: 16px;
+  font-size: 14px;
+  line-height: 22px;
+}
 .primary { background: #c2410c; color: white !important; }
 .primary:hover { background: #9a3412; }
 .secondary { border: 1.4px solid #0f172a; background: #fafaf8; color: #0f172a; }
