@@ -21,7 +21,6 @@ export interface BorrowerHeroCopy {
   primary: string;
   secondary: string;
 }
-
 export function HomeMarketingPage({ locale, heroCopy }: { locale: string; heroCopy?: BorrowerHeroCopy }) {
   return (
     <div className={styles.site}>
@@ -106,7 +105,7 @@ function Hero({ locale, audience, borrowerCopy }: { locale: string; audience: Jo
         primary: borrowerCopy.primary,
         secondary: borrowerCopy.secondary,
         primaryHref: `/${locale}/apply`,
-        secondaryHref: "#products",
+        secondaryHref: `/${locale}/how-it-works`,
       }
     : {
         eyebrow: "Business financing, made simple",
@@ -115,7 +114,7 @@ function Hero({ locale, audience, borrowerCopy }: { locale: string; audience: Jo
         primary: "Start Application",
         secondary: "See How It Works",
         primaryHref: `/${locale}/apply`,
-        secondaryHref: "#how-it-works",
+        secondaryHref: `/${locale}/how-it-works`,
       };
   const content = {
     borrower,

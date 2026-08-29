@@ -15,6 +15,16 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: locale === "en" ? 1 : 0.9,
     },
     {
+      url: `${SITE_URL}/${locale}/why-navdhan`,
+      changeFrequency: "monthly" as const,
+      priority: 0.8,
+    },
+    {
+      url: `${SITE_URL}/${locale}/how-it-works`,
+      changeFrequency: "monthly" as const,
+      priority: 0.8,
+    },
+    {
       url: `${SITE_URL}/${locale}/team`,
       changeFrequency: "monthly" as const,
       priority: 0.6,

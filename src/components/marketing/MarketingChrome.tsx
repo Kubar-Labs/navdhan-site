@@ -15,8 +15,8 @@ export function MarketingHeader({ locale }: { locale: Locale }) {
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const links = [
     { label: "Loan Options", href: `/${locale}/#products` },
-    { label: "How It Works", href: `/${locale}/#how-it-works` },
-    { label: "Why NavDhan", href: `/${locale}/#why` },
+    { label: "How It Works", href: `/${locale}/how-it-works` },
+    { label: "Why NavDhan", href: `/${locale}/why-navdhan` },
     { label: "For Platforms", href: `/${locale}/platforms` },
     { label: "For Lenders", href: `/${locale}/lenders` },
   ];
@@ -45,6 +45,7 @@ export function MarketingHeader({ locale }: { locale: Locale }) {
             key={link.label}
             href={link.href}
             className={pathname === link.href ? styles.activeNav : undefined}
+            aria-current={pathname === link.href ? "page" : undefined}
           >
             {link.label}
           </Link>
@@ -75,7 +76,13 @@ export function MarketingHeader({ locale }: { locale: Locale }) {
       {open ? (
         <nav id="mobile-navigation" className={styles.mobileNav} aria-label="Mobile navigation">
           {links.map((link) => (
-            <Link key={link.label} href={link.href} onClick={() => setOpen(false)}>
+            <Link
+              key={link.label}
+              href={link.href}
+              className={pathname === link.href ? styles.activeNav : undefined}
+              aria-current={pathname === link.href ? "page" : undefined}
+              onClick={() => setOpen(false)}
+            >
               {link.label}
             </Link>
           ))}
@@ -106,8 +113,8 @@ export function MarketingFooter({ locale }: { locale: Locale }) {
 
   const explore = [
     ["Loan Options", `/${locale}/#products`],
-    ["How It Works", `/${locale}/#how-it-works`],
-    ["Why NavDhan", `/${locale}/#why`],
+    ["How It Works", `/${locale}/how-it-works`],
+    ["Why NavDhan", `/${locale}/why-navdhan`],
     ["For Platforms", `/${locale}/platforms`],
     ["For Lenders", `/${locale}/lenders`],
     ["Team", `/${locale}/team`],

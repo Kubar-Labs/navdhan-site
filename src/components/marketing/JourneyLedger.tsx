@@ -36,7 +36,7 @@ export function JourneyLedger({ audience }: { audience: JourneyAudience }) {
             <span className={styles[`step${index + 1}`]}>0{index + 1}</span>
             <Image className={styles.stepIcon} src={`/assets/navdhan-redesign/${assets[index][0]}`} alt="" width={64} height={64} />
             <div className={styles.stepLabel}>
-              <Image src={`/assets/navdhan-redesign/${assets[index][1]}`} alt="" width={458} height={12} />
+              <Image src={`/assets/navdhan-redesign/${assets[index][1]}`} alt="" width={456} height={12} />
               <p>{label}</p>
             </div>
           </div>

@@ -14,7 +14,6 @@
   font-family: var(--font-inter), Inter, system-ui, sans-serif;
   letter-spacing: -.2px;
 }
-
 .site *, .header *, .footer * { box-sizing: border-box; }
 .site a, .header a, .footer a { color: inherit; text-decoration: none; }
 .site button, .header button, .footer button, .footer select { font: inherit; }
@@ -362,4 +361,628 @@
   .stepIcon { width: 40px; height: 40px; }
   .stepLabel p { font-size: 12px; line-height: 15px; white-space: normal; }
   .metricRow { grid-template-columns: 1fr; }
+}
+
+.informationPage {
+  overflow-x: clip;
+}
+.informationHero {
+  background: #fafaf8;
+}
+.informationHero h1 {
+  font-size: 82px;
+  line-height: 82px;
+  letter-spacing: -1px;
+}
+.informationHeroCopy > p:not(.eyebrow) {
+  margin-top: 24px;
+  font-size: 22px;
+  line-height: 34px;
+  letter-spacing: -0.55px;
+}
+.informationHeroCopy .heroActions {
+  margin-top: 32px;
+  padding-top: 0;
+}
+
+.informationChecklist {
+  display: flex;
+  width: min(100%, 736px);
+  min-height: 410px;
+  flex-direction: column;
+  gap: 16px;
+  padding: 28px 32px 24px;
+  border: 0.8px solid #d8d2c4;
+  border-radius: 12px;
+  background-color: #f7f3ea;
+  background-image: radial-gradient(rgba(51, 46, 31, 0.08) 0.55px, transparent 0.55px);
+  background-size: 4px 4px;
+}
+.informationChecklist .eyebrow {
+  margin-bottom: 0;
+}
+.informationChecklistItems {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.informationChecklistItem {
+  display: flex;
+  min-height: 58px;
+  align-items: center;
+  gap: 16px;
+}
+.informationChecklistItem > span {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+  place-items: center;
+  border: 1px solid #00875e;
+  color: #00875e;
+  font-size: 13px;
+  line-height: 1;
+}
+.informationChecklistItem p {
+  margin: 0;
+}
+.informationChecklistItem strong,
+.informationChecklistItem small {
+  display: block;
+}
+.informationChecklistItem strong {
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 24px;
+  letter-spacing: -0.4px;
+}
+.informationChecklistItem small {
+  margin-top: 4px;
+  color: #475569;
+  font-size: 14px;
+  line-height: 22px;
+}
+.informationChecklistNote {
+  margin-top: auto;
+  color: #475569;
+  font-size: 14px;
+  line-height: 22px;
+}
+
+.contextSection {
+  display: grid;
+  grid-template-columns: 610px minmax(0, 700px);
+  gap: 80px;
+  align-items: center;
+  padding-bottom: 80px;
+  background: #fafaf8;
+}
+.contextIntro {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.contextIntro .eyebrow {
+  margin-bottom: 20px;
+}
+.informationLead {
+  max-width: 530px;
+  margin: 20px 0 0;
+  font-size: 20px;
+  line-height: 32px;
+  letter-spacing: -0.55px;
+}
+.contextNote {
+  width: 560px;
+  margin: 20px 0 0;
+  padding: 8px 0 8px 16px;
+  border-left: 2px solid #00875e;
+  color: #475569;
+  font-size: 16px;
+  line-height: 26px;
+}
+.compactChecklist {
+  width: 700px;
+  min-height: 414px;
+}
+
+.informationEditorialSection {
+  padding-bottom: 72px;
+  background: white;
+}
+.informationSectionHeading {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+}
+.informationSectionHeading .eyebrow {
+  margin: 0;
+}
+.informationSectionHeading h2 {
+  margin: 0;
+  font-size: 38px;
+  font-weight: 600;
+  line-height: 48px;
+  letter-spacing: -1px;
+}
+.informationSectionHeading > p {
+  margin: -4px 0 0;
+  color: #475569;
+  font-size: 16px;
+  line-height: 26px;
+}
+.informationEditorialGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 32px;
+  margin-top: 32px;
+}
+.informationPaperPanel,
+.walkthroughCard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  overflow: hidden;
+  border: 0.8px solid #d8d2c4;
+  border-radius: 10px;
+  background-color: #f7f3ea;
+  background-image: radial-gradient(rgba(51, 46, 31, 0.08) 0.55px, transparent 0.55px);
+  background-size: 4px 4px;
+}
+.informationPaperPanel::before,
+.walkthroughCard::before {
+  content: "";
+  position: absolute;
+  inset: -1px -1px auto;
+  height: 2px;
+  background: var(--accent);
+}
+.informationPaperPanel {
+  min-height: 342px;
+  gap: 20px;
+  padding: 32px;
+}
+.informationPaperPanel .eyebrow,
+.walkthroughCard .eyebrow {
+  margin: 0;
+  color: var(--accent);
+  font-size: 14px;
+  line-height: 20px;
+}
+.informationPaperPanel h3,
+.walkthroughCard h3 {
+  margin: 0;
+  font:
+    40px/48px var(--font-safira-march),
+    Georgia,
+    serif;
+  letter-spacing: -0.3px;
+}
+.informationPaperPanel > p,
+.walkthroughCard > p {
+  margin: 0;
+  font-size: 18px;
+  line-height: 28px;
+}
+.informationPaperPanel ul,
+.walkthroughCard ul {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 16px;
+  line-height: 26px;
+}
+.informationPaperPanel li,
+.walkthroughCard li {
+  display: grid;
+  grid-template-columns: 10px 1fr;
+  gap: 12px;
+}
+.informationPaperPanel li::before,
+.walkthroughCard li::before {
+  content: "—";
+  color: var(--accent);
+}
+
+.walkthrough {
+  background: white;
+  scroll-margin-top: 20px;
+}
+.walkthroughGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  margin-top: 32px;
+}
+.walkthroughRow {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 32px;
+}
+.walkthroughCard {
+  min-width: 0;
+  min-height: 420px;
+  gap: 20px;
+  padding: 32px;
+  opacity: 1;
+  transform: none;
+}
+.walkthrough[data-reveal-mode="desktop"] .walkthroughCard:not([data-revealed]),
+.walkthrough[data-reveal-mode="mobile"] .walkthroughCard:not([data-revealed]) {
+  opacity: 0;
+}
+.walkthrough[data-reveal-mode="desktop"] .walkthroughCard:not([data-revealed]) {
+  transform: translateY(24px);
+}
+.walkthrough[data-reveal-mode="mobile"] .walkthroughCard:not([data-revealed]) {
+  transform: translateY(16px);
+}
+.walkthrough[data-reveal-mode="desktop"] .walkthroughCard[data-revealed] {
+  transition:
+    opacity 480ms cubic-bezier(0.22, 1, 0.36, 1) var(--reveal-delay),
+    transform 480ms cubic-bezier(0.22, 1, 0.36, 1) var(--reveal-delay);
+}
+.walkthrough[data-reveal-mode="mobile"] .walkthroughCard[data-revealed] {
+  transition:
+    opacity 420ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 420ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.informationFaqSection {
+  display: grid;
+  grid-template-areas: "intro list" "support list";
+  grid-template-columns: 440px minmax(0, 850px);
+  grid-template-rows: auto 1fr;
+  column-gap: 100px;
+  padding-bottom: 80px;
+  background: #fafaf8;
+}
+.informationFaqIntro {
+  grid-area: intro;
+}
+.informationFaqIntro .eyebrow {
+  margin-bottom: 20px;
+}
+.informationFaqIntro > p {
+  margin: 20px 0 0;
+  color: #475569;
+  font-size: 16px;
+  line-height: 26px;
+}
+.informationFaqSection .faqList {
+  grid-area: list;
+}
+.informationFaqSupport {
+  grid-area: support;
+  align-self: start;
+  color: #006e4c !important;
+  font-size: 16px;
+  line-height: 26px;
+}
+
+@media (max-width: 1100px) and (min-width: 901px) {
+  .contextSection {
+    grid-template-columns: 1fr 1fr;
+    gap: 48px;
+  }
+  .compactChecklist {
+    width: 100%;
+  }
+  .informationFaqSection {
+    grid-template-columns: 1fr 1fr;
+    column-gap: 48px;
+  }
+}
+
+@media (max-width: 900px) {
+  .informationPage .eyebrow {
+    margin-bottom: 16px;
+    font-size: 13px;
+    line-height: 20px;
+  }
+  .informationHero {
+    gap: 32px;
+    min-height: 0;
+  }
+  .whyHero {
+    gap: 30px;
+  }
+  .informationHero h1 {
+    font-size: 52px;
+    line-height: 54px;
+  }
+  .informationHeroCopy > p:not(.eyebrow) {
+    margin-top: 16px;
+    font-size: 18px;
+    line-height: 28px;
+    letter-spacing: -0.2px;
+  }
+  .informationHeroCopy .heroActions {
+    margin-top: 20px;
+  }
+  .informationHeroCopy .button,
+  .informationPage .closing .button {
+    font-size: 20px;
+    line-height: 26px;
+  }
+  .informationPage .ledgerRows {
+    padding: 24px 14px 0 42px;
+  }
+  .informationPage .ledgerRow {
+    grid-template-columns: 28px 36px 1fr;
+    gap: 10px;
+    height: 84px;
+  }
+  .informationPage .ledgerRow > span {
+    font-size: 30px;
+    line-height: 38px;
+  }
+  .informationPage .stepIcon {
+    width: 36px;
+    height: 36px;
+  }
+  .informationPage .stepLabel {
+    padding-top: 9px;
+  }
+  .informationPage .stepLabel img {
+    height: 10px;
+  }
+  .informationPage .stepLabel p {
+    margin-top: 6px;
+    font-size: 18px;
+    line-height: 24px;
+    letter-spacing: -0.4px;
+  }
+  .informationPage .ledgerNote {
+    gap: 8px;
+    height: 74px;
+    padding: 12px 0;
+    font-size: 14px;
+    line-height: 22px;
+  }
+  .informationPage .ledgerNote img {
+    width: 14px;
+    height: 14px;
+  }
+  .informationPage .trustStrip {
+    padding-inline: 24px;
+  }
+  .informationPage .trustStrip > div {
+    gap: 8px;
+    font-size: 14px;
+    line-height: 18px;
+  }
+  .informationPage .trustStrip img {
+    width: 44px;
+    height: 44px;
+  }
+  .informationChecklist {
+    width: 100%;
+    height: 462px;
+    min-height: 0;
+    gap: 16px;
+    padding: 24px;
+  }
+  .informationChecklist .eyebrow {
+    margin-bottom: 0;
+    font-size: 17px;
+    line-height: 24px;
+  }
+  .informationChecklistItems {
+    gap: 16px;
+  }
+  .informationChecklistItem {
+    min-height: 0;
+    gap: 16px;
+  }
+  .informationChecklistItem > span {
+    width: 24px;
+    height: 24px;
+    flex-basis: 24px;
+    font-size: 13px;
+  }
+  .informationChecklistItem strong {
+    font-size: 18px;
+    line-height: 24px;
+  }
+  .informationChecklistItem small {
+    font-size: 14px;
+    line-height: 22px;
+  }
+  .informationChecklistNote {
+    font-size: 14px;
+    line-height: 22px;
+  }
+
+  .contextSection {
+    display: flex;
+    min-height: 906px;
+    flex-direction: column;
+    gap: 24px;
+    align-items: stretch;
+    padding-bottom: 48px;
+  }
+  .contextIntro .eyebrow {
+    margin-bottom: 16px;
+  }
+  .informationLead {
+    margin-top: 16px;
+    font-size: 16px;
+    line-height: 26px;
+    letter-spacing: -0.2px;
+  }
+  .contextNote {
+    width: 100%;
+    margin-top: 16px;
+    padding: 4px 0 4px 12px;
+    font-size: 14px;
+    line-height: 22px;
+  }
+  .compactChecklist {
+    height: 484px;
+    min-height: 0;
+  }
+
+  .informationEditorialSection {
+    padding-bottom: 48px;
+  }
+  .informationSectionHeading {
+    gap: 12px;
+  }
+  .informationSectionHeading .eyebrow {
+    margin: 0;
+  }
+  .informationSectionHeading h2 {
+    font-size: 32px;
+    line-height: 40px;
+    letter-spacing: -0.5px;
+  }
+  .informationSectionHeading > p {
+    margin-top: 0;
+    font-size: 16px;
+    line-height: 26px;
+  }
+  .informationEditorialGrid {
+    grid-template-columns: 1fr;
+    gap: 24px;
+    margin-top: 24px;
+  }
+  .informationPaperPanel {
+    height: 324px;
+    min-height: 0;
+    gap: 16px;
+    padding: 24px;
+  }
+  .informationPaperPanel .eyebrow,
+  .walkthroughCard .eyebrow {
+    margin-bottom: 0;
+    font-size: 12px;
+    line-height: 18px;
+  }
+  .informationPaperPanel h3,
+  .walkthroughCard h3 {
+    font-size: 32px;
+    line-height: 38px;
+  }
+  .informationPaperPanel > p,
+  .walkthroughCard > p {
+    font-size: 16px;
+    line-height: 26px;
+  }
+  .informationPaperPanel ul,
+  .walkthroughCard ul {
+    gap: 8px;
+    font-size: 16px;
+    line-height: 26px;
+  }
+  .informationPaperPanel li,
+  .walkthroughCard li {
+    grid-template-columns: 10px 1fr;
+    gap: 12px;
+  }
+  .informationEditorialGrid .informationPaperPanel:nth-child(2) {
+    height: 388px;
+  }
+  .walkthrough + .informationEditorialSection .informationPaperPanel:first-child {
+    height: 350px;
+  }
+  .walkthrough + .informationEditorialSection .informationPaperPanel:nth-child(2) {
+    height: 440px;
+  }
+
+  .walkthrough {
+    scroll-margin-top: 0;
+  }
+  .walkthroughGrid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 24px;
+    margin-top: 24px;
+  }
+  .walkthroughRow {
+    display: contents;
+  }
+  .walkthroughCard {
+    min-height: 324px;
+    gap: 16px;
+    padding: 23px 24px;
+  }
+  .walkthroughCard[data-testid="walkthrough-card-04"],
+  .walkthroughCard[data-testid="walkthrough-card-07"],
+  .walkthroughCard[data-testid="walkthrough-card-08"] {
+    min-height: 376px;
+  }
+  .walkthroughCard[data-testid="walkthrough-card-09"] {
+    min-height: 350px;
+  }
+
+  .informationFaqSection {
+    display: flex;
+    min-height: 0;
+    flex-direction: column;
+    gap: 24px;
+    padding-bottom: 48px;
+  }
+  .informationFaqIntro .eyebrow {
+    margin: 0 0 16px;
+  }
+  .informationFaqIntro > p {
+    margin-top: 16px;
+    font-size: 16px;
+    line-height: 26px;
+  }
+  .informationFaqSupport {
+    font-size: 16px;
+    line-height: 26px;
+  }
+  .informationFaqSection .faq button {
+    padding: 23.5px 0;
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 26px;
+    letter-spacing: -0.4px;
+  }
+  .informationFaqSection .faq button img {
+    width: 22px;
+    height: 22px;
+  }
+  .informationFaqSection .faq p {
+    margin: -12px 0 24px;
+    font-size: 16px;
+    line-height: 26px;
+  }
+  .informationPage .closing {
+    gap: 28px;
+    padding-block: 40px;
+  }
+  .informationPage .closing p {
+    margin-top: 16px;
+    font-size: 16px;
+    line-height: 26px;
+  }
+  .informationPage .textLink {
+    font-size: 18px;
+    line-height: 24px;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .walkthroughCard {
+    will-change: opacity, transform;
+  }
+  .walkthroughCard[data-revealed] {
+    will-change: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .walkthrough[data-reveal-mode] .walkthroughCard {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
 }
