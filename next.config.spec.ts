@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import nextConfig, { buildSecurityHeaders, SECURITY_HEADERS } from "./next.config";
 
 describe("Next development watcher configuration", () => {
-  it("preserves Next's RegExp defaults and ignores local document fixtures", () => {
+  it("preserves Next's RegExp defaults and ignores local application data", () => {
     const webpack = nextConfig.webpack;
     expect(webpack).toBeTypeOf("function");
 
@@ -14,6 +14,7 @@ describe("Next development watcher configuration", () => {
     expect(ignored).toMatchObject({ source: expect.stringContaining("node_modules") });
     expect(ignored.test("/workspace/node_modules/react/index.js")).toBe(true);
     expect(ignored.test("/workspace/.next/cache/file")).toBe(true);
+    expect(ignored.test("/workspace/database/.local/data/base/1")).toBe(true);
     expect(ignored.test("/workspace/dsa_portal/backend/.local_documents/file.pdf")).toBe(true);
   });
 });

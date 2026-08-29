@@ -48,11 +48,14 @@ export function buildSecurityHeaders(nodeEnv = process.env.NODE_ENV) {
 export const SECURITY_HEADERS = buildSecurityHeaders();
 
 const LOCAL_WATCH_IGNORE_GLOBS = [
+  "**/database/.local/**",
   "**/dsa_portal/backend/.local_documents/**",
 ];
 
-const LOCAL_WATCH_IGNORE_SOURCE =
-  String.raw`(?:^|[/\\])dsa_portal[/\\]backend[/\\]\.local_documents(?:[/\\]|$)`;
+const LOCAL_WATCH_IGNORE_SOURCE = [
+  String.raw`(?:^|[/\\])database[/\\]\.local(?:[/\\]|$)`,
+  String.raw`(?:^|[/\\])dsa_portal[/\\]backend[/\\]\.local_documents(?:[/\\]|$)`,
+].join("|");
 
 export function extendWatchIgnored(ignored: unknown): string[] | RegExp {
   if (ignored instanceof RegExp) {
@@ -104,9 +107,8 @@ const nextConfig: NextConfig = {
   images: {
     unoptimized: true,
   },
-  // Local document fixtures can be written inside the repository while the
-  // legacy portal is running. Ignore those writes so Fast Refresh does not
-  // remount the application wizard and discard unsaved in-progress input.
+  // Local database and document storage writes must not trigger Fast Refresh,
+  // which would remount the application wizard and discard in-progress input.
   webpack: (config, { dev }) => {
     if (dev) {
       config.watchOptions = {

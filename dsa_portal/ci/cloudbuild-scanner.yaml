@@ -1,0 +1,44 @@
+# Build and publish a production malware scanner image. Cloud Run deployment is
+# a separate operator action after all staging scanner gates pass.
+
+steps:
+  - name: gcr.io/google.com/cloudsdktool/cloud-sdk@sha256:fbc4b76c34c8e2847a83f9bfcf445daa6a231a818a470b218f15bec8c1cb1a00
+    id: validate-trigger-source
+    entrypoint: bash
+    env:
+      - RELEASE_SHA=${COMMIT_SHA}
+    args:
+      - -ceu
+      - |
+        if [[ ! "$$RELEASE_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+          echo "ERROR: use a repository-connected trigger that supplies the full COMMIT_SHA." >&2
+          exit 1
+        fi
+
+  - name: gcr.io/cloud-builders/docker@sha256:661e95acd923514f71f47ce7b390e06a8d31b15febecf772e506babf62960528
+    id: build-scanner
+    waitFor: [validate-trigger-source]
+    args:
+      - build
+      - --pull
+      - --file=dsa_portal/scanner/Dockerfile
+      - --tag=asia-south1-docker.pkg.dev/kubardevops/kuber/navdhan-scanner:${COMMIT_SHA}-$BUILD_ID
+      - dsa_portal/scanner
+
+  - name: gcr.io/cloud-builders/docker@sha256:661e95acd923514f71f47ce7b390e06a8d31b15febecf772e506babf62960528
+    id: push-scanner
+    waitFor: [build-scanner]
+    args:
+      - push
+      - asia-south1-docker.pkg.dev/kubardevops/kuber/navdhan-scanner:${COMMIT_SHA}-$BUILD_ID
+
+serviceAccount: projects/kubardevops/serviceAccounts/navdhan-build-sa@kubardevops.iam.gserviceaccount.com
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+  requestedVerifyOption: VERIFIED
+
+images:
+  - asia-south1-docker.pkg.dev/kubardevops/kuber/navdhan-scanner:${COMMIT_SHA}-$BUILD_ID
+
+timeout: 1200s

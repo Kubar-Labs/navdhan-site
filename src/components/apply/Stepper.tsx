@@ -58,6 +58,7 @@ export function Stepper({
             >
               <div className="group relative flex flex-col items-center shrink-0">
                 <span
+                  aria-current={isActive ? "step" : undefined}
                   className={`flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full text-xs font-semibold transition-all duration-200 shadow-xs ${
                     isActive
                       ? "bg-nt-orange-600 text-white ring-3 ring-nt-orange-600/20 scale-105"
@@ -66,7 +67,11 @@ export function Stepper({
                       : "border border-nt-slate-300 bg-white text-nt-slate-400"
                   }`}
                 >
-                  {isCompleted ? <Check className="h-3.5 w-3.5 stroke-[2.5]" /> : stepNumber}
+                  {isCompleted ? (
+                    <Check className="h-3.5 w-3.5 stroke-[2.5]" aria-hidden="true" />
+                  ) : (
+                    stepNumber
+                  )}
                 </span>
                 {!condensed && (
                   <span

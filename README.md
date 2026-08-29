@@ -1,63 +1,85 @@
-# NavDhan site
+# NavDhan
 
-NavDhan's localized marketing site and existing application experience, built
-with Next.js 15, React 19, Tailwind CSS 4, and `next-intl`.
+NavDhan's production application consists of:
 
-## Development
+- a localized Next.js 15 / React 19 frontend deployed to Cloudflare Workers;
+- a collection-only FastAPI service deployed to Google Cloud Run;
+- the authoritative PostgreSQL 18 schema in `database/`; and
+- private PDF storage in Google Cloud Storage.
+
+The former Perfios/Vite DSA portal and its database are retired reference
+material. They are not a migration source, compatibility target, or supported
+deployment path.
+
+## Local frontend
+
+Use Node.js 22 and install the committed lockfile exactly:
 
 ```bash
 npm ci
+cp .env.example .env.local
 npm run dev
 ```
 
-Useful checks:
+The root application is available at `http://localhost:3000`. Its server-side
+apply routes proxy to the FastAPI URL configured by
+`APPLY_BACKEND_BASE_URL`; `APPLY_BACKEND_SERVICE_TOKEN` must match the
+backend's `APPLY_SERVICE_TOKEN` and must never use a `NEXT_PUBLIC_` name.
+Agentation is mounted only in development, including on localized `/apply`
+routes, and is not rendered in production.
+
+Useful release checks:
 
 ```bash
 npm run lint
 npm run typecheck
 npm test
-npm run build
 npm run cf:build
 ```
 
-The lint command enforces the inherited 19-warning ceiling in the frozen
-application/backend files; any additional warning or any error fails the gate.
+## Local backend and database
 
-Agentation is available only in development, including on `/en/apply`; it is
-not rendered in production.
+The canonical backend is `dsa_portal/backend/collection_app.py`. Copy
+`dsa_portal/backend/.env.example` to an ignored `.env`, configure the
+PostgreSQL 18 database and cryptographic keys, then run from that directory:
 
-## Application boundary
+```bash
+python -m pip install --require-hashes -r requirements.lock
+python -m uvicorn collection_app:app --host 127.0.0.1 --port 8000
+```
 
-The frontend redesign deliberately preserves the application/backend state
-that existed at commit `9c6a6813df3e01044d83dfdf0bef736b6c0e3451`.
-In particular, frontend-only work must not change:
+The current upward migrations and required seed live in `database/`. Never
+apply them over the incompatible legacy DSA schema. Cloud releases must use
+`database/scripts/release.sh`, which accepts only an empty target or a database
+already carrying its checked release ledger.
 
-- `app/api/apply/`
-- `src/lib/apply/server/`
-- `src/types/apply.ts`
-- `dsa_portal/`
-- `public/apply/`
-- `scripts/sync-portal.mjs`
+Run the database and backend suites against PostgreSQL 18 before a release:
 
-The root application routes retain their pre-redesign in-process MVP storage
-behavior. This repository does not select or migrate to a replacement database
-as part of the frontend release. Database/backend changes require a separate,
-explicitly approved project.
+```bash
+python -m unittest discover -s database/tests -v
+cd dsa_portal/backend
+python -m unittest discover -s tests -v
+```
 
-## Project structure
+## Repository map
 
-- `app/[locale]/(marketing)`: localized marketing pages
-- `app/[locale]/apply`: localized application entry point
-- `app/apply`: existing application UI and state flow
-- `app/api/apply`: existing application route handlers
-- `src/components`: shared and marketing components
-- `content`: structured marketing and legal content
-- `dsa_portal` and `public/apply`: preserved legacy portal source and assets
+- `app/`, `src/`, `content/`: Next.js routes, UI, localization, and content
+- `database/`: authoritative PostgreSQL 18 migrations, seed, release tooling,
+  and database tests
+- `dsa_portal/backend/`: collection-only FastAPI service and tests
+- `dsa_portal/frontend/`, `dsa_portal/infra/`: retired legacy reference only
+- `.github/workflows/ci.yml`: frontend, backend, database, audit, and build gates
+- `DEPLOYMENT.md`: controlled staging and production release runbook
+- `CLOUDFLARE-DEPLOY.md`: Cloudflare Worker configuration and rollback
 
 ## Deployment
 
-The production frontend runs as the Cloudflare Worker
-`kubar-labs-navdhan-site`. GitHub Actions are not relied on because the account
-does not currently have active Actions billing. Follow
-[`CLOUDFLARE-DEPLOY.md`](./CLOUDFLARE-DEPLOY.md) for preview, production,
-verification, and rollback steps.
+Do not deploy from a dirty worktree or bypass staging. The required order is
+documented in `DEPLOYMENT.md`: disposable PostgreSQL 18 rehearsal, rebuilt
+staging acceptance, production backup/preflight and schema bootstrap,
+zero-traffic Cloud Run candidate, backend promotion, then the Cloudflare
+Worker. Database down migrations are never an application rollback mechanism.
+
+## License
+
+Proprietary.

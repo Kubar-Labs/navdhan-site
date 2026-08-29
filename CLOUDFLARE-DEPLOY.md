@@ -1,78 +1,118 @@
-# Deploying NavDhan to Cloudflare
+# Deploy the NavDhan Next.js Worker
 
-The Next.js site is built with the OpenNext Cloudflare adapter and deployed as
-the Worker `kubar-labs-navdhan-site`. `navdhan.app` and `www.navdhan.app` are
-production custom domains configured only in `wrangler.jsonc`.
+The supported frontend is the repository-root Next.js application built with
+the OpenNext Cloudflare adapter. It deploys as the Worker
+`kubar-labs-navdhan-site` and owns `navdhan.app` and `www.navdhan.app`.
 
-This runbook covers the frontend Worker only. It must not provision, migrate,
-inspect, or reconfigure any database or backend. The application/API baseline
-is commit `9c6a6813df3e01044d83dfdf0bef736b6c0e3451`; compare the protected paths
-listed in `README.md` before every frontend release.
+`dsa_portal/frontend` is retired. Do not build it, sync it into `public/apply`,
+or run its Cloud Run/PowerShell deployment scripts. It is a legacy
+Vite/Perfios portal whose API does not exist in the collection backend.
 
-## Delivery model
+## Release gate
 
-GitHub Actions are not part of the active release path because the account has
-no active Actions billing. The existing workflow is retained unchanged. A
-reviewed operator builds and deploys the exact pushed commit from a clean
-checkout. Never use a dirty working tree as a deployment source.
+Deploy the Worker only after:
 
-`wrangler.preview.jsonc` has a separate Worker name, a `workers.dev` URL, and no
-production routes. `wrangler.jsonc` is the production configuration.
+1. the current database release and read-only RLS verification pass;
+2. the Cloud Run candidate rejects missing/invalid service tokens;
+3. the scanner proves clean/infected/replay/failure paths against staging
+   quarantine objects;
+4. the candidate passes staging acceptance; and
+5. the chosen Cloud Run revision is healthy at 100% traffic.
 
-## Preview
+Do not publish while reviewed legal/contact content is incomplete. Keep public
+contact details email-only unless a verified phone number is approved, obtain
+owner/legal approval for any public lending, outcome, or association claim, and
+supply reviewed translations before indexing the six placeholder legal locales.
+
+Record the current Worker version before changing anything so rollback is
+unambiguous.
+
+## Runtime configuration
+
+The Worker needs exactly two backend values:
+
+- `APPLY_BACKEND_BASE_URL`: the canonical HTTPS URL of `navdhan-backend`; and
+- `APPLY_BACKEND_SERVICE_TOKEN`: the secret corresponding to Cloud Run's
+  `APPLY_SERVICE_TOKEN`.
+
+Store both values as Cloudflare secrets:
 
 ```bash
+npx wrangler secret put APPLY_BACKEND_BASE_URL
+npx wrangler secret put APPLY_BACKEND_SERVICE_TOKEN
+```
+
+Do not set `APPLY_BACKEND_BASE_URL` only as a dashboard variable. Wrangler's
+configuration is authoritative by default and a later deploy removes dashboard
+variables that are absent from `wrangler.jsonc`. Keeping both runtime values as
+secrets makes them survive a version deploy without committing the environment
+URL. There is deliberately no loopback or self-URL fallback. Confirm the
+effective URL points to Cloud Run, not `navdhan.app` and not a tagged candidate
+URL.
+
+The token is used only by server-side route handlers and sent as
+`x-navdhan-service-token`. It must never appear in browser JavaScript, HTML,
+logs, analytics, error bodies, or client-readable environment variables.
+
+Do **not** set `DATABASE_URL` on the Worker. The root application reaches
+PostgreSQL only through the authenticated FastAPI backend; Cloud SQL credentials
+belong exclusively to Cloud Run.
+
+## Build and deploy
+
+Authenticate to the Team@kubar.tech Cloudflare account, then run from the
+repository root at the approved Git SHA:
+
+```bash
+npx wrangler whoami
 npm ci
-npm run lint
 npm run typecheck
 npm test
-npm run build
 npm run cf:build
-npm run cf:deploy:preview
+npm run deploy:cf
 ```
 
-Confirm the preview has no custom domain before exercising it. Do not copy,
-rotate, or delete production secrets for a frontend preview.
+`npm run deploy:cf` builds and deploys the Worker; it is not a Pages project,
+so never use `wrangler pages deploy`.
 
-## Production gate
+GitHub auto-deploy, when enabled, needs `CLOUDFLARE_API_TOKEN` and
+`CLOUDFLARE_ACCOUNT_ID` as repository secrets. Those CI credentials are not
+Worker runtime values and do not replace either apply-backend variable.
 
-Before deploying:
+## Domains and smoke tests
 
-1. Record `git rev-parse HEAD`, `git status --short`, and the current Worker
-   deployment/version.
-2. Confirm the release SHA is the exact SHA pushed to `main`.
-3. Confirm the protected backend paths still match the pre-redesign baseline.
-4. Pass lint, typecheck, tests, the normal Next.js build, and the OpenNext build.
-5. Verify desktop, mobile, keyboard navigation, locale switching, legal links,
-   calculator behavior, and the existing application flow in a real browser.
-6. Review the final diff and built artifacts for secrets and unrelated files.
+In Workers & Pages, confirm both custom domains point to
+`kubar-labs-navdhan-site` and that no older Worker (including
+`navdhan-os-proxy`) owns `navdhan.app/*`.
 
-Deploy only after those gates pass:
+After deploy:
 
-```bash
-npx wrangler deployments list --name kubar-labs-navdhan-site
-npx wrangler deploy --config wrangler.jsonc --message "NavDhan release <full-git-sha>"
-```
+- verify both apex and `www` use the intended Worker version;
+- create/resume an application through the browser and confirm the Worker can
+  reach Cloud Run with the service token;
+- confirm a direct Cloud Run `/api/apply/*` request without that token is
+  rejected while `/health` remains public;
+- upload a PDF, prove it cannot satisfy a requirement while quarantined, wait
+  for an authenticated clean verdict, and confirm the exact generation moves
+  from `quarantine/` to `clean/` before delete/re-upload;
+- prove anonymous session and upload limits return 429 with a bounded
+  `Retry-After`, without storing an extra object;
+- verify the active Cloudflare plan accepts the configured upload size and the
+  rate-limit bindings enforce the expected behavior at the edge;
+- inspect Worker and Cloud Run logs for token, session, and PII leakage; and
+- check CSP/HSTS/frame/nosniff headers, canonical URLs, locale routing, and
+  `/sitemap.xml` as independent production gates.
 
-Do not deploy with the preview configuration, alter domain routes, or change
-backend/database configuration during this release.
-
-## Production verification
-
-- Confirm both `https://navdhan.app` and `https://www.navdhan.app` resolve to
-  the newly deployed Worker version; `www` must redirect to the apex domain.
-- Check `/en`, `/en/platforms`, `/en/lenders`, `/en/team`, and `/en/apply` at
-  desktop and mobile widths.
-- Check all supported locale routes and language switching.
-- Check response security headers, canonical metadata, robots, sitemap, asset
-  caching, focus states, overflow, and browser console errors.
-- Exercise only safe application validation and draft behavior. Do not submit
-  real applications, OTP/KYC requests, documents, or transactions.
+The browser never calls Cloud Run directly. `ALLOWED_ORIGINS` is defense in
+depth, not authentication; the service-token middleware is the backend access
+boundary.
 
 ## Rollback
 
-Record the previous Worker version before deployment. If production regresses,
-roll the Worker back to that exact version through Cloudflare's version
-rollback, then re-run the domain and application smoke checks. A frontend
-rollback must not include database migrations, backend changes, domain changes,
-or secret rotation.
+If frontend errors rise, roll the Worker back to the recorded prior version
+before changing backend traffic. Use the Cloudflare dashboard's version
+rollback or the supported Wrangler rollback command for the installed version.
+Then verify both domains and an application resume.
+
+If the failure persists, follow `DEPLOYMENT.md`: route Cloud Run to its recorded
+prior revision. Do not run database down migrations as part of either rollback.

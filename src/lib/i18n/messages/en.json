@@ -51,7 +51,7 @@
       "tagline": "One stop-solution for all your working capital needs",
       "company": "Kubar Protocol Private Limited (CIN: U70200WB2024PTC274850)",
       "address": "156, Tarvakere, BTM Layout 1st Stage, Bengaluru, Karnataka",
-      "copyright": "\u00a9 2026 Kubar Protocol Private Limited. NavDhan is powered by Kubar.",
+      "copyright": "© 2026 Kubar Protocol Private Limited. NavDhan is powered by Kubar.",
       "contactHeading": "Contact",
       "companyHeading": "Company",
       "legalHeading": "Legal",
@@ -125,14 +125,18 @@
           "href": "/legal/consent-policy"
         }
       ],
-      "badges": ["RBI Aligned", "FACE Registered", "Powered by Kubar"],
+      "badges": [
+        "RBI Aligned",
+        "FACE Registered",
+        "Powered by Kubar"
+      ],
       "emptyBadges": []
     }
   },
   "home": {
     "meta": {
       "title": "NavDhan: Business Loans for India's MSMEs",
-      "description": "Get \u20b95L to \u20b91Cr business loans. One application, multiple offers, zero platform fee."
+      "description": "Get ₹5L to ₹1Cr business loans. One application, multiple offers, zero platform fee."
     },
     "hero": {
       "eyebrow": "Fast business loans for India's MSMEs",
@@ -142,7 +146,7 @@
       "secondaryCta": "View Products",
       "approvalCard": {
         "label": "Funding Approved",
-        "value": "\u20b915,00,000"
+        "value": "₹15,00,000"
       },
       "stats": [
         {
@@ -196,7 +200,7 @@
         "specs": [
           {
             "label": "Amount",
-            "value": "\u20b95L - \u20b91Cr"
+            "value": "₹5L - ₹1Cr"
           },
           {
             "label": "Interest Rate",
@@ -216,7 +220,7 @@
         {
           "id": "collateral-free",
           "titleKey": "Collateral-Free Business Loan",
-          "descriptionKey": "Unsecured funding up to \u20b91 Crore based on your business cash flow. No property or asset needed.",
+          "descriptionKey": "Unsecured funding up to ₹1 Crore based on your business cash flow. No property or asset needed.",
           "iconName": "ShieldCheck",
           "ctaKey": "Learn more"
         },
@@ -248,7 +252,11 @@
       "heading": "Why Choose NavDhan?",
       "body": "Built on trust, designed for speed. We remove the friction from business financing.",
       "cta": "Apply Now",
-      "trustBadges": ["RBI Aligned", "FACE Registered", "Powered by Kubar"],
+      "trustBadges": [
+        "RBI Aligned",
+        "FACE Registered",
+        "Powered by Kubar"
+      ],
       "reasons": [
         {
           "id": "instant-sanction",
@@ -401,11 +409,11 @@
   "apply": {
     "meta": {
       "title": "Apply: NavDhan",
-      "description": "Check your business loan eligibility in under 5 minutes."
+      "description": "Submit a business-financing application and the documents required for lender assessment."
     },
     "eyebrow": "Business loan application",
-    "heading": "Get the right business loan, without chasing banks.",
-    "description": "Fill a few details to check your eligibility. It takes less than 5 minutes.",
+    "heading": "Submit your business-financing application online.",
+    "description": "Provide your business, applicant, and loan details, then review them before submission.",
     "loanDetailsTitle": "Loan details",
     "amountLabel": "Loan amount",
     "tenureLabel": "Tenure (months)",
@@ -427,14 +435,14 @@
     "pinCodePlaceholder": "6-digit PIN",
     "referralCodeLabel": "Referral code (optional)",
     "aadhaarLabel": "Aadhaar number",
-    "aadhaarConsentLabel": "I agree to Aadhaar OTP-based eKYC",
+    "aadhaarConsentLabel": "I consent to the collection and storage of my Aadhaar details for this application",
     "panLabel": "PAN number",
-    "panConsentLabel": "I consent to PAN verification",
+    "panConsentLabel": "I consent to the collection and storage of my PAN details for this application",
     "gstRegisteredLabel": "Are you GST registered?",
     "gstRegisteredYes": "Registered under GST",
     "gstRegisteredNo": "Not registered",
     "gstinLabel": "GSTIN",
-    "gstConsentLabel": "I consent to GST verification",
+    "gstConsentLabel": "I consent to sharing my GST registration details",
     "annualTurnoverLabel": "Annual turnover",
     "annualTurnoverPlaceholder": "Estimated annual turnover",
     "turnoverRanges": {
@@ -444,10 +452,8 @@
       "100_500": "₹1 - ₹5 Crore",
       "500_plus": "₹5 Crore+"
     },
-    "itrUploadLabel": "Upload ITR (PDF)",
-    "itrConsentLabel": "I confirm this is my latest ITR",
-    "linkBankLabel": "Link bank account",
-    "bankConsentLabel": "I consent to fetch bank statements",
+    "itrUploadLabel": "Documents",
+    "linkBankLabel": "Existing loans",
     "privacyConsentLabel": "I agree to the Privacy Policy",
     "termsConsentLabel": "I agree to the Terms of Use",
     "creditConsentLabel": "I consent to a credit bureau check",
@@ -458,11 +464,11 @@
     "consentAnd": "and",
     "consentPolicy": "Consent Policy",
     "privacyPolicy": "Privacy Policy",
-    "consentLender": "I consent to sharing my details so NavDhan can find a loan offer for my business.",
-    "submit": "Check Eligibility",
-    "submitting": "Checking...",
+    "consentLender": "I consent to NavDhan sharing my application details with participating lenders for assessment.",
+    "submit": "Submit Application",
+    "submitting": "Submitting...",
     "successHeading": "Thank you",
-    "successBody": "We have received your application. A NavDhan advisor will reach out within 24 hours.",
+    "successBody": "We have received your application. Keep your reference number for future correspondence.",
     "successCta": "Back to home",
     "errorHeading": "Something went wrong",
     "errorBody": "Please check your details and try again.",
@@ -485,11 +491,11 @@
       "stepTitles": {
         "loan_intent": "Loan intent",
         "personal_contact": "Personal contact",
-        "aadhaar_verification": "Aadhaar verification",
-        "pan_verification": "PAN verification",
-        "gst_verification": "GST verification",
-        "itr_upload": "ITR upload",
-        "bank_statements": "Bank statements",
+        "aadhaar_verification": "Aadhaar Details",
+        "pan_verification": "PAN Details",
+        "gst_verification": "GST Details",
+        "itr_upload": "Documents",
+        "bank_statements": "Existing loans",
         "review_submit": "Review & submit",
         "submission_result": "Submission result"
       },
@@ -499,8 +505,8 @@
         "Aadhaar",
         "PAN",
         "GST",
-        "ITR",
-        "Bank",
+        "Documents",
+        "Existing loans",
         "Review",
         "Result"
       ],
@@ -508,7 +514,7 @@
       "submissionSuccessHeading": "Application submitted",
       "submissionSuccessBody": "Thank you! Your application has been submitted successfully.",
       "referenceLabel": "Reference number",
-      "viewDashboardLabel": "View dashboard"
+      "viewDashboardLabel": "Back to home"
     }
   },
   "legal": {

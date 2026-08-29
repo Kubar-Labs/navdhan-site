@@ -14,6 +14,14 @@ dist-ssr
 .vercel
 *.local
 
+# Environment files and local secrets
+.env
+.env.*
+**/.env
+**/.env.*
+!.env.example
+!**/.env.example
+
 # Next.js
 .next/
 *.tsbuildinfo
@@ -46,3 +54,15 @@ dsa_portal/frontend/.env.*
 dsa_portal/**/*-key.json
 dsa_portal/**/*deployer*.json
 dsa_portal/**/.firebase/
+
+# Local collection database and document storage
+database/.local/
+dsa_portal/backend/.local_documents/
+
+# Python test and runtime artifacts
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.coverage
