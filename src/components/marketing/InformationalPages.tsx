@@ -199,7 +199,6 @@ export function WhyNavDhanPage({ locale }: { locale: Locale }) {
     <div className={`${styles.site} ${styles.informationPage}`}>
       <section className={`${styles.hero} ${styles.informationHero} ${styles.whyHero}`}>
         <div className={`${styles.heroCopy} ${styles.informationHeroCopy}`}>
-          <Eyebrow>Why NavDhan</Eyebrow>
           <h1>
             One application.
             <br />A clearer path.
@@ -242,7 +241,6 @@ export function WhyNavDhanPage({ locale }: { locale: Locale }) {
 
       <section className={`${styles.section} ${styles.contextSection}`}>
         <div className={styles.contextIntro}>
-          <Eyebrow>Your business, in context</Eyebrow>
           <h2 className={styles.displayHeading}>
             More context.
             <br />A clearer picture.
@@ -338,7 +336,6 @@ export function HowItWorksPage({ locale }: { locale: Locale }) {
     <div className={`${styles.site} ${styles.informationPage}`}>
       <section className={`${styles.hero} ${styles.informationHero}`}>
         <div className={`${styles.heroCopy} ${styles.informationHeroCopy}`}>
-          <Eyebrow>How It Works</Eyebrow>
           <h1>
             Your next step.
             <br />
@@ -390,7 +387,6 @@ export function HowItWorksPage({ locale }: { locale: Locale }) {
       />
 
       <InformationFaq
-        eyebrow="Good to know"
         title={
           <>
             A little more
@@ -640,7 +636,7 @@ export function InformationFaq({
   faqs,
   idPrefix,
 }: {
-  eyebrow: string;
+  eyebrow?: string;
   title: ReactNode;
   faqs: readonly { question: string; answer: string }[];
   idPrefix: string;
@@ -651,7 +647,7 @@ export function InformationFaq({
   return (
     <section className={`${styles.section} ${styles.informationFaqSection}`}>
       <div className={styles.informationFaqIntro}>
-        <Eyebrow>{eyebrow}</Eyebrow>
+        {eyebrow ? <Eyebrow>{eyebrow}</Eyebrow> : null}
         <h2 className={styles.displayHeading}>{title}</h2>
         <p>A few things to know before you begin.</p>
       </div>
