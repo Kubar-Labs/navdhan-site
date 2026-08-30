@@ -16,7 +16,7 @@ describe("approved Team page data", () => {
 
   it("contains the six core team members in approved order", () => {
     expect(teamData.members.map(({ name, roleKey }) => [name, roleKey])).toEqual([
-      ["Vaibhav Sharma", "Founder"],
+      ["Vaibhav Sharma", "CEO"],
       ["Rayansh Srivastava", "CTO"],
       ["Keshav Dudani", "Founding ML Engineer"],
       ["Manchit Sanan", "Compliance Lead"],

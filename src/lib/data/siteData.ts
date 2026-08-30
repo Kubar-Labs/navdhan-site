@@ -292,7 +292,7 @@ export const teamMembers: TeamMember[] = [
   {
     id: "founder-1",
     name: "Vaibhav Sharma",
-    roleKey: "Founder & Head of Product",
+    roleKey: "CEO",
     bioKey:
       "Building NavDhan to make MSME credit calm, clear, and accessible for every business owner in India.",
     imageAsset: "/assets/team/placeholder-avatar.jpg",
