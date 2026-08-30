@@ -47,9 +47,15 @@ describe("global response hardening", () => {
   it("canonicalizes the www hostname without changing paths", async () => {
     const redirects = await nextConfig.redirects?.();
     expect(redirects).toContainEqual({
-      source: "/:path*",
+      source: "/",
       has: [{ type: "host", value: "www.navdhan.app" }],
-      destination: "https://navdhan.app/:path*",
+      destination: "https://navdhan.app/",
+      permanent: true,
+    });
+    expect(redirects).toContainEqual({
+      source: "/:path+",
+      has: [{ type: "host", value: "www.navdhan.app" }],
+      destination: "https://navdhan.app/:path+",
       permanent: true,
     });
   });

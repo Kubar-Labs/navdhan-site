@@ -97,9 +97,15 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       {
-        source: "/:path*",
+        source: "/",
         has: [{ type: "host", value: "www.navdhan.app" }],
-        destination: "https://navdhan.app/:path*",
+        destination: "https://navdhan.app/",
+        permanent: true,
+      },
+      {
+        source: "/:path+",
+        has: [{ type: "host", value: "www.navdhan.app" }],
+        destination: "https://navdhan.app/:path+",
         permanent: true,
       },
     ];
