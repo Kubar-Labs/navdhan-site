@@ -33,7 +33,7 @@ const STATUS_LABELS: Record<string, string> = {
   partial: "Partially covered",
   collected: "Uploaded",
   accepted_for_review: "Under review",
-  rejected: "Rejected — please re-upload",
+  rejected: "Rejected. Please re-upload",
   waived: "Waived",
   not_applicable: "Not needed (alternative provided)",
   missing: "Missing",
@@ -73,10 +73,10 @@ function documentScanLabel(document: RequirementRow["documents"][number]): strin
     return "Scanning for malware…";
   }
   if (document.scan_result === "infected") {
-    return "Unsafe file detected — remove it and upload a different PDF.";
+    return "Unsafe file detected. Remove it and upload a different PDF.";
   }
   if (document.status === "scan_failed" || document.scan_result === "unreadable") {
-    return "Scan failed — remove it and upload a readable PDF.";
+    return "Scan failed. Remove it and upload a readable PDF.";
   }
   return null;
 }

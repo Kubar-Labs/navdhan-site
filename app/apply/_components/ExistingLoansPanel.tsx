@@ -411,19 +411,20 @@ function ExistingLoansPanelImpl(
             <div key={facility.facility_id} className="space-y-2">
               <div className="text-sm text-slate-800">
                 <p className="font-medium">
-                  {facility.lender_name} —{" "}
+                  {facility.lender_name}: {" "}
                   {FACILITY_TYPE_OPTIONS.find((option) => option.value === facility.facility_type)
                     ?.label ?? facility.facility_type}
                 </p>
                 <p className="text-xs text-slate-500">
-                  Loan amount ₹{facility.original_loan_amount ?? "—"} · Outstanding ₹
-                  {facility.outstanding_amount ?? "—"} · EMI ₹{facility.emi_amount ?? "—"} · ROI{" "}
-                  {facility.interest_rate_percent ?? "—"}% · Tenure {facility.tenure_months ?? "—"}{" "}
-                  months
+                  Loan amount {facility.original_loan_amount != null ? `₹${facility.original_loan_amount}` : "Not provided"} · Outstanding{" "}
+                  {facility.outstanding_amount != null ? `₹${facility.outstanding_amount}` : "Not provided"} · EMI{" "}
+                  {facility.emi_amount != null ? `₹${facility.emi_amount}` : "Not provided"} · ROI{" "}
+                  {facility.interest_rate_percent != null ? `${facility.interest_rate_percent}%` : "Not provided"} · Tenure{" "}
+                  {facility.tenure_months != null ? `${facility.tenure_months} months` : "Not provided"}
                 </p>
                 <p className="text-xs text-slate-500">
-                  {facility.start_date ?? "—"} to {facility.end_date ?? "—"} · Paid EMIs{" "}
-                  {facility.emis_paid_count ?? "—"}
+                  {facility.start_date ?? "Not provided"} to {facility.end_date ?? "Not provided"} · Paid EMIs{" "}
+                  {facility.emis_paid_count ?? "Not provided"}
                 </p>
               </div>
               <DocumentChecklist

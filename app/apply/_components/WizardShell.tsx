@@ -1488,7 +1488,7 @@ export function WizardShell({
           <div key={party.party_id} className="space-y-3">
             <TextField
               id={`aadhaar_number_${party.party_id}`}
-              label={`${t.aadhaarLabel ?? "Aadhaar number"} — ${partyName}`}
+              label={`${t.aadhaarLabel ?? "Aadhaar number"} for ${partyName}`}
               value={values.party_aadhaar_numbers?.[party.party_id] ?? ""}
               onChange={(value) =>
                 updatePartyIdentifier("party_aadhaar_numbers", party.party_id, value)
@@ -1499,7 +1499,7 @@ export function WizardShell({
             {!party.identifiers.aadhaar_masked && (
               <TextField
                 id={`confirm_aadhaar_number_${party.party_id}`}
-                label={`Confirm Aadhaar number — ${partyName}`}
+                label={`Confirm Aadhaar number for ${partyName}`}
                 value={values.confirm_party_aadhaar_numbers?.[party.party_id] ?? ""}
                 onChange={(value) =>
                   updatePartyIdentifier("confirm_party_aadhaar_numbers", party.party_id, value)
@@ -1547,7 +1547,7 @@ export function WizardShell({
           <div key={party.party_id} className="space-y-3">
             <TextField
               id={`pan_number_${party.party_id}`}
-              label={`${t.panLabel ?? "PAN number"} — ${partyName}`}
+              label={`${t.panLabel ?? "PAN number"} for ${partyName}`}
               value={values.party_pan_numbers?.[party.party_id] ?? ""}
               onChange={(value) =>
                 updatePartyIdentifier("party_pan_numbers", party.party_id, value.toUpperCase())
@@ -1557,7 +1557,7 @@ export function WizardShell({
             {!party.identifiers.pan_masked && (
               <TextField
                 id={`confirm_pan_number_${party.party_id}`}
-                label={`Confirm PAN number — ${partyName}`}
+                label={`Confirm PAN number for ${partyName}`}
                 value={values.confirm_party_pan_numbers?.[party.party_id] ?? ""}
                 onChange={(value) =>
                   updatePartyIdentifier(
@@ -1775,57 +1775,59 @@ export function WizardShell({
         label: t.loanAmountLabel ?? "Loan amount",
         value: application?.values.requested_amount
           ? `₹${application.values.requested_amount.toLocaleString("en-IN")}`
-          : "—",
+          : "Not available",
       },
       {
         label: t.tenureLabel ?? "Tenure",
         value: application?.values.requested_tenure_months
           ? `${application.values.requested_tenure_months} months`
-          : "—",
+          : "Not available",
       },
       {
         label: t.purposeLabel ?? "Purpose",
         value:
           t.purposeLabels?.[application?.values.purpose ?? ""] ??
           application?.values.purpose ??
-          "—",
+          "Not available",
       },
-      { label: t.fullNameLabel ?? "Full name", value: primaryParty?.full_name ?? "—" },
+      { label: t.fullNameLabel ?? "Full name", value: primaryParty?.full_name ?? "Not available" },
       {
         label: t.mobileLabel ?? "Mobile number",
-        value: primaryParty?.mobile_masked ?? "—",
+        value: primaryParty?.mobile_masked ?? "Not available",
       },
       {
         label: t.emailLabel ?? "Email",
-        value: primaryParty?.email_masked ?? "—",
+        value: primaryParty?.email_masked ?? "Not available",
       },
       {
         label: t.pinCodeLabel ?? "Business PIN code",
-        value: application?.business_profile.business_pincode ?? "—",
+        value: application?.business_profile.business_pincode ?? "Not available",
       },
       {
         label: t.aadhaarLabel ?? "Aadhaar",
-        value: primaryParty?.identifiers.aadhaar_masked ?? "—",
+        value: primaryParty?.identifiers.aadhaar_masked ?? "Not available",
       },
       {
         label: t.panLabel ?? "PAN",
-        value: primaryParty?.identifiers.pan_masked ?? "—",
+        value: primaryParty?.identifiers.pan_masked ?? "Not available",
       },
       gstRegistered
         ? {
             label: t.gstinLabel ?? "GSTIN",
-            value: application?.registrations.gstin_masked ?? "—",
+            value: application?.registrations.gstin_masked ?? "Not available",
           }
         : { label: t.gstinLabel ?? "GSTIN", value: "Not registered" },
       {
         label: t.annualTurnoverLabel ?? "Annual turnover",
-        value: turnoverRange ? (t.turnoverRanges?.[turnoverRange] ?? turnoverRange) : "—",
+        value: turnoverRange
+          ? (t.turnoverRanges?.[turnoverRange] ?? turnoverRange)
+          : "Not available",
       },
       {
         label: t.itrUploadLabel ?? "Documents",
         value: requirements
           ? `${requirements.requirements.filter((row) => row.status === "collected").length} of ${requirements.requirements.length} uploaded`
-          : "—",
+          : "Not available",
       },
       {
         label: t.linkBankLabel ?? "Existing loans",
@@ -1834,7 +1836,7 @@ export function WizardShell({
             ? `${requirements.facilities.length} declared`
             : requirements?.credit_declaration.has_active_credit_facilities === false
               ? "None declared"
-              : "—",
+              : "Not available",
       },
     ];
 
@@ -1952,7 +1954,7 @@ export function WizardShell({
               application?.application_no ??
               submissionResult?.reference_number ??
               values.application_reference ??
-              "—"}
+              "Not available"}
           </p>
         </div>
         <Link

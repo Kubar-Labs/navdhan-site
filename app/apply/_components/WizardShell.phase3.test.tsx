@@ -448,9 +448,9 @@ describe("WizardShell Phase 3 browser integration", () => {
     render(<WizardShell locale="en" steps={steps} />);
 
     expect(await screen.findByRole("heading", { name: "Aadhaar verification" })).toBeVisible();
-    expect(screen.getByLabelText("Aadhaar number — Anita Rao")).toHaveValue("");
+    expect(screen.getByLabelText("Aadhaar number for Anita Rao")).toHaveValue("");
     expect(screen.getByText("Saved: XXXX XXXX 1234")).toBeVisible();
-    expect(screen.getByLabelText("Aadhaar number — Ravi Shah")).toHaveValue("");
+    expect(screen.getByLabelText("Aadhaar number for Ravi Shah")).toHaveValue("");
   });
 
   it("saves co-applicant and director Aadhaar/PAN with chained lock versions", async () => {

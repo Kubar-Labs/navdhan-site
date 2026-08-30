@@ -208,7 +208,7 @@
 .editorialCard h3 { margin-top: 20px; }
 .editorialCard > p:not(.eyebrow) { margin: 18px 0; font-size: 16px; line-height: 26px; }
 .editorialCard ul { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; font-size: 14px; line-height: 22px; }
-.editorialCard li::before { content: "—"; margin-right: 12px; color: var(--accent); }
+.editorialCard li::before { content: "•"; margin-right: 12px; color: var(--accent); }
 
 .closing { display: grid; grid-template-columns: 1fr 344px; gap: 120px; align-items: center; min-height: 316px; padding: 48px max(68px, calc((100vw - 1390px) / 2)); border-block: 1px solid #d8d2c4; background-color: #f7f3ea; background-image: radial-gradient(rgba(51, 46, 31, .06) .5px, transparent .5px); background-size: 4px 4px; }
 .closing h2 { font-size: 60px; line-height: 62px; }
@@ -590,7 +590,7 @@
 }
 .informationPaperPanel li::before,
 .walkthroughCard li::before {
-  content: "—";
+  content: "•";
   color: var(--accent);
 }
 

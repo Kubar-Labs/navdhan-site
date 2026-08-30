@@ -33,7 +33,7 @@ export async function generateMetadata({ params }: LegalPageProps): Promise<Meta
           },
     };
   } catch {
-    return { title: "Legal — NavDhan" };
+    return { title: "Legal | NavDhan" };
   }
 }
 
