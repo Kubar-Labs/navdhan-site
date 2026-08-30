@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import subprocess
 import unittest
 from pathlib import Path
 
@@ -47,9 +48,11 @@ class DatabaseReleaseToolingTests(unittest.TestCase):
             "kubardevops:asia-south1:navdhan-prod",
             "kubardevops:asia-south1:navdhan-staging",
             "navdhan_collection",
+            "navdhan_collection_release",
             "navdhan_collection_app",
             "legacy navdhan is protected",
             "PRODUCTION_RELEASE_ACK",
+            "Production PGUSER must be",
             "server major version must be 18",
             "pg_auth_members",
             "migrations require a distinct administrative database role",
@@ -87,6 +90,37 @@ class DatabaseReleaseToolingTests(unittest.TestCase):
         ):
             with self.subTest(fragment=fragment):
                 self.assertIn(fragment, self.release)
+
+    def test_release_runner_rejects_wrong_production_role(self) -> None:
+        env = os.environ.copy()
+        env.update(
+            {
+                "TARGET_ENV": "production",
+                "CLOUD_SQL_CONNECTION_NAME": "kubardevops:asia-south1:navdhan-prod",
+                "PGHOST": "/tmp/not-a-navdhan-proxy/kubardevops:asia-south1:navdhan-prod",
+                "PGPORT": "5432",
+                "PGUSER": "postgres",
+                "PGDATABASE": "navdhan_collection",
+                "RUNTIME_ROLE": "navdhan_collection_app",
+                "PRODUCTION_RELEASE_ACK": (
+                    "kubardevops:asia-south1:navdhan-prod/navdhan_collection"
+                ),
+            }
+        )
+
+        completed = subprocess.run(
+            [str(PROJECT_ROOT / "database/scripts/release.sh")],
+            env=env,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+        self.assertNotEqual(completed.returncode, 0)
+        self.assertIn(
+            "Production PGUSER must be navdhan_collection_release",
+            completed.stderr,
+        )
 
     def test_runtime_verification_is_read_only_and_rls_aware(self) -> None:
         self.assertIn("BEGIN READ ONLY", self.runtime_verify)

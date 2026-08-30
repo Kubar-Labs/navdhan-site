@@ -23,6 +23,7 @@ readonly MARKETPLACE_ID="10000000-0000-0000-0000-000000000001"
 readonly PROD_CONNECTION="kubardevops:asia-south1:navdhan-prod"
 readonly STAGING_CONNECTION="kubardevops:asia-south1:navdhan-staging"
 readonly PROD_DATABASE="navdhan_collection"
+readonly PROD_RELEASE_ROLE="navdhan_collection_release"
 readonly PROD_RUNTIME_ROLE="navdhan_collection_app"
 readonly NONPROD_RUNTIME_ROLE="navdhan_app"
 readonly PROD_ACK="kubardevops:asia-south1:navdhan-prod/navdhan_collection"
@@ -72,6 +73,8 @@ validate_target() {
         die "Production database must be ${PROD_DATABASE}; legacy navdhan is protected"
       [[ "$RUNTIME_ROLE" == "$PROD_RUNTIME_ROLE" ]] ||
         die "Production RUNTIME_ROLE must be ${PROD_RUNTIME_ROLE}"
+      [[ "$PGUSER" == "$PROD_RELEASE_ROLE" ]] ||
+        die "Production PGUSER must be ${PROD_RELEASE_ROLE}"
       [[ "${PRODUCTION_RELEASE_ACK:-}" == "$PROD_ACK" ]] ||
         die "Set PRODUCTION_RELEASE_ACK=${PROD_ACK} after completing the production preflight"
       ;;

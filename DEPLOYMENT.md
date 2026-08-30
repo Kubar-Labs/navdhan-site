@@ -30,6 +30,8 @@ non-empty database without this branch's ledger.
 | Engine | PostgreSQL 18 |
 | Collection database | `navdhan_collection` |
 | Protected legacy database | `navdhan` (never modified by this release) |
+| Release role | `navdhan_collection_release` |
+| Release credential | `navdhan-prod-release-admin-password` (operator-only) |
 | Runtime role | `navdhan_collection_app` |
 | Document bucket | `gs://navdhan-documents-prod` |
 | Region | `asia-south1` |
@@ -40,6 +42,12 @@ Production is intentionally `ZONAL`, not regional, and storage auto-increase is
 disabled. Backups run daily at 19:00 UTC, seven are retained, PITR and deletion
 protection are enabled. Those cost choices mean a zonal outage causes downtime
 and a full disk takes the database offline. Alert on disk utilization at 80%.
+Both production and staging require Cloud SQL connector enforcement,
+encrypted-only transport, and the PostgreSQL password policy (minimum 20
+characters, default complexity, username exclusion, and four-password reuse
+history). Public IPv4 remains only as the connector transport until private
+networking is rehearsed; authorized networks are prohibited by organization
+policy.
 
 The staging instance is `navdhan-staging`, with connection name
 `kubardevops:asia-south1:navdhan-staging` and bucket
@@ -105,6 +113,12 @@ and access its callback credential. It must not connect to Cloud SQL, write
 secrets. Mirror these identities with staging-only grants; never share a
 service account across environments.
 
+With uniform bucket-level access enabled, the production bucket IAM policy
+must contain only the backend's bucket-scoped `roles/storage.objectAdmin`
+binding and the scanner's `roles/storage.objectViewer` binding conditioned on
+`resource.name.startsWith("projects/_/buckets/navdhan-documents-prod/objects/quarantine/")`.
+Do not retain legacy project-principal bindings or direct human object grants.
+
 The custom Cloud Build identity is build-only. Grant it writer access on the
 `kuber` Artifact Registry repository, viewer access on the dedicated source
 bucket, and log-writer access. It must not receive Cloud Run Admin, Service
@@ -131,6 +145,15 @@ reconciliation queue for dispatch failures, scan timeouts, callback failures,
 and orphaned objects. A bucket lifecycle rule must not silently delete
 quarantined bytes while the corresponding database row still says pending;
 cleanup must update/audit both stores under the approved retention policy.
+
+The production Eventarc transport subscription must retain events for seven
+days, use a 300-second acknowledgement deadline, retry with 10-600 second
+backoff, and dead-letter after 20 delivery attempts to the regional
+`navdhan-document-finalized-prod-dlq` topic. Keep the
+`navdhan-document-finalized-prod-dlq-retain` subscription non-expiring with
+30-day retention. Eventarc can replace its generated transport subscription
+when a trigger is recreated, so resolve the subscription from the trigger and
+reassert these settings after every trigger change.
 
 The repository implements quarantine, authenticated callback, backend-only
 promotion, and the scanner runtime under `dsa_portal/scanner`. The two scanner
@@ -222,7 +245,8 @@ running:
 ```bash
 export NAVDHAN_PROXY_SOCKET_ROOT="/tmp/navdhan-cloud-sql-$(id -u)"
 install -d -m 700 "$NAVDHAN_PROXY_SOCKET_ROOT"
-cloud-sql-proxy --unix-socket "$NAVDHAN_PROXY_SOCKET_ROOT" \
+cloud-sql-proxy --gcloud-auth \
+  --unix-socket "$NAVDHAN_PROXY_SOCKET_ROOT" \
   kubardevops:asia-south1:navdhan-staging
 ```
 
@@ -335,7 +359,8 @@ behind that port:
 ```bash
 export NAVDHAN_PROXY_SOCKET_ROOT="/tmp/navdhan-cloud-sql-$(id -u)"
 install -d -m 700 "$NAVDHAN_PROXY_SOCKET_ROOT"
-cloud-sql-proxy --unix-socket "$NAVDHAN_PROXY_SOCKET_ROOT" \
+cloud-sql-proxy --gcloud-auth \
+  --unix-socket "$NAVDHAN_PROXY_SOCKET_ROOT" \
   kubardevops:asia-south1:navdhan-prod
 ```
 
@@ -348,12 +373,21 @@ export CLOUD_SQL_CONNECTION_NAME=kubardevops:asia-south1:navdhan-prod
 export PGHOST="$NAVDHAN_PROXY_SOCKET_ROOT/$CLOUD_SQL_CONNECTION_NAME"
 export PGPORT=5432
 unset PGHOSTADDR PGSERVICE PGSERVICEFILE
-export PGUSER=postgres
+export PGUSER=navdhan_collection_release
 export PGDATABASE=navdhan_collection
 export RUNTIME_ROLE=navdhan_collection_app
 export PRODUCTION_RELEASE_ACK=kubardevops:asia-south1:navdhan-prod/navdhan_collection
 database/scripts/release.sh
 ```
+
+The production migration owner is `navdhan_collection_release`. Load an
+explicitly reviewed numeric version of
+`navdhan-prod-release-admin-password` through a mode-0600 `PGPASSFILE` or a
+hidden password prompt. Never use `latest`, place the password in a command
+argument or shell history, bind this operator-only secret to Cloud Run, or use
+`postgres` as the routine migration identity. After any credential repair,
+verify the release ledger and role attributes before disabling the stale
+secret version; disable it first rather than destroying it.
 
 Then reconnect directly as `navdhan_collection_app` with its separate password:
 
@@ -558,6 +592,11 @@ instance during diagnosis.
 - Inspect Cloud Run/Cloud SQL metrics for 5xx responses, latency, memory,
   active connections, lock waits, disk utilization, backup success, and PITR
   health.
+- Confirm the public-apply and backend-health uptime checks, Cloud Run 5xx,
+  latency and memory alerts, Cloud SQL capacity/contention/backup alerts,
+  scanner delivery/DLQ alerts, and document-cleanup log alert are enabled and
+  attached to `NavDhan Production On-call` (`team@kubar.tech`), or its formally
+  approved replacement.
 - Confirm both `navdhan.app` and `www.navdhan.app` route to the expected Worker
   version and record the backend revision, Worker version, Git SHA, migration
   ledger rows, backup IDs, and acceptance evidence.
