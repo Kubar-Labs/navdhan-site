@@ -1,0 +1,574 @@
+.page {
+  --ink: #0f172a;
+  --muted: #475569;
+  --orange: #ea580c;
+  --orange-text: #c2410c;
+  --green: #00875e;
+  --green-text: #006e4c;
+  --blue: #007dad;
+  --blue-text: #00688f;
+  --paper: #f7f3ea;
+  --cream: #fafaf8;
+  --rule: #d8d2c4;
+  overflow-x: clip;
+  color: var(--ink);
+  background: var(--cream);
+}
+
+.page h1,
+.page h2,
+.page h3,
+.page p {
+  margin: 0;
+}
+
+.hero,
+.section {
+  padding-inline: max(68px, calc((100vw - 1400px) / 2));
+}
+
+.hero {
+  padding-block: 104px 120px;
+  background: var(--cream);
+}
+
+.heroInner {
+  display: grid;
+  grid-template-columns: 650px 648px;
+  gap: 80px;
+  max-width: 1378px;
+  margin: 0 auto;
+  align-items: center;
+}
+
+.heroCopy {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.hero h1 {
+  font:
+    400 82px/82px var(--font-safira-march),
+    Georgia,
+    serif;
+  letter-spacing: -1px;
+}
+
+.heroBody {
+  max-width: 600px;
+  color: var(--muted);
+  font-size: 22px;
+  line-height: 34px;
+  letter-spacing: -0.55px;
+}
+
+.paperCard,
+.paperPanel,
+.contactSheet {
+  border: 1px solid var(--rule);
+  background-color: var(--paper);
+  background-image: radial-gradient(rgba(51, 46, 31, 0.075) 0.55px, transparent 0.55px);
+  background-size: 4px 4px;
+}
+
+.contactSheet {
+  display: flex;
+  width: 648px;
+  height: 520px;
+  flex-direction: column;
+  gap: 18px;
+  overflow: hidden;
+  padding: 24px 28px 28px;
+  border-radius: 3px;
+}
+
+.contactSheet > p {
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 24px;
+  letter-spacing: 1px;
+}
+
+.contactSheetRule {
+  width: 100%;
+  height: 1px;
+  flex: 0 0 1px;
+  background: var(--rule);
+}
+
+.heroPortraitGrid {
+  display: grid;
+  height: 388px;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(2, 188px);
+  gap: 12px;
+}
+
+.heroPortrait,
+.memberPortrait,
+.advisorPortrait {
+  position: relative;
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+.heroPortrait {
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+}
+
+.heroPortrait img,
+.memberPortrait img,
+.advisorPortrait img {
+  object-fit: cover;
+}
+
+.section {
+  padding-block: 120px;
+}
+
+.sectionInner,
+.careersPanel {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.missionSection,
+.advisorSection {
+  background: white;
+}
+
+.missionSection .sectionInner {
+  display: flex;
+  flex-direction: column;
+  gap: 64px;
+}
+
+.missionIntro {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 560px;
+  gap: 96px;
+  align-items: start;
+}
+
+.missionIntro > div,
+.sectionHeading {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.missionIntro h2,
+.sectionHeading h2,
+.careersCopy h2 {
+  font-size: 38px;
+  font-weight: 600;
+  line-height: 48px;
+  letter-spacing: -1px;
+}
+
+.missionIntro > p {
+  color: var(--muted);
+  font-size: 22px;
+  line-height: 34px;
+  letter-spacing: -0.55px;
+}
+
+.valueGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+}
+
+.paperCard {
+  position: relative;
+  min-width: 0;
+  border-radius: 24px;
+}
+
+.accentRule {
+  width: 100%;
+  height: 2px;
+  flex: 0 0 2px;
+  background: var(--accent);
+}
+
+.green {
+  --accent: var(--green-text);
+}
+
+.blue {
+  --accent: var(--blue-text);
+}
+
+.orange {
+  --accent: var(--orange-text);
+}
+
+.valueCard {
+  display: flex;
+  min-height: 212px;
+  flex-direction: column;
+  gap: 15px;
+  padding: 24px;
+}
+
+.valueMarker {
+  color: var(--accent);
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 24px;
+  letter-spacing: 1px;
+}
+
+.valueCard h3,
+.cardCopy h3 {
+  font:
+    400 32px/38px var(--font-safira-march),
+    Georgia,
+    serif;
+  letter-spacing: -0.3px;
+}
+
+.valueCard > p:last-child {
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 26px;
+}
+
+.teamSection,
+.careersSection {
+  background: var(--cream);
+}
+
+.teamSection .sectionInner,
+.advisorSection .sectionInner {
+  display: flex;
+  flex-direction: column;
+  gap: 56px;
+}
+
+.memberGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+}
+
+.memberCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 24px 24px 22px;
+}
+
+.memberCard .accentRule {
+  --accent: var(--green-text);
+}
+
+.memberCard > .accentRule,
+.memberCard .cardCopy {
+  width: min(100%, 394px);
+}
+
+.memberPortrait {
+  width: min(100%, 394px);
+  aspect-ratio: 394 / 260;
+}
+
+.cardCopy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.memberRole,
+.advisorDomain {
+  color: var(--green-text);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 22px;
+}
+
+.biography,
+.profileLink {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 22px;
+}
+
+.profileLink {
+  color: var(--green-text) !important;
+}
+
+.advisorGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+
+.advisorCard {
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr);
+  gap: 24px;
+  padding: 24px 24px 22px;
+}
+
+.advisorMedia {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.advisorCard .accentRule {
+  --accent: var(--blue-text);
+}
+
+.advisorPortrait {
+  width: 160px;
+  height: 180px;
+}
+
+.advisorCard .cardCopy {
+  width: min(100%, 447px);
+  align-self: start;
+}
+
+.advisorCard h3 a {
+  display: inline-block;
+}
+
+.advisorDomain {
+  color: var(--blue-text);
+  font-size: 16px;
+  line-height: 26px;
+}
+
+.careersPanel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 48px;
+  padding: 48px 48px 46px;
+  border-radius: 3px;
+}
+
+.careersCopy {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.careersCopy > p:last-child {
+  max-width: 780px;
+  color: var(--muted);
+  font-size: 22px;
+  line-height: 34px;
+  letter-spacing: -0.55px;
+}
+
+.careersCta {
+  width: 242px;
+  flex: 0 0 242px;
+  font-size: 20px;
+}
+
+@media (max-width: 1250px) and (min-width: 901px) {
+  .hero,
+  .section {
+    padding-inline: 40px;
+  }
+
+  .heroInner {
+    grid-template-columns: minmax(0, 1fr) minmax(440px, 0.95fr);
+    gap: 48px;
+  }
+
+  .hero h1 {
+    font-size: clamp(60px, 6vw, 74px);
+    line-height: 1;
+  }
+
+  .contactSheet {
+    width: 100%;
+  }
+
+  .missionIntro {
+    grid-template-columns: minmax(0, 1fr) minmax(380px, 560px);
+    gap: 56px;
+  }
+}
+
+@media (max-width: 900px) {
+  .hero,
+  .section {
+    padding-inline: 20px;
+  }
+
+  .hero {
+    padding-block: 64px 80px;
+  }
+
+  .heroInner {
+    display: flex;
+    max-width: none;
+    flex-direction: column;
+    gap: 36px;
+    align-items: stretch;
+  }
+
+  .heroCopy {
+    gap: 16px;
+  }
+
+  .hero h1 {
+    font-size: 52px;
+    line-height: 54px;
+    letter-spacing: -0.5px;
+  }
+
+  .heroBody {
+    max-width: none;
+    font-size: 16px;
+    line-height: 26px;
+    letter-spacing: -0.2px;
+  }
+
+  .contactSheet {
+    width: 100%;
+    height: 299px;
+    gap: 12px;
+    padding: 18px 18px 20px;
+  }
+
+  .heroPortraitGrid {
+    height: 206px;
+    grid-template-rows: repeat(2, 99px);
+    gap: 8px;
+  }
+
+  .section {
+    padding-block: 80px;
+  }
+
+  .missionSection {
+    padding-top: 76px;
+  }
+
+  .missionSection .sectionInner,
+  .teamSection .sectionInner,
+  .advisorSection .sectionInner {
+    gap: 40px;
+  }
+
+  .missionIntro {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .missionIntro > div {
+    gap: 16px;
+  }
+
+  .missionIntro h2,
+  .sectionHeading h2,
+  .careersCopy h2 {
+    font-size: 38px;
+    line-height: 48px;
+    letter-spacing: -1px;
+  }
+
+  .missionIntro > p {
+    font-size: 16px;
+    line-height: 26px;
+    letter-spacing: -0.2px;
+  }
+
+  .valueGrid,
+  .memberGrid,
+  .advisorGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .valueGrid {
+    gap: 12px;
+  }
+
+  .memberGrid,
+  .advisorGrid {
+    gap: 14px;
+  }
+
+  .memberCard > .accentRule,
+  .memberCard .cardCopy,
+  .memberPortrait {
+    width: min(100%, 294px);
+  }
+
+  .memberPortrait {
+    aspect-ratio: 294 / 220;
+  }
+
+  .advisorCard {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .advisorMedia,
+  .advisorCard .cardCopy {
+    width: min(100%, 294px);
+  }
+
+  .advisorCard .cardCopy {
+    align-self: center;
+  }
+
+  .advisorPortrait {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 294 / 220;
+  }
+
+  .careersPanel {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 28px;
+    padding: 32px 24px;
+  }
+
+  .careersCopy > p:last-child {
+    max-width: none;
+    font-size: 16px;
+    line-height: 26px;
+    letter-spacing: -0.2px;
+  }
+
+  .careersCta {
+    width: 242px;
+    flex-basis: auto;
+  }
+}
+
+@media (max-width: 360px) {
+  .hero h1 {
+    font-size: 46px;
+    line-height: 49px;
+  }
+
+  .contactSheet {
+    height: auto;
+  }
+
+  .heroPortraitGrid {
+    height: auto;
+    grid-template-rows: repeat(2, minmax(84px, 27vw));
+  }
+}

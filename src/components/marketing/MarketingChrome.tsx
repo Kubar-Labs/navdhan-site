@@ -19,6 +19,7 @@ export function MarketingHeader({ locale }: { locale: Locale }) {
     { label: "Why NavDhan", href: `/${locale}/why-navdhan` },
     { label: "For Platforms", href: `/${locale}/platforms` },
     { label: "For Lenders", href: `/${locale}/lenders` },
+    { label: "Team", href: `/${locale}/team` },
   ];
 
   useEffect(() => {

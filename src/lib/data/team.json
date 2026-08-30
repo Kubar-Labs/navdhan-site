@@ -9,7 +9,7 @@
       "name": "Vaibhav Sharma",
       "roleKey": "Founder",
       "bioKey": "Family-run SME roots | Digital assets, RWA tokenisation & trade-finance workflows | Built NavDhan’s origination stack through 4 months of lender co-design",
-      "imageAsset": "/assets/team/vaibhav.webp",
+      "imageAsset": "/assets/team/redesign/vaibhav.webp",
       "linkedIn": "https://www.linkedin.com/in/fenestbuc/"
     },
     {
@@ -17,7 +17,7 @@
       "name": "Rayansh Srivastava",
       "roleKey": "CTO",
       "bioKey": "Multi-Agent AI & ML Systems | Previously built wealth-tech solutions for European Family Offices | Ex-Samsung ML Research",
-      "imageAsset": "/assets/team/rayansh.webp",
+      "imageAsset": "/assets/team/redesign/rayansh.webp",
       "linkedIn": "https://www.linkedin.com/in/rayansh-srivastava-419951219/"
     },
     {
@@ -25,7 +25,7 @@
       "name": "Keshav Dudani",
       "roleKey": "Founding ML Engineer",
       "bioKey": "Backend & Applied ML | Prediction Systems & Financial NLP | Built commodity-trading systems deployed across 5 enterprises",
-      "imageAsset": "/assets/team/keshav.webp",
+      "imageAsset": "/assets/team/redesign/keshav.webp",
       "linkedIn": "https://www.linkedin.com/in/keshav-dudani-617295251/"
     },
     {
@@ -33,7 +33,7 @@
       "name": "Manchit Sanan",
       "roleKey": "Compliance Lead",
       "bioKey": "17+ Years Enterprise IT | API & Regulatory Infrastructure | US Healthcare → FinTech",
-      "imageAsset": "/assets/team/manchit.webp",
+      "imageAsset": "/assets/team/redesign/manchit.webp",
       "linkedIn": "https://www.linkedin.com/in/manchit-sanan-6b9705158/"
     },
     {
@@ -41,7 +41,7 @@
       "name": "Divyesh Reddy",
       "roleKey": "Partnerships Lead",
       "bioKey": "MSME Credit Analytics | Previously built Buyer-Risk Intelligence for MSMEs | Lender & Ecosystem Partnerships",
-      "imageAsset": "/assets/team/divyesh.webp",
+      "imageAsset": "/assets/team/redesign/divyesh.webp",
       "linkedIn": "https://www.linkedin.com/in/divyesh-reddy/"
     },
     {
@@ -49,7 +49,7 @@
       "name": "Kavish Mahajan",
       "roleKey": "Creative Director",
       "bioKey": "Brand & Product Design | Owns Kubar’s Brand, UI/UX & Design Systems | Previously founded & scaled a design agency",
-      "imageAsset": "/assets/team/kavish.webp",
+      "imageAsset": "/assets/team/redesign/kavish.webp",
       "linkedIn": "https://www.linkedin.com/in/koverner/"
     }
   ],
@@ -59,32 +59,32 @@
       "name": "Debayan Gupta",
       "domainKey": "Professor, CS - MIT, Ashoka University",
       "contributionKey": "Advises on research-led technology choices and academic partnerships.",
-      "imageAsset": "/assets/advisors/debayan.webp",
-      "linkedIn": "https://linkedin.com"
+      "imageAsset": "/assets/advisors/redesign/debayan.webp",
+      "linkedIn": "https://www.linkedin.com/in/debayang/"
     },
     {
       "id": "amit-sagar",
       "name": "Amit Sagar",
       "domainKey": "Lead System Architect at Bank of England",
       "contributionKey": "Contributes system architecture and CBDC insight for secure infrastructure.",
-      "imageAsset": "/assets/advisors/amit.webp",
-      "linkedIn": "https://linkedin.com"
+      "imageAsset": "/assets/advisors/redesign/amit.webp",
+      "linkedIn": "https://www.linkedin.com/in/amit-sagar-59286768/"
     },
     {
       "id": "shridhar-sethuram",
       "name": "Shridhar Sethuram",
       "domainKey": "Finance veteran, 25+ years in Private Equity",
       "contributionKey": "Brings long-term capital markets perspective to growth strategy.",
-      "imageAsset": "/assets/advisors/shridhar.webp",
-      "linkedIn": "https://linkedin.com"
+      "imageAsset": "/assets/advisors/redesign/shridhar.webp",
+      "linkedIn": "https://www.linkedin.com/in/shridharsethuram/"
     },
     {
       "id": "tushar-jaruhar",
       "name": "Tushar Jaruhar",
       "domainKey": "Ex-Pricing Actuary at Zurich Insurance Co.",
       "contributionKey": "Advises on pricing discipline and insurance-linked risk thinking.",
-      "imageAsset": "/assets/advisors/tushar.webp",
-      "linkedIn": "https://linkedin.com"
+      "imageAsset": "/assets/advisors/redesign/tushar.webp",
+      "linkedIn": "https://www.linkedin.com/in/tushar-jaruhar-9362959/"
     }
   ]
 }

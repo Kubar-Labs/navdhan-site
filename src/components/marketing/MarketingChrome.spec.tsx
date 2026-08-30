@@ -34,6 +34,9 @@ describe("marketing navigation", () => {
     screen.getAllByRole("link", { name: "Why NavDhan" }).forEach((link) => {
       expect(link).toHaveAttribute("href", "/hi/why-navdhan");
     });
+    screen.getAllByRole("link", { name: "Team" }).forEach((link) => {
+      expect(link).toHaveAttribute("href", "/hi/team");
+    });
     expect(screen.getAllByRole("link", { name: "How It Works" })[0]).toHaveAttribute(
       "aria-current",
       "page",
