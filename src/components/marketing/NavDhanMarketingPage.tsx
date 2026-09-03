@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
+import { FinancialInstitutionCarousel } from "./FinancialInstitutionCarousel";
 import { JourneyLedger, type JourneyAudience } from "./JourneyLedger";
 import { Arrow } from "./MarketingChrome";
 import { RedesignedEmiCalculator } from "./RedesignedEmiCalculator";
@@ -26,6 +27,7 @@ export function HomeMarketingPage({ locale, heroCopy }: { locale: string; heroCo
     <div className={styles.site}>
       <Hero locale={locale} audience="borrower" borrowerCopy={heroCopy} />
       <TrustStrip />
+      <FinancialInstitutionCarousel />
       <section className={`${styles.section} ${styles.financeSection}`} id="products">
         <h2 className={styles.centerHeading}>What could you finance?</h2>
         <div className={styles.financeGrid}>

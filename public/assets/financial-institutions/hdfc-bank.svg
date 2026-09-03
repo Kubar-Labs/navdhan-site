@@ -1,0 +1,28 @@
+<svg width="80" height="48" viewBox="0 0 80 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect width="80" height="48" fill="#F5F5F5"/>
+<g id="__FI Mark / HDFC Bank">
+<g id="brand mark" clip-path="url(#clip0_140_362)">
+<g id="Clip path group">
+<mask id="mask0_140_362" style="mask-type:luminance" maskUnits="userSpaceOnUse" x="24" y="8" width="32" height="32">
+<g id="clip0_45_4204">
+<path id="Vector" d="M56 8H24V40H56V8Z" fill="white"/>
+</g>
+</mask>
+<g mask="url(#mask0_140_362)">
+<g id="Group">
+<path id="Vector_2" d="M24 8H56V40H24V8Z" fill="#ED232A"/>
+<path id="Vector_3" d="M29.6007 13.601H50.4031V34.4033H29.6007V13.601Z" fill="white"/>
+<path id="Vector_4" d="M38.4004 8H41.5991V40H38.4004V8Z" fill="white"/>
+<path id="Vector_5" d="M24 22.4045H56V25.6032H24V22.4045Z" fill="white"/>
+<path id="Vector_6" d="M35.2015 19.2018H44.8019V28.8023H35.2015V19.2018Z" fill="#004C8F"/>
+</g>
+</g>
+</g>
+</g>
+</g>
+<defs>
+<clipPath id="clip0_140_362">
+<rect width="32" height="32" fill="white" transform="translate(24 8)"/>
+</clipPath>
+</defs>
+</svg>

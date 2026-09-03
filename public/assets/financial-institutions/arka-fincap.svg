@@ -1,0 +1,12 @@
+<svg width="80" height="48" viewBox="0 0 80 48" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<rect width="80" height="48" fill="#F5F5F5"/>
+<g id="__FI Mark / Arka Fincap">
+<rect id="brand mark" x="24" y="8" width="32" height="32" fill="url(#pattern0_140_362)"/>
+</g>
+<defs>
+<pattern id="pattern0_140_362" patternContentUnits="objectBoundingBox" width="1" height="1">
+<use xlink:href="#image0_140_362" transform="scale(0.0208333)"/>
+</pattern>
+<image id="image0_140_362" width="48" height="48" preserveAspectRatio="none" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAMAAABg3Am1AAAAIGNIUk0AAHomAACAhAAA+gAAAIDoAAB1MAAA6mAAADqYAAAXcJy6UTwAAAEdUExURf///x8ZFEsxJGA7KmtALjMkHAAKCwANDwATFpJWPWdBL0MtIgAMDgAND3dINEAsIgAHCAAMDW9FMTwoHgANDgAUGEcwJQAKC187K0YtIWhALwAKDDsoHgAND1g5KgAQEnhJNQASFYlSOgAOEHJGMjUyLkdNTaqrrICFhVdbXJOWlk9WV4qOjktQUFthYnd7e4CEhQAHCAAMD7W1tgAJCgAUFgASFEhOT2xyc0hOT3NDLwAmK2FENc54VAAeIwArMcFwT0M6MD86MqpkRwAhJQAoLjU2MaplSCIyMZNaQQwtMIhWP35POgAWGZpaPwAYHLRpSU5hZE5kZ2x6fO/v73iEhf///w80OqmvsNLT1CpJTcPFxdLV1WBwcgAcIGyOhx0AAAA6dFJOUwCu5vj+tIHX+P7woYvo+ahI3PRfnvi80Oua7pSoxOLa9/H83vfeqv7umvmo9F+26PB30f6L5+ny4qg+OC5LAAAAAWJLR0QAiAUdSAAAAAd0SU1FB+oIHwcrIuVeNEQAAAGcSURBVEjHlZZnW8IwFEYjoAxFAUFcOMDBxr1quRVQcUAVQ9z+/59hyyhpOpKer33P02bce4sQy5TPH7gaEPD7phGHmWBIupYpwpFZl/hctA4aJkNW5hcc4rH4IK5xo5iVxKJdPpkCg4bZkJtL1ny6BeBsKMtsPigBuBlyhMnfAngx0hJYuLtnDOqrki2woc0YirHyWApAxGiOdzcOIGYkRudbB0FDGZ55FJxpP5iM+cF9q7sI8PhkesWKfgQA4saqJoTAgxFGaE0CL8Y6yvDymvE8ETbQJl+gS2oLbYsIEyOLOkKCYXSRKiaMDXFhZLyIC8PW4OENwyLsii56bHQFt9UwsijnRYDGjsjVoNkVuHw0r3v8603T2+cXEM0bznNLlKZPcIHXBMx5UuS1GYp3LY9LnEZG5z8IIWVOq2TznxX3ZszmcdW93VN8fWt5UnMfKHT+R88fuI8sXp4dihQ9PY9ryELSfq96WN+fKrJhMtiZPC5XkD2jXweKX0xwsYScOTwK0avvk+N8AXE4yeROO6r6p3bOzi8uLY//AYVPxJywjgHtAAAAAElFTkSuQmCC"/>
+</defs>
+</svg>
